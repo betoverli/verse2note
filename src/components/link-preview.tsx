@@ -7,7 +7,6 @@ import { formatPassage, formatPassageById, samePassage, type Passage } from "@/l
 import { translationById } from "@/lib/bible/translations";
 import {
   canWebShare,
-  clipboardDropsHtmlLinks,
   copyReferences,
   shareReferences,
   type CopyItem,
@@ -53,7 +52,6 @@ export function LinkPreview() {
   const resetSelection = useAppStore((s) => s.resetSelection);
   const [copied, setCopied] = useState<"one" | "list" | null>(null);
   const [shareReady, setShareReady] = useState(false);
-  const androidPaste = clipboardDropsHtmlLinks();
 
   useEffect(() => {
     setShareReady(canWebShare());
@@ -62,9 +60,8 @@ export function LinkPreview() {
   const passage = bookId && chapter ? { bookId, chapter, verseStart, verseEnd } : null;
   const translation = translationById(translationId);
   const app = appById(appId);
-  const webOnly = androidPaste;
   const current = passage
-    ? toCopyItem(passage, locale, appId, translationId, preferNative, webOnly)
+    ? toCopyItem(passage, locale, appId, translationId, preferNative, false)
     : null;
   const currentShare = passage
     ? toCopyItem(passage, locale, appId, translationId, preferNative, true)
@@ -125,7 +122,7 @@ export function LinkPreview() {
   }
 
   async function onCopyList() {
-    const items = listItems(webOnly);
+    const items = listItems(false);
     if (items.length === 0) return;
     try {
       await copyReferences(items, copyFormat);

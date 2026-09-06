@@ -131,9 +131,7 @@ export async function copyReferences(items: CopyItem[], format: CopyFormat): Pro
     await navigator.clipboard.writeText(payload.markdown);
     return;
   }
-
-  // Android Keep (and most notes) read text/html, strip <a>, and keep only the label.
-  if (format === "plain" || clipboardDropsHtmlLinks()) {
+  if (format === "plain") {
     await navigator.clipboard.writeText(payload.plain);
     return;
   }

@@ -1,7 +1,6 @@
 import type { Locale } from "@/lib/bible/books";
 import { appById } from "@/lib/bible/apps";
 import { TRANSLATIONS } from "@/lib/bible/translations";
-import { clipboardDropsHtmlLinks } from "@/lib/copy-rich";
 import { t, type I18nKey } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Choice } from "@/components/choice";
@@ -52,7 +51,7 @@ export function BibleAppOptions({ locale }: { locale: Locale }) {
         </section>
       ) : null}
 
-      {app.hasNative && app.hasWeb && !clipboardDropsHtmlLinks() ? (
+      {app.hasNative && app.hasWeb ? (
         <section className="space-y-3">
           <div className="space-y-1">
             <h2 className="text-xs font-medium tracking-wide text-muted uppercase">

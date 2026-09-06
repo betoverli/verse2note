@@ -85,6 +85,9 @@ export function Landing() {
           <Step icon={Copy} label={t(locale, "landStepCopy")} />
           <Step icon={ClipboardPaste} label={t(locale, "landStepPaste")} />
         </ul>
+        <p className="mt-4 max-w-md text-pretty text-xs leading-relaxed text-subtle">
+          {t(locale, "landLimits")}
+        </p>
       </div>
 
       <div className="mt-6 shrink-0 space-y-3 border-t border-border/60 pt-4">
