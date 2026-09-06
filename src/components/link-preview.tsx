@@ -161,11 +161,10 @@ export function LinkPreview() {
               <p className="text-xs font-medium tracking-wide text-muted uppercase">
                 {t(locale, "list")} · {list.length}
               </p>
-              <div className="flex items-center gap-1">
+              <div className="flex shrink-0 items-center gap-1">
                 {shareReady ? (
-                  <Button size="sm" variant="outline" onClick={onShareList}>
+                  <Button size="icon" variant="outline" className="size-9" onClick={onShareList} aria-label={t(locale, "shareList")}>
                     <Share2 />
-                    {t(locale, "shareList")}
                   </Button>
                 ) : null}
                 <Button size="sm" onClick={onCopyList}>
@@ -232,27 +231,37 @@ export function LinkPreview() {
             </div>
             <div className="flex gap-2 p-2">
               <Button
+                size="icon"
                 variant={inList ? "secondary" : "outline"}
                 onClick={onAdd}
                 aria-label={inList ? t(locale, "inList") : t(locale, "add")}
               >
                 {inList ? <Check /> : <Plus />}
-                {inList ? t(locale, "inList") : t(locale, "add")}
               </Button>
-              {shareReady ? (
-                <Button className={androidPaste ? "flex-1" : undefined} variant={androidPaste ? "primary" : "secondary"} onClick={onShare}>
+              {androidPaste && shareReady ? (
+                <Button className="min-w-0 flex-1" onClick={onShare}>
                   <Share2 />
                   {t(locale, "share")}
                 </Button>
+              ) : (
+                <Button className="min-w-0 flex-1" onClick={onCopy}>
+                  {copied === "one" ? <Check /> : <Copy />}
+                  {copied === "one" ? t(locale, "copied") : t(locale, "copy")}
+                </Button>
+              )}
+              {shareReady && !androidPaste ? (
+                <Button size="icon" variant="secondary" onClick={onShare} aria-label={t(locale, "share")}>
+                  <Share2 />
+                </Button>
               ) : null}
-              <Button className={androidPaste && shareReady ? undefined : "flex-1"} variant={androidPaste && shareReady ? "secondary" : "primary"} onClick={onCopy}>
-                {copied === "one" ? <Check /> : <Copy />}
-                {copied === "one" ? t(locale, "copied") : t(locale, "copy")}
-              </Button>
-              <Button variant="secondary" asChild>
-                <a href={current.url} target="_blank" rel="noreferrer">
+              {androidPaste && shareReady ? (
+                <Button size="icon" variant="secondary" onClick={onCopy} aria-label={t(locale, "copy")}>
+                  {copied === "one" ? <Check /> : <Copy />}
+                </Button>
+              ) : null}
+              <Button size="icon" variant="secondary" asChild>
+                <a href={current.url} target="_blank" rel="noreferrer" aria-label={t(locale, "open")}>
                   <ExternalLink />
-                  {t(locale, "open")}
                 </a>
               </Button>
             </div>
