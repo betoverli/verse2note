@@ -1,0 +1,116 @@
+@import "tailwindcss";
+@import "./fonts.css";
+
+@theme {
+  --color-bg: #121110;
+  --color-surface: #1c1a18;
+  --color-elevated: #262320;
+  --color-fg: #f3eee6;
+  --color-muted: #a89f93;
+  --color-subtle: #7a736a;
+  --color-accent: #e8dcc8;
+  --color-accent-fg: #1a1714;
+  --color-border: rgb(243 238 230 / 0.12);
+  --color-ring: #e8dcc8;
+  --color-success: #b7c4a8;
+
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-border: 0 0 0 1px rgb(243 238 230 / 0.08);
+  --shadow-border-hover: 0 0 0 1px rgb(243 238 230 / 0.16);
+}
+
+html.light {
+  --color-bg: #f4efe6;
+  --color-surface: #ebe4d6;
+  --color-elevated: #fffaf2;
+  --color-fg: #1c1814;
+  --color-muted: #6b6358;
+  --color-subtle: #8a8176;
+  --color-accent: #2a241e;
+  --color-accent-fg: #f7f1e6;
+  --color-border: rgb(28 24 20 / 0.12);
+  --color-ring: #2a241e;
+  --color-success: #4d5c42;
+  --shadow-border: 0 0 0 1px rgb(28 24 20 / 0.1);
+  --shadow-border-hover: 0 0 0 1px rgb(28 24 20 / 0.18);
+}
+
+@layer components {
+  .app-header {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem);
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-image: linear-gradient(180deg, #141312 0%, #121110 48%, #10100f 100%);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: rgb(232 220 200 / 0.28);
+    color: var(--color-fg);
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
+  html.light body {
+    background-image: linear-gradient(180deg, #f7f3ea 0%, #f4efe6 48%, #efe8da 100%);
+  }
+
+  html.light ::selection {
+    background: rgb(42 36 30 / 0.18);
+    color: var(--color-fg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
