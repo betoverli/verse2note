@@ -369,3 +369,14 @@ export function buildDeepLink(
   const native = preferNative && app.hasNative ? true : !app.hasWeb;
   return builders[app.id]({ book, passage, translation, preferNative: native });
 }
+
+/** HTTPS URL Keep/WhatsApp can open. Falls back to YouVersion web if the app has no site. */
+export function buildHttpLink(
+  appId: string,
+  passage: Passage,
+  translation: Translation,
+): string | null {
+  const preferred = buildDeepLink(appId, passage, translation, false);
+  if (preferred?.startsWith("http")) return preferred;
+  return buildDeepLink("youversion", passage, translation, false) ?? preferred;
+}

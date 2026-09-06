@@ -140,3 +140,27 @@ export async function copyReferences(items: CopyItem[], format: CopyFormat): Pro
 
   await writeRichClipboard(payload.html, payload.plain);
 }
+
+export function canWebShare(): boolean {
+  return typeof navigator !== "undefined" && typeof navigator.share === "function";
+}
+
+export async function shareReferences(items: CopyItem[]): Promise<"shared" | "cancelled"> {
+  if (items.length === 0 || !canWebShare()) {
+    throw new Error("share unavailable");
+  }
+
+  const first = items[0];
+  const data: ShareData =
+    items.length === 1 && first.url.startsWith("http")
+      ? { title: first.label, text: first.label, url: first.url }
+      : { title: items.map((item) => item.label).join(", "), text: plainWithUrls(items) };
+
+  try {
+    await navigator.share(data);
+    return "shared";
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") return "cancelled";
+    throw error;
+  }
+}

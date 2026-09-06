@@ -1,11 +1,17 @@
-import { Check, Copy, ExternalLink, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { Check, Copy, ExternalLink, Plus, Share2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { appById, appIcon, buildDeepLink } from "@/lib/bible/apps";
+import { appById, appIcon, buildDeepLink, buildHttpLink } from "@/lib/bible/apps";
 import { bookById, type Locale } from "@/lib/bible/books";
 import { formatPassage, formatPassageById, samePassage, type Passage } from "@/lib/bible/passage";
 import { translationById } from "@/lib/bible/translations";
-import { copyReferences, type CopyItem } from "@/lib/copy-rich";
+import {
+  canWebShare,
+  clipboardDropsHtmlLinks,
+  copyReferences,
+  shareReferences,
+  type CopyItem,
+} from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -16,11 +22,14 @@ function toCopyItem(
   appId: string,
   translationId: string,
   preferNative: boolean,
+  httpOnly: boolean,
 ): CopyItem | null {
   const book = bookById(passage.bookId);
   const translation = translationById(translationId);
   if (!book) return null;
-  const url = buildDeepLink(appId, passage, translation, preferNative);
+  const url = httpOnly
+    ? buildHttpLink(appId, passage, translation)
+    : buildDeepLink(appId, passage, translation, preferNative);
   if (!url) return null;
   return { label: formatPassage(book, passage, locale), url };
 }
@@ -43,12 +52,22 @@ export function LinkPreview() {
   const applyPassage = useAppStore((s) => s.applyPassage);
   const resetSelection = useAppStore((s) => s.resetSelection);
   const [copied, setCopied] = useState<"one" | "list" | null>(null);
+  const [shareReady, setShareReady] = useState(false);
+  const androidPaste = clipboardDropsHtmlLinks();
 
-  const book = bookId ? bookById(bookId) : undefined;
+  useEffect(() => {
+    setShareReady(canWebShare());
+  }, []);
+
   const passage = bookId && chapter ? { bookId, chapter, verseStart, verseEnd } : null;
   const translation = translationById(translationId);
   const app = appById(appId);
-  const current = passage ? toCopyItem(passage, locale, appId, translationId, preferNative) : null;
+  const current = passage
+    ? toCopyItem(passage, locale, appId, translationId, preferNative, androidPaste)
+    : null;
+  const currentShare = passage
+    ? toCopyItem(passage, locale, appId, translationId, preferNative, true)
+    : current;
   const inList = Boolean(passage && list.some((item) => samePassage(item, passage)));
 
   function flash(kind: "one" | "list") {
@@ -74,6 +93,19 @@ export function LinkPreview() {
     }
   }
 
+  async function onShare() {
+    const item = currentShare ?? current;
+    if (!item || !passage) return;
+    try {
+      const result = await shareReferences([item]);
+      if (result === "cancelled") return;
+      remember(passage);
+      notify(t(locale, "shared"));
+    } catch {
+      notify(t(locale, "share"), "error");
+    }
+  }
+
   function onAdd() {
     if (!passage || !current) return;
     if (!addToList(passage)) {
@@ -85,10 +117,14 @@ export function LinkPreview() {
     resetSelection();
   }
 
-  async function onCopyList() {
-    const items = list
-      .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
+  function listItems(httpOnly: boolean) {
+    return list
+      .map((item) => toCopyItem(item, locale, appId, translationId, preferNative, httpOnly))
       .filter((item): item is CopyItem => item != null);
+  }
+
+  async function onCopyList() {
+    const items = listItems(androidPaste);
     if (items.length === 0) return;
     try {
       await copyReferences(items, copyFormat);
@@ -96,6 +132,18 @@ export function LinkPreview() {
       notify(t(locale, "copiedList"));
     } catch {
       notify(t(locale, "copyList"), "error");
+    }
+  }
+
+  async function onShareList() {
+    const items = listItems(true);
+    if (items.length === 0) return;
+    try {
+      const result = await shareReferences(items);
+      if (result === "cancelled") return;
+      notify(t(locale, "sharedList"));
+    } catch {
+      notify(t(locale, "shareList"), "error");
     }
   }
 
@@ -114,6 +162,12 @@ export function LinkPreview() {
                 {t(locale, "list")} · {list.length}
               </p>
               <div className="flex items-center gap-1">
+                {shareReady ? (
+                  <Button size="sm" variant="outline" onClick={onShareList}>
+                    <Share2 />
+                    {t(locale, "shareList")}
+                  </Button>
+                ) : null}
                 <Button size="sm" onClick={onCopyList}>
                   {copied === "list" ? <Check /> : <Copy />}
                   {copied === "list" ? t(locale, "copiedList") : t(locale, "copyList")}
@@ -185,7 +239,13 @@ export function LinkPreview() {
                 {inList ? <Check /> : <Plus />}
                 {inList ? t(locale, "inList") : t(locale, "add")}
               </Button>
-              <Button className="flex-1" onClick={onCopy}>
+              {shareReady ? (
+                <Button className={androidPaste ? "flex-1" : undefined} variant={androidPaste ? "primary" : "secondary"} onClick={onShare}>
+                  <Share2 />
+                  {t(locale, "share")}
+                </Button>
+              ) : null}
+              <Button className={androidPaste && shareReady ? undefined : "flex-1"} variant={androidPaste && shareReady ? "secondary" : "primary"} onClick={onCopy}>
                 {copied === "one" ? <Check /> : <Copy />}
                 {copied === "one" ? t(locale, "copied") : t(locale, "copy")}
               </Button>
