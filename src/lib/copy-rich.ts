@@ -17,28 +17,27 @@ function linkHtml(label: string, url: string): string {
   return `<a href="${escapeHtml(url)}">${escapeHtml(label)}</a>`;
 }
 
+export function plainWithUrls(items: CopyItem[]): string {
+  return items.map((item) => `${item.label}\n${item.url}`).join("\n\n");
+}
+
+/** Keep and most Android notes paste HTML inner text and drop the href. */
+export function clipboardDropsHtmlLinks(ua = typeof navigator === "undefined" ? "" : navigator.userAgent) {
+  return /Android/i.test(ua);
+}
+
 export function buildCopyPayload(label: string, url: string, format: CopyFormat) {
-  const html = linkHtml(label, url);
-  const markdown = `[${label}](${url})`;
-  const plain = `${label}\n${url}`;
-  return {
-    html,
-    markdown,
-    plain: format === "markdown" ? markdown : format === "plain" ? plain : label,
-    label,
-    url,
-  };
+  return buildListPayload([{ label, url }], format);
 }
 
 export function buildListPayload(items: CopyItem[], format: CopyFormat) {
   const html = items.map((item) => `<div>${linkHtml(item.label, item.url)}</div>`).join("");
   const markdown = items.map((item) => `[${item.label}](${item.url})`).join("\n");
-  const plain = items.map((item) => `${item.label}\n${item.url}`).join("\n\n");
-  const labels = items.map((item) => item.label).join("\n");
+  const plain = plainWithUrls(items);
   return {
     html,
     markdown,
-    plain: format === "markdown" ? markdown : format === "plain" ? plain : labels,
+    plain: format === "markdown" ? markdown : plain,
   };
 }
 
@@ -132,10 +131,12 @@ export async function copyReferences(items: CopyItem[], format: CopyFormat): Pro
     await navigator.clipboard.writeText(payload.markdown);
     return;
   }
-  if (format === "plain") {
+
+  // Android Keep (and most notes) read text/html, strip <a>, and keep only the label.
+  if (format === "plain" || clipboardDropsHtmlLinks()) {
     await navigator.clipboard.writeText(payload.plain);
     return;
   }
 
-  await writeRichClipboard(payload.html, items.map((item) => `${item.label}\n${item.url}`).join("\n\n"));
+  await writeRichClipboard(payload.html, payload.plain);
 }

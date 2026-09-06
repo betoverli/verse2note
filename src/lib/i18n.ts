@@ -29,6 +29,8 @@ const strings = {
     webHint: "Abre o app se estiver instalado; senão, o site.",
     nativeHint: "Abre direto no app. Pode não funcionar se ele não estiver instalado.",
     copyFormat: "Formato ao copiar",
+    copyAndroidHint:
+      "No Android o Keep não aceita link rico. Copiamos o nome e a URL na linha de baixo — o Keep deixa o endereço clicável.",
     rich: "Texto rico (Notes, Docs)",
     markdown: "Markdown",
     plain: "Texto simples",
@@ -142,6 +144,8 @@ const strings = {
     webHint: "Opens the app if installed; otherwise the website.",
     nativeHint: "Opens the app directly. May fail if it is not installed.",
     copyFormat: "Copy format",
+    copyAndroidHint:
+      "On Android, Keep does not keep rich links. We copy the name and the URL on the next line — Keep makes the address tappable.",
     rich: "Rich text (Notes, Docs)",
     markdown: "Markdown",
     plain: "Plain text",
@@ -255,6 +259,8 @@ const strings = {
     webHint: "Abre la app si está instalada; si no, el sitio.",
     nativeHint: "Abre la app directamente. Puede fallar si no está instalada.",
     copyFormat: "Formato al copiar",
+    copyAndroidHint:
+      "En Android, Keep no conserva el enlace enriquecido. Copiamos el nombre y la URL en la línea de abajo — Keep deja la dirección clicable.",
     rich: "Texto enriquecido (Notes, Docs)",
     markdown: "Markdown",
     plain: "Texto simple",

@@ -4,7 +4,7 @@ import { ArrowLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import type { Locale } from "@/lib/bible/books";
 import { appById, appHasOptions, appIcon } from "@/lib/bible/apps";
 import { TRANSLATIONS } from "@/lib/bible/translations";
-import type { CopyFormat } from "@/lib/copy-rich";
+import { clipboardDropsHtmlLinks, type CopyFormat } from "@/lib/copy-rich";
 import { t, type I18nKey } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import type { Theme } from "@/lib/theme";
@@ -176,7 +176,7 @@ export function SettingsPanel() {
         />
       </Section>
 
-      <Section title={t(locale, "copyFormat")}>
+      <Section title={t(locale, "copyFormat")} lead={clipboardDropsHtmlLinks() ? t(locale, "copyAndroidHint") : undefined}>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {COPY_FORMATS.map((item) => (
             <Choice
