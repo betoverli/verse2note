@@ -62,8 +62,9 @@ export function LinkPreview() {
   const passage = bookId && chapter ? { bookId, chapter, verseStart, verseEnd } : null;
   const translation = translationById(translationId);
   const app = appById(appId);
+  const webOnly = androidPaste;
   const current = passage
-    ? toCopyItem(passage, locale, appId, translationId, preferNative, androidPaste)
+    ? toCopyItem(passage, locale, appId, translationId, preferNative, webOnly)
     : null;
   const currentShare = passage
     ? toCopyItem(passage, locale, appId, translationId, preferNative, true)
@@ -124,7 +125,7 @@ export function LinkPreview() {
   }
 
   async function onCopyList() {
-    const items = listItems(androidPaste);
+    const items = listItems(webOnly);
     if (items.length === 0) return;
     try {
       await copyReferences(items, copyFormat);
@@ -238,25 +239,13 @@ export function LinkPreview() {
               >
                 {inList ? <Check /> : <Plus />}
               </Button>
-              {androidPaste && shareReady ? (
-                <Button className="min-w-0 flex-1" onClick={onShare}>
-                  <Share2 />
-                  {t(locale, "share")}
-                </Button>
-              ) : (
-                <Button className="min-w-0 flex-1" onClick={onCopy}>
-                  {copied === "one" ? <Check /> : <Copy />}
-                  {copied === "one" ? t(locale, "copied") : t(locale, "copy")}
-                </Button>
-              )}
-              {shareReady && !androidPaste ? (
+              <Button className="min-w-0 flex-1" onClick={onCopy}>
+                {copied === "one" ? <Check /> : <Copy />}
+                {copied === "one" ? t(locale, "copied") : t(locale, "copy")}
+              </Button>
+              {shareReady ? (
                 <Button size="icon" variant="secondary" onClick={onShare} aria-label={t(locale, "share")}>
                   <Share2 />
-                </Button>
-              ) : null}
-              {androidPaste && shareReady ? (
-                <Button size="icon" variant="secondary" onClick={onCopy} aria-label={t(locale, "copy")}>
-                  {copied === "one" ? <Check /> : <Copy />}
                 </Button>
               ) : null}
               <Button size="icon" variant="secondary" asChild>

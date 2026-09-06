@@ -34,7 +34,7 @@ const strings = {
     nativeHint: "Abre direto no app. Pode não funcionar se ele não estiver instalado.",
     copyFormat: "Formato ao copiar",
     copyAndroidHint:
-      "No Android o Keep não transforma URL colada em link. Use Compartilhar e escolha o Keep — aí o endereço fica clicável.",
+      "No Android só usamos o link web (https), para colar no Keep e no WhatsApp. O Keep não deixa URL colada clicável — use o ícone de compartilhar.",
     rich: "Texto rico (Notes, Docs)",
     markdown: "Markdown",
     plain: "Texto simples",
@@ -153,7 +153,7 @@ const strings = {
     nativeHint: "Opens the app directly. May fail if it is not installed.",
     copyFormat: "Copy format",
     copyAndroidHint:
-      "On Android, Keep does not turn a pasted URL into a link. Use Share and pick Keep — then the address is tappable.",
+      "On Android we only use the web (https) link, so Keep and WhatsApp can open it. Keep does not make a pasted URL tappable — use the share icon.",
     rich: "Rich text (Notes, Docs)",
     markdown: "Markdown",
     plain: "Plain text",
@@ -272,7 +272,7 @@ const strings = {
     nativeHint: "Abre la app directamente. Puede fallar si no está instalada.",
     copyFormat: "Formato al copiar",
     copyAndroidHint:
-      "En Android, Keep no convierte una URL pegada en enlace. Usa Compartir y elige Keep — ahí la dirección queda clicable.",
+      "En Android solo usamos el enlace web (https), para Keep y WhatsApp. Keep no hace clicable una URL pegada — usa el icono de compartir.",
     rich: "Texto enriquecido (Notes, Docs)",
     markdown: "Markdown",
     plain: "Texto simple",
