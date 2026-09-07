@@ -59,7 +59,7 @@ export const useAppStore = create<AppState>()(
       translationId: DEFAULT_TRANSLATION[detectLocale()],
       preferNative: false,
       copyFormat: "rich",
-      booksCompact: true,
+      booksCompact: false,
       theme: "system",
       onboarded: false,
       tourDone: false,
