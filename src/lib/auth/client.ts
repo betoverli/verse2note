@@ -153,7 +153,7 @@ export async function signIn(
   });
   if (error) throw new Error(error.message ?? "Sign-in failed");
   if (data?.url) {
-    window.location.href = data.url;
+    window.location.assign(data.url);
     return;
   }
   throw new Error("Sign-in did not return a redirect URL");

@@ -41,7 +41,7 @@ export function Login() {
       await signIn(providerId, { callbackURL: "/profile" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
-      setError(/pop-up|popup/i.test(message) ? t(locale, "accountPopup") : t(locale, "accountError"));
+      setError(/pop-up|popup/i.test(message) ? t(locale, "accountPopup") : message || t(locale, "accountError"));
       setBusy(false);
     }
   }
@@ -107,6 +107,7 @@ export function Login() {
           <p className="text-sm text-muted">{t(locale, "accountOff")}</p>
         )}
       </div>
+      {error ? <p className="mt-4 text-sm text-accent">{error}</p> : null}
 
       {authEnabled ? (
         <>
@@ -140,7 +141,6 @@ export function Login() {
               onChange={(event) => setPassword(event.target.value)}
               placeholder={t(locale, "accountPassword")}
             />
-            {error ? <p className="text-sm text-accent">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={busy}>
               {busy ? t(locale, "accountWait") : mode === "up" ? t(locale, "createAccount") : t(locale, "signIn")}
             </Button>

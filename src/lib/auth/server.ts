@@ -103,6 +103,21 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
 ];
+// Custom domain (CNAME to the Grok host). Without these, email/OAuth POSTs from
+// https://verse2note.com get Better Auth "Invalid origin".
+const CUSTOM_ORIGINS: string[] = [
+  "https://verse2note.com",
+  "https://www.verse2note.com",
+];
+
+function extraTrustedOrigins(): string[] {
+  const raw = env("BETTER_AUTH_TRUSTED_ORIGINS");
+  const fromEnv = raw
+    ? raw.split(",").map((item) => item.trim()).filter(Boolean)
+    : [];
+  return [...CUSTOM_ORIGINS, ...fromEnv];
+}
+
 const baseURL = explicitBaseURL ?? {
   // Include loopback hosts so dynamic baseURL resolves for local email/password
   // (not only the preview wildcard).
@@ -116,12 +131,13 @@ const baseURL = explicitBaseURL ?? {
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
 const trustedOrigins: string[] = explicitBaseURL
-  ? [explicitBaseURL, ...LOCAL_DEV_ORIGINS]
+  ? [...new Set([explicitBaseURL, ...extraTrustedOrigins(), ...LOCAL_DEV_ORIGINS])]
   : [
       // Host wildcards (matched against Origin's host)
       ...previewAllowedHosts,
       // Full-origin wildcards (matched against Origin)
       ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
+      ...extraTrustedOrigins(),
       ...LOCAL_DEV_ORIGINS,
     ];
 
