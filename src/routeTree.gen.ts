@@ -15,6 +15,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ForAiRouteImport } from './routes/for-ai'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
 import { Route as ApiLinkRouteImport } from './routes/api/link'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
@@ -50,6 +51,11 @@ const ForAiRoute = ForAiRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCollectionsRoute = ApiCollectionsRouteImport.update({
+  id: '/api/collections',
+  path: '/api/collections',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiLinkRoute = ApiLinkRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
   '/settings': typeof SettingsRoute
+  '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
@@ -104,6 +111,7 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/for-ai': typeof ForAiRoute
   '/settings': typeof SettingsRoute
+  '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
@@ -119,6 +127,7 @@ export interface FileRoutesById {
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
   '/settings': typeof SettingsRoute
+  '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/collections'
     | '/for-ai'
     | '/settings'
+    | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/for-ai'
     | '/settings'
+    | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/collections'
     | '/for-ai'
     | '/settings'
+    | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ForAiRoute: typeof ForAiRoute
   SettingsRoute: typeof SettingsRoute
+  ApiCollectionsRoute: typeof ApiCollectionsRoute
   ApiLinkRoute: typeof ApiLinkRoute
   ApiMcpRoute: typeof ApiMcpRoute
 }
@@ -223,6 +236,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/collections': {
+      id: '/api/collections'
+      path: '/api/collections'
+      fullPath: '/api/collections'
+      preLoaderRoute: typeof ApiCollectionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/link': {
@@ -295,6 +315,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsRoute: CollectionsRouteWithChildren,
   ForAiRoute: ForAiRoute,
   SettingsRoute: SettingsRoute,
+  ApiCollectionsRoute: ApiCollectionsRoute,
   ApiLinkRoute: ApiLinkRoute,
   ApiMcpRoute: ApiMcpRoute,
 }

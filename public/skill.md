@@ -2,18 +2,22 @@
 name: verse2note
 description: >
   Generate rich-text Bible reference deep links for YouVersion, Logos, Tecarta
-  and other Bible apps. Use when the user wants to link verses, copy João 3:16 /
-  John 3:16 / Juan 3:16, or paste Scripture references into notes, chat, or a doc.
+  and other Bible apps. Also fetch themed collections (salvation, prayer, anxiety…).
+  Use when the user wants to link verses, copy João 3:16 / John 3:16 / Juan 3:16,
+  paste Scripture into notes, or get a ready-made list of references by theme.
 ---
 
 # Verse2Note
 
-Verse2Note is a verse picker, not a Bible. It does not return verse text. It returns
+Verse2Note is a verse picker, not a Bible. It does not return full verse text. It returns
 the **passage name already linked** to the user's Bible app.
 
-If you fetched this file from `{origin}/skill.md`, the API is `{origin}/api/link`.
+If you fetched this file from `{origin}/skill.md`:
+- links: `{origin}/api/link`
+- collections: `{origin}/api/collections`
+- MCP: `{origin}/api/mcp`
 
-## Call the API
+## Call the API — one reference or a list
 
 ```
 GET {origin}/api/link?ref=John+3:16&app=youversion&locale=en
@@ -25,11 +29,29 @@ Content-Type: application/json
 
 Response `markdown` is what you paste. Example: `[John 3:16](https://www.bible.com/bible/111/JHN.3.16)`.
 
-## Parameters
+## Call the API — collections (themes)
+
+160 themed lists, 14 categories. Search, open a category, or fetch a theme as linked markdown.
+
+```
+GET {origin}/api/collections?locale=pt
+GET {origin}/api/collections?q=oração&locale=pt
+GET {origin}/api/collections?category=doctrine&locale=pt
+GET {origin}/api/collections?id=salvation&app=youversion&locale=pt
+```
+
+`id=salvation` returns `markdown` for the whole list (same shape as `/api/link`). Snippets are only the **start** of the verse, from a free translation — not the full text.
+
+Category ids: `doctrine`, `jesus`, `personal`, `church-life`, `home`, `seasons`, `society`, `character`, `spirit`, `last-things`, `stories`, `emotions`, `work-money`, `worship-prayer`.
+
+## Parameters (both endpoints)
 
 | Name | Default | Notes |
 |---|---|---|
-| `ref` / `refs` | required | Book + chapter + verse. PT/EN/ES names and abbreviations. |
+| `ref` / `refs` | required on `/api/link` | Book + chapter + verse. PT/EN/ES names and abbreviations. |
+| `q` | — | Search themes and categories. |
+| `id` | — | Theme id (`salvation`, `prayer`, `trinity`…). |
+| `category` | — | Category id (see list above). |
 | `app` | `youversion` | youversion, tecarta, logos, olive-tree, bible-gateway, blue-letter, esv, biblia-online, bible-hub, accordance, e-sword, mysword, jw-library |
 | `translation` | locale default | nvi-pt, niv, rvr1960, esv, kjv, … |
 | `locale` | pt | pt, en, es — labels in that language |
@@ -37,15 +59,20 @@ Response `markdown` is what you paste. Example: `[John 3:16](https://www.bible.c
 
 ## MCP
 
-JSON-RPC at `POST {origin}/api/mcp`. Tool: `verse2note_link` with the same fields.
+JSON-RPC at `POST {origin}/api/mcp`.
+
+Tools:
+- `verse2note_link` — same fields as `/api/link`
+- `verse2note_collection` — `q`, `id`, `category`, plus `app` / `locale` / `translation` / `native`
 
 ```
 {"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"verse2note_link","arguments":{"ref":"John 3:16","app":"youversion","locale":"en"}}}
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"verse2note_collection","arguments":{"id":"salvation","locale":"pt","app":"youversion"}}}
 ```
 
 ## Rules
 
 - Never invent a bible.com / Logos URL. Always call the API.
-- Several references in one meeting → one `refs` call, paste `markdown`.
+- Several references in one meeting → one `refs` call, or a collection `id`, then paste `markdown`.
 - If the user names a Bible app, pass `app`. If they name a translation, pass `translation`.
-- Do not fetch or quote verse text unless the user already provided it.
+- Do not fetch or quote full verse text unless the user already provided it. Collection snippets are beginnings only.

@@ -126,20 +126,20 @@ const strings = {
     landFoot: "Sem conta. Depois da primeira abertura, funciona sem internet.",
     forAiTitle: "Para IA e agentes",
     forAiLead:
-      "O Verse2Note também gera o mesmo link para o Grok, o Claude, o Cursor ou qualquer agente. Sem conta. O modelo chama a API; não inventa a URL.",
+      "O Verse2Note também gera o mesmo link — e as coleções por tema — para o Grok, o Claude, o Cursor ou qualquer agente. Sem conta. O modelo chama a API; não inventa a URL.",
     forAiApiTitle: "API",
     forAiApiLead:
-      "Um GET ou POST devolve o nome da passagem já em Markdown. Várias referências no mesmo pedido.",
+      "GET /api/link para uma referência. GET /api/collections para buscar um tema ou devolver a lista toda em Markdown.",
     forAiSkillTitle: "Skill",
     forAiSkillLead:
       "Cole a skill no Claude, no Grok Build ou no Cursor. O agente lê as regras e chama a API deste site.",
     forAiSkillCta: "Abrir skill.md",
     forAiMcpTitle: "MCP",
     forAiMcpLead:
-      "JSON-RPC em POST /api/mcp. A ferramenta verse2note_link recebe a referência e devolve o Markdown.",
+      "JSON-RPC em POST /api/mcp. verse2note_link para uma referência; verse2note_collection para um tema.",
     forAiAppsTitle: "Ids dos apps",
     forAiExample: "Resposta",
-    helpForAi: "API, skill e MCP para gerar os mesmos links a partir de um agente.",
+    helpForAi: "API, skill e MCP para gerar os mesmos links — e coleções — a partir de um agente.",
   },
   en: {
     appName: "Verse2Note",
@@ -266,20 +266,20 @@ const strings = {
     landFoot: "No account. After the first open, it works offline.",
     forAiTitle: "For AI and agents",
     forAiLead:
-      "Verse2Note can mint the same link for Grok, Claude, Cursor, or any agent. No account. The model calls the API; it should not invent the URL.",
+      "Verse2Note can mint the same link — and themed collections — for Grok, Claude, Cursor, or any agent. No account. The model calls the API; it should not invent the URL.",
     forAiApiTitle: "API",
     forAiApiLead:
-      "A GET or POST returns the passage name already in Markdown. Several references in one request.",
+      "GET /api/link for a reference. GET /api/collections to search a theme or return the whole list in Markdown.",
     forAiSkillTitle: "Skill",
     forAiSkillLead:
       "Drop the skill into Claude, Grok Build, or Cursor. The agent reads the rules and calls this site's API.",
     forAiSkillCta: "Open skill.md",
     forAiMcpTitle: "MCP",
     forAiMcpLead:
-      "JSON-RPC at POST /api/mcp. The verse2note_link tool takes a reference and returns Markdown.",
+      "JSON-RPC at POST /api/mcp. verse2note_link for a reference; verse2note_collection for a theme.",
     forAiAppsTitle: "App ids",
     forAiExample: "Response",
-    helpForAi: "API, skill, and MCP so an agent can generate the same links.",
+    helpForAi: "API, skill, and MCP so an agent can generate the same links and collections.",
   },
   es: {
     appName: "Verse2Note",
@@ -406,20 +406,20 @@ const strings = {
     landFoot: "Sin cuenta. Después de la primera apertura, funciona sin internet.",
     forAiTitle: "Para IA y agentes",
     forAiLead:
-      "Verse2Note también genera el mismo enlace para Grok, Claude, Cursor o cualquier agente. Sin cuenta. El modelo llama a la API; no inventa la URL.",
+      "Verse2Note también genera el mismo enlace — y las colecciones por tema — para Grok, Claude, Cursor o cualquier agente. Sin cuenta. El modelo llama a la API; no inventa la URL.",
     forAiApiTitle: "API",
     forAiApiLead:
-      "Un GET o POST devuelve el nombre del pasaje ya en Markdown. Varias referencias en la misma petición.",
+      "GET /api/link para una referencia. GET /api/collections para buscar un tema o devolver la lista en Markdown.",
     forAiSkillTitle: "Skill",
     forAiSkillLead:
       "Pega la skill en Claude, Grok Build o Cursor. El agente lee las reglas y llama a la API de este sitio.",
     forAiSkillCta: "Abrir skill.md",
     forAiMcpTitle: "MCP",
     forAiMcpLead:
-      "JSON-RPC en POST /api/mcp. La herramienta verse2note_link recibe la referencia y devuelve Markdown.",
+      "JSON-RPC en POST /api/mcp. verse2note_link para una referencia; verse2note_collection para un tema.",
     forAiAppsTitle: "Ids de las apps",
     forAiExample: "Respuesta",
-    helpForAi: "API, skill y MCP para generar los mismos enlaces desde un agente.",
+    helpForAi: "API, skill y MCP para generar los mismos enlaces y colecciones desde un agente.",
   },
 } as const;
 

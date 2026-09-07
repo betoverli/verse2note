@@ -63,6 +63,10 @@ export function ForAiPage() {
     ? `GET ${origin}/api/link?ref=${encodeURIComponent(locale === "en" ? "John 3:16" : locale === "es" ? "Juan 3:16" : "João 3:16")}&app=youversion&locale=${locale}`
     : "GET /api/link?ref=John+3:16&app=youversion&locale=en";
 
+  const collectionsExample = origin
+    ? `GET ${origin}/api/collections?id=salvation&app=youversion&locale=${locale}`
+    : "GET /api/collections?id=salvation&app=youversion&locale=pt";
+
   const postExample = `{
   "refs": ["John 3:16", "Romans 8:28"],
   "app": "youversion",
@@ -79,6 +83,16 @@ export function ForAiPage() {
   }
 }`;
 
+  const mcpCollectionExample = `{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "verse2note_collection",
+    "arguments": { "id": "salvation", "app": "youversion", "locale": "pt" }
+  }
+}`;
+
   return (
     <div className="flex flex-col gap-10">
       <p className="max-w-xl text-pretty text-base leading-relaxed text-muted">{t(locale, "forAiLead")}</p>
@@ -87,6 +101,7 @@ export function ForAiPage() {
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "forAiApiTitle")}</h2>
         <p className="max-w-xl text-sm leading-relaxed text-fg">{t(locale, "forAiApiLead")}</p>
         <CopyBlock label="GET" value={getExample} />
+        <CopyBlock label="GET /api/collections" value={collectionsExample} />
         <CopyBlock label="POST /api/link" value={postExample} />
         {sample ? <CopyBlock label={t(locale, "forAiExample")} value={sample} /> : null}
       </section>
@@ -103,6 +118,7 @@ export function ForAiPage() {
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "forAiMcpTitle")}</h2>
         <p className="max-w-xl text-sm leading-relaxed text-fg">{t(locale, "forAiMcpLead")}</p>
         <CopyBlock label="POST /api/mcp" value={mcpExample} />
+        <CopyBlock label="verse2note_collection" value={mcpCollectionExample} />
       </section>
 
       <section className="space-y-3">
