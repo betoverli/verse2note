@@ -24,6 +24,7 @@ const JSON_LD = {
     "Book, chapter and verse picker",
     "Rich-text copy with a deep link",
     "Multiple Bible apps",
+    "Themed collections of references",
     "Works offline after first open",
   ],
 };
@@ -97,6 +98,10 @@ export function Landing() {
         <p className="text-center text-xs text-subtle">
           <Link to="/about" className="underline-offset-2 hover:text-fg hover:underline">
             {t(locale, "aboutTitle")}
+          </Link>
+          <span className="text-subtle"> · </span>
+          <Link to="/collections" className="underline-offset-2 hover:text-fg hover:underline">
+            {t(locale, "collections")}
           </Link>
           <span className="text-subtle"> · </span>
           <Link to="/for-ai" className="underline-offset-2 hover:text-fg hover:underline">

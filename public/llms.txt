@@ -29,6 +29,7 @@ Verse2Note is a verse picker, not a Bible reader. Copy "João 3:16" / "John 3:16
 
 - Home / landing: /
 - App (picker): /app
+- Collections (themed reference lists): /collections
 - About and help: /about
 - For AI (API, skill, MCP): /for-ai
 - Skill file: /skill.md

@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Settings2 } from "lucide-react";
+import { ArrowLeft, Library, Settings2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { RecentsMenu } from "@/components/recents-menu";
 import { Wordmark } from "@/components/wordmark";
 
-export function AppHeader({ backTo }: { backTo?: "/" | "/settings" | "/app" }) {
+export function AppHeader({ backTo }: { backTo?: "/" | "/settings" | "/app" | "/collections" }) {
   const locale = useAppStore((s) => s.locale);
 
   return (
@@ -23,6 +23,11 @@ export function AppHeader({ backTo }: { backTo?: "/" | "/settings" | "/app" }) {
         </Button>
       ) : (
         <div className="flex shrink-0 items-center">
+          <Button variant="ghost" size="icon" asChild aria-label={t(locale, "collections")}>
+            <Link to="/collections">
+              <Library />
+            </Link>
+          </Button>
           <RecentsMenu />
           <Button variant="ghost" size="icon" asChild aria-label={t(locale, "settings")}>
             <Link to="/settings">

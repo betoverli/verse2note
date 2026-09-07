@@ -1,0 +1,110 @@
+import { Check, Copy, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { buildDeepLink } from "@/lib/bible/apps";
+import type { Collection } from "@/lib/bible/collections";
+import { bookById, type Locale } from "@/lib/bible/books";
+import { formatPassage, type Passage } from "@/lib/bible/passage";
+import { translationById } from "@/lib/bible/translations";
+import { copyReferences, type CopyItem } from "@/lib/copy-rich";
+import { t } from "@/lib/i18n";
+import { useAppStore } from "@/lib/store";
+import { Button } from "@/components/ui/button";
+
+function toCopyItem(
+  passage: Passage,
+  locale: Locale,
+  appId: string,
+  translationId: string,
+  preferNative: boolean,
+): CopyItem | null {
+  const book = bookById(passage.bookId);
+  const translation = translationById(translationId);
+  if (!book) return null;
+  const url = buildDeepLink(appId, passage, translation, preferNative);
+  if (!url) return null;
+  return { label: formatPassage(book, passage, locale), url };
+}
+
+export function CollectionDetail({ collection }: { collection: Collection }) {
+  const locale = useAppStore((s) => s.locale);
+  const appId = useAppStore((s) => s.appId);
+  const translationId = useAppStore((s) => s.translationId);
+  const preferNative = useAppStore((s) => s.preferNative);
+  const copyFormat = useAppStore((s) => s.copyFormat);
+  const remember = useAppStore((s) => s.remember);
+  const [copied, setCopied] = useState<"all" | string | null>(null);
+
+  const items = collection.passages
+    .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
+    .filter((item): item is CopyItem => item != null);
+
+  function flash(key: "all" | string) {
+    setCopied(key);
+    window.setTimeout(() => setCopied(null), 1600);
+  }
+
+  function notify(message: string, mode: "success" | "error" = "success") {
+    const id = mode === "success" ? toast.success(message) : toast.error(message);
+    window.setTimeout(() => toast.dismiss(id), 2000);
+  }
+
+  async function onCopyOne(item: CopyItem, passage: Passage) {
+    try {
+      await copyReferences([item], copyFormat);
+      remember(passage);
+      flash(`${passage.bookId}-${passage.chapter}-${passage.verseStart}`);
+      notify(t(locale, "copied"));
+    } catch {
+      notify(t(locale, "copy"), "error");
+    }
+  }
+
+  async function onCopyAll() {
+    if (items.length === 0) return;
+    try {
+      await copyReferences(items, copyFormat);
+      flash("all");
+      notify(t(locale, "copiedCollection"));
+    } catch {
+      notify(t(locale, "copyCollection"), "error");
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-6 pb-8">
+      <ul className="flex flex-col gap-2">
+        {collection.passages.map((passage, index) => {
+          const item = items[index];
+          if (!item) return null;
+          const key = `${passage.bookId}-${passage.chapter}-${passage.verseStart}`;
+          return (
+            <li
+              key={key}
+              className="flex min-h-11 items-center gap-1 rounded-md bg-surface shadow-[var(--shadow-border)]"
+            >
+              <p className="min-w-0 flex-1 px-4 py-3 font-display text-lg italic text-fg">{item.label}</p>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => void onCopyOne(item, passage)}
+                aria-label={t(locale, "copy")}
+              >
+                {copied === key ? <Check /> : <Copy />}
+              </Button>
+              <Button size="icon" variant="ghost" asChild>
+                <a href={item.url} target="_blank" rel="noreferrer" aria-label={t(locale, "open")}>
+                  <ExternalLink />
+                </a>
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+      <Button className="w-full" onClick={() => void onCopyAll()}>
+        {copied === "all" ? <Check /> : <Copy />}
+        {copied === "all" ? t(locale, "copiedCollection") : t(locale, "copyCollection")}
+      </Button>
+    </div>
+  );
+}

@@ -60,6 +60,12 @@ const strings = {
     added: "Adicionado",
     inList: "Na lista",
     list: "Lista",
+    refs: "refs",
+    collections: "Coleções",
+    collectionsLead:
+      "Listas curtas por tema, para reunião. Copie uma passagem ou a lista inteira — o nome já vai com o link.",
+    copyCollection: "Copiar lista",
+    copiedCollection: "Lista copiada",
     copyList: "Copiar lista",
     copiedList: "Lista copiada",
     clearList: "Limpar",
@@ -90,6 +96,8 @@ const strings = {
     helpInstall: "No Safari ou Chrome, use Adicionar à Tela de Início. Depois da primeira abertura, funciona sem internet.",
     helpLimits:
       "Keep e WhatsApp no Android não colam o link azul. Use o ícone de compartilhar, ou cole no Docs / Word.",
+    helpCollections:
+      "Coleções são listas prontas por tema. Abra uma, copie uma referência ou a lista inteira.",
     donateTitle: "Quer ajudar?",
     donateLead: "O Verse2Note é gratuito e sem anúncio. Se ele te serve, um café ajuda a manter o projeto.",
     donateCta: "Apoiar",
@@ -183,6 +191,12 @@ const strings = {
     added: "Added",
     inList: "In list",
     list: "List",
+    refs: "refs",
+    collections: "Collections",
+    collectionsLead:
+      "Short lists by theme, for a meeting. Copy one passage or the whole list — the name is already the link.",
+    copyCollection: "Copy list",
+    copiedCollection: "List copied",
     copyList: "Copy list",
     copiedList: "List copied",
     clearList: "Clear",
@@ -213,6 +227,8 @@ const strings = {
     helpInstall: "In Safari or Chrome, use Add to Home Screen. After the first open, it works offline.",
     helpLimits:
       "Keep and WhatsApp on Android will not paste a blue link. Use the share icon, or paste into Docs / Word.",
+    helpCollections:
+      "Collections are ready-made lists by theme. Open one, copy a reference or the whole list.",
     donateTitle: "Want to help?",
     donateLead: "Verse2Note is free and has no ads. If it serves you, a coffee helps keep it going.",
     donateCta: "Support",
@@ -306,6 +322,12 @@ const strings = {
     added: "Añadido",
     inList: "En la lista",
     list: "Lista",
+    refs: "refs",
+    collections: "Colecciones",
+    collectionsLead:
+      "Listas cortas por tema, para una reunión. Copia un pasaje o la lista entera — el nombre ya lleva el enlace.",
+    copyCollection: "Copiar lista",
+    copiedCollection: "Lista copiada",
     copyList: "Copiar lista",
     copiedList: "Lista copiada",
     clearList: "Limpiar",
@@ -336,6 +358,8 @@ const strings = {
     helpInstall: "En Safari o Chrome, usa Añadir a pantalla de inicio. Después de abrirlo una vez, funciona sin conexión.",
     helpLimits:
       "Keep y WhatsApp en Android no pegan el enlace azul. Usa el icono de compartir, o pega en Docs / Word.",
+    helpCollections:
+      "Las colecciones son listas listas por tema. Abre una, copia una referencia o la lista entera.",
     donateTitle: "¿Quieres ayudar?",
     donateLead: "Verse2Note es gratis y sin anuncios. Si te sirve, un café ayuda a mantener el proyecto.",
     donateCta: "Apoyar",
