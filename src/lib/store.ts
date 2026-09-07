@@ -49,6 +49,7 @@ type AppState = {
   addToList: (passage: Passage) => boolean;
   removeFromList: (passage: Passage) => void;
   clearList: () => void;
+  clearPassage: () => void;
   togglePlanDay: (planId: string, day: number) => void;
   resetPlanProgress: (planId: string) => void;
   startPlan: (planId: string) => void;
@@ -152,6 +153,15 @@ export const useAppStore = create<AppState>()(
       removeFromList: (passage) =>
         set({ list: get().list.filter((item) => !samePassage(item, passage)) }),
       clearList: () => set({ list: [] }),
+      clearPassage: () => {
+        const { bookId } = get();
+        set({
+          chapter: null,
+          verseStart: null,
+          verseEnd: null,
+          step: bookId ? "chapter" : "book",
+        });
+      },
       togglePlanDay: (planId, day) => {
         const current = get().planProgress[planId] ?? [];
         const next = current.includes(day) ? current.filter((item) => item !== day) : [...current, day];

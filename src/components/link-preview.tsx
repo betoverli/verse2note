@@ -48,6 +48,7 @@ export function LinkPreview() {
   const addToList = useAppStore((s) => s.addToList);
   const removeFromList = useAppStore((s) => s.removeFromList);
   const clearList = useAppStore((s) => s.clearList);
+  const clearPassage = useAppStore((s) => s.clearPassage);
   const applyPassage = useAppStore((s) => s.applyPassage);
   const resetSelection = useAppStore((s) => s.resetSelection);
   const [copied, setCopied] = useState<"one" | "list" | null>(null);
@@ -226,6 +227,9 @@ export function LinkPreview() {
                   </span>
                 </p>
               </div>
+              <Button size="sm" variant="ghost" className="shrink-0 text-muted" onClick={clearPassage}>
+                {t(locale, "clearList")}
+              </Button>
             </div>
             <div className="flex gap-2 p-2">
               <Button
