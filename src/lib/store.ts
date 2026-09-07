@@ -68,6 +68,7 @@ type AppState = {
     lastName?: string;
     profileEmail?: string;
   }) => void;
+  clearAccount: () => void;
   resetSelection: () => void;
   passage: () => Passage | null;
 };
@@ -222,6 +223,16 @@ export const useAppStore = create<AppState>()(
         }
       },
       setProfile: (profile) => set(profile),
+      clearAccount: () =>
+        set({
+          activePlans: [],
+          planProgress: {},
+          avatarId: "book",
+          handle: "",
+          firstName: "",
+          lastName: "",
+          profileEmail: "",
+        }),
       resetSelection: () =>
         set({
           bookId: null,

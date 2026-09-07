@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +9,7 @@ import { readingToPassage, type PlanDay, type ReadingPlan } from "@/lib/bible/re
 import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -45,8 +47,9 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   const locale = useAppStore((s) => s.locale);
   const started = useAppStore((s) => s.activePlans.includes(plan.id));
   const startPlan = useAppStore((s) => s.startPlan);
+  const { user } = useCurrentUserState();
 
-  if (!started) {
+  if (!started || !user) {
     const chapters = plan.days.reduce((n, day) => n + day.readings.length, 0);
     const perDay = Math.max(1, Math.round(chapters / plan.days.length));
     return (
@@ -59,9 +62,17 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
             {perDay} {t(locale, "planChaptersPerDay")}
           </p>
         </div>
-        <Button className="w-full" onClick={() => startPlan(plan.id)}>
-          {t(locale, "startPlan")}
-        </Button>
+        {user ? (
+          <Button className="w-full" onClick={() => startPlan(plan.id)}>
+            {t(locale, "startPlan")}
+          </Button>
+        ) : (
+          <Button className="w-full" asChild>
+            <Link to="/login" search={{ create: false }}>
+              {t(locale, "startPlanLogin")}
+            </Link>
+          </Button>
+        )}
       </div>
     );
   }

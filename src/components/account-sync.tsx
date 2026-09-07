@@ -29,7 +29,9 @@ export function AccountSync() {
   const last = useRef<string>("");
 
   useEffect(() => {
-    if (isPending || !user) {
+    if (isPending) return;
+    if (!user) {
+      useAppStore.getState().clearAccount();
       ready.current = false;
       return;
     }

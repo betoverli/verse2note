@@ -58,7 +58,6 @@ export function ProfileView() {
   const firstName = useAppStore((s) => s.firstName);
   const lastName = useAppStore((s) => s.lastName);
   const { user, isPending } = useCurrentUserState();
-  const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
   const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
   usePrefillProfile();
@@ -106,9 +105,8 @@ export function ProfileView() {
           disabled={signingOut}
           onClick={() => {
             setSigningOut(true);
-            void signOut()
-              .then(() => navigate({ to: "/app" }))
-              .catch(() => setSigningOut(false));
+            useAppStore.getState().clearAccount();
+            void signOut("/app").catch(() => setSigningOut(false));
           }}
         >
           {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}

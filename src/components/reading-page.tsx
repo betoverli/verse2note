@@ -10,6 +10,7 @@ import {
   type ReadingPlan,
 } from "@/lib/bible/reading-plans";
 import { t } from "@/lib/i18n";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { PlanList } from "@/components/plan-list";
 
@@ -23,6 +24,7 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
 export function ReadingPage() {
   const locale = useAppStore((s) => s.locale);
   const activePlans = useAppStore((s) => s.activePlans);
+  const { user } = useCurrentUserState();
   const [query, setQuery] = useState("");
   const categories = useMemo(() => searchPlanCategories(query, locale), [query, locale]);
   const plans = useMemo(() => searchPlans(query, locale), [query, locale]);
@@ -51,7 +53,7 @@ export function ReadingPage() {
         </>
       ) : (
         <>
-          {mine.length > 0 ? (
+          {user && mine.length > 0 ? (
             <section className="space-y-3">
               <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "myPlans")}</h2>
               <PlanList items={mine} />
