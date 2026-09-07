@@ -39,6 +39,8 @@ function dayItems(
     .filter((item): item is CopyItem => item != null);
 }
 
+const EMPTY_DAYS: number[] = [];
+
 export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   const locale = useAppStore((s) => s.locale);
   const appId = useAppStore((s) => s.appId);
@@ -46,7 +48,7 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   const preferNative = useAppStore((s) => s.preferNative);
   const copyFormat = useAppStore((s) => s.copyFormat);
   const remember = useAppStore((s) => s.remember);
-  const doneDays = useAppStore((s) => s.planProgress[plan.id] ?? []);
+  const doneDays = useAppStore((s) => s.planProgress[plan.id]) ?? EMPTY_DAYS;
   const togglePlanDay = useAppStore((s) => s.togglePlanDay);
   const resetPlanProgress = useAppStore((s) => s.resetPlanProgress);
   const [copied, setCopied] = useState<string | null>(null);
