@@ -122,8 +122,6 @@ export function SettingsPanel() {
 
   return (
     <div className="flex flex-col gap-10">
-      <p className="max-w-xl text-sm text-muted">{t(locale, "settingsLead")}</p>
-
       <Section title={t(locale, "language")}>
         <div className="grid grid-cols-3 gap-2">
           {LOCALES.map((item) => (
@@ -167,7 +165,7 @@ export function SettingsPanel() {
         </div>
       </Section>
 
-      <Section title={t(locale, "bibleApp")} lead={t(locale, "bibleAppLead")}>
+      <Section title={t(locale, "bibleApp")}>
         <BibleAppList
           locale={locale}
           appId={appId}

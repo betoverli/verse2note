@@ -12,7 +12,6 @@ export function CollectionsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <p className="max-w-xl text-pretty text-sm leading-relaxed text-muted">{t(locale, "collectionsLead")}</p>
       <label className="block">
         <span className="sr-only">{t(locale, "collectionsSearch")}</span>
         <input
