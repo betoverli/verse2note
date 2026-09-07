@@ -1,13 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import {
   BookMarked,
+  Briefcase,
   CalendarDays,
   Church,
   Cross,
+  Flame,
   Heart,
   Home,
+  Hourglass,
   Library,
+  Music,
   Scale,
+  ScrollText,
+  Smile,
   Sparkles,
 } from "lucide-react";
 import { useMemo, useState, type ComponentType } from "react";
@@ -26,6 +32,12 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   seasons: CalendarDays,
   society: Scale,
   character: Sparkles,
+  spirit: Flame,
+  "last-things": Hourglass,
+  stories: ScrollText,
+  emotions: Smile,
+  "work-money": Briefcase,
+  "worship-prayer": Music,
 };
 
 export function CollectionsPage() {

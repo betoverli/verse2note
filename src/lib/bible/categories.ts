@@ -16,7 +16,9 @@ export const CATEGORIES: Category[] = [
       "second-coming", "creation", "covenant", "law-and-grace", "death", "heaven", "hell",
       "resurrection", "scripture", "the-cross", "blood", "lordship", "faith-and-works",
       "new-life", "light", "truth", "new-covenant", "sabbath", "angels", "beatitudes",
-      "end-times", "identity", "name-of-jesus",
+      "end-times", "identity", "name-of-jesus", "trinity", "incarnation", "atonement",
+      "justification", "sanctification", "adoption", "kingdom", "god-is", "faithfulness",
+      "sovereignty", "ten-commandments",
     ],
   },
   {
@@ -25,7 +27,8 @@ export const CATEGORIES: Category[] = [
     themeIds: [
       "salvation", "the-cross", "blood", "name-of-jesus", "lordship", "resurrection",
       "good-shepherd", "bread-of-life", "the-vine", "prodigal", "easter", "christmas",
-      "new-life", "love-god", "second-coming",
+      "new-life", "love-god", "second-coming", "lamb", "immanuel", "incarnation",
+      "atonement", "sermon-on-mount", "lords-prayer", "lost-sheep",
     ],
   },
   {
@@ -37,6 +40,8 @@ export const CATEGORIES: Category[] = [
       "guidance", "contentment", "integrity", "speech", "purity", "freedom", "grief",
       "doubt", "calling", "peace", "joy", "hope", "love", "forgiveness", "repentance",
       "thanksgiving", "fasting", "comfort", "praise", "kindness", "fast-and-pray",
+      "loneliness", "discouragement", "jealousy", "gossip", "laziness", "addiction",
+      "singleness", "aging",
     ],
   },
   {
@@ -45,7 +50,8 @@ export const CATEGORIES: Category[] = [
     themeIds: [
       "church", "worship", "service", "missions", "evangelism", "discipleship", "leadership",
       "unity", "gifts", "fruit", "armor", "false-teaching", "persecution", "revival",
-      "confession", "obedience", "baptism", "lords-supper", "scripture",
+      "confession", "obedience", "baptism", "lords-supper", "scripture", "body-of-christ",
+      "priesthood", "pentecost", "prophecy", "hospitality",
     ],
   },
   {
@@ -54,7 +60,7 @@ export const CATEGORIES: Category[] = [
     themeIds: [
       "family", "marriage", "children", "friendship", "fathers", "mothers", "widows",
       "love-neighbor", "love-god", "prodigal", "kindness", "forgiveness", "unity",
-      "speech", "youth", "women", "men",
+      "speech", "youth", "women", "men", "singleness", "aging", "hospitality",
     ],
   },
   {
@@ -62,7 +68,7 @@ export const CATEGORIES: Category[] = [
     names: { pt: "Tempos e festas", en: "Seasons", es: "Tiempos y fiestas" },
     themeIds: [
       "christmas", "easter", "youth", "women", "men", "sabbath", "fasting",
-      "fast-and-pray", "end-times", "second-coming",
+      "fast-and-pray", "end-times", "second-coming", "pentecost", "holy-week", "psalms",
     ],
   },
   {
@@ -70,7 +76,8 @@ export const CATEGORIES: Category[] = [
     names: { pt: "Justiça e sociedade", en: "Justice & society", es: "Justicia y sociedad" },
     themeIds: [
       "justice", "the-poor", "government", "israel", "creation-care", "widows",
-      "generosity", "mercy", "compassion", "money", "work", "missions",
+      "generosity", "mercy", "compassion", "money", "work", "missions", "tithing",
+      "stewardship", "enemies", "hospitality", "good-samaritan",
     ],
   },
   {
@@ -79,10 +86,61 @@ export const CATEGORIES: Category[] = [
     themeIds: [
       "promises", "hope", "peace", "joy", "courage", "waiting", "fruit", "beatitudes",
       "love", "mercy", "humility", "patience", "kindness", "integrity", "purity",
-      "contentment", "thanksgiving", "obedience", "identity", "armor",
+      "contentment", "thanksgiving", "obedience", "identity", "armor", "faithfulness",
+      "blessing", "stewardship", "enemies",
+    ],
+  },
+  {
+    id: "spirit",
+    names: { pt: "Espírito Santo", en: "Holy Spirit", es: "Espíritu Santo" },
+    themeIds: [
+      "holy-spirit", "gifts", "fruit", "pentecost", "prophecy", "revival", "baptism",
+      "spiritual-warfare", "armor", "guidance",
+    ],
+  },
+  {
+    id: "last-things",
+    names: { pt: "Fim dos tempos", en: "Last things", es: "Últimas cosas" },
+    themeIds: [
+      "end-times", "second-coming", "heaven", "hell", "death", "resurrection",
+      "revelation", "kingdom",
+    ],
+  },
+  {
+    id: "stories",
+    names: { pt: "Histórias e pessoas", en: "Stories & people", es: "Historias y personas" },
+    themeIds: [
+      "abraham", "moses", "david", "joseph", "daniel", "elijah", "ruth", "esther",
+      "mary", "peter", "paul", "prodigal", "good-samaritan", "lost-sheep", "sower",
+      "good-shepherd", "the-vine", "israel",
+    ],
+  },
+  {
+    id: "emotions",
+    names: { pt: "Emoções", en: "Emotions", es: "Emociones" },
+    themeIds: [
+      "anxiety", "fear", "joy", "hope", "peace", "grief", "doubt", "loneliness",
+      "discouragement", "jealousy", "anger", "comfort", "love", "patience",
+    ],
+  },
+  {
+    id: "work-money",
+    names: { pt: "Trabalho e dinheiro", en: "Work & money", es: "Trabajo y dinero" },
+    themeIds: [
+      "money", "work", "tithing", "stewardship", "generosity", "contentment",
+      "laziness", "calling",
+    ],
+  },
+  {
+    id: "worship-prayer",
+    names: { pt: "Oração e adoração", en: "Prayer & worship", es: "Oración y adoración" },
+    themeIds: [
+      "prayer", "worship", "praise", "thanksgiving", "fasting", "fast-and-pray",
+      "psalms", "lords-prayer", "revival",
     ],
   },
 ];
+
 
 export function categoryById(id: string): Category | undefined {
   return CATEGORIES.find((item) => item.id === id);

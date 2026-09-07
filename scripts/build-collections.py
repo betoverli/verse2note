@@ -11,11 +11,14 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import time
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from collection_expand import EXTRA_REFS, NEW_THEMES
 CACHE = Path("/tmp/verse2note-bible-cache")
 OUT = ROOT / "src/lib/bible/collections.ts"
 CACHE.mkdir(parents=True, exist_ok=True)
@@ -160,7 +163,7 @@ THEMES: list[tuple] = [
 # Fix typo EXD -> EXO if I used EXD
 # EZE vs EZK - our books use EZK
 
-BOOK_FIX = {"EXD": "EXO", "EZE": "EZK"}
+BOOK_FIX = {"EXD": "EXO", "EZE": "EZK", "ZCH": "ZEC"}
 
 
 def load_book_nums() -> dict[str, int]:
@@ -270,10 +273,15 @@ def main() -> None:
     nums = load_book_nums()
     needed: set[tuple[str, int]] = set()
     themes = []
-    for cid, pt, en, es, refs in THEMES:
+    for cid, pt, en, es, refs in THEMES + NEW_THEMES:
         clean = []
-        for book, ch, vs, ve in refs:
+        seen: set[tuple] = set()
+        for book, ch, vs, ve in list(refs) + EXTRA_REFS.get(cid, []):
             book = BOOK_FIX.get(book, book)
+            key = (book, ch, vs, ve)
+            if key in seen:
+                continue
+            seen.add(key)
             if book not in nums:
                 raise SystemExit(f"unknown book {book} in {cid}")
             needed.add((book, ch))
