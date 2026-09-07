@@ -22,7 +22,7 @@ function CollectionDetailRoute() {
   if (!collection) return <Navigate to="/collections" />;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader title={collection.names[locale]} backTo="/collections" backLabel={t(locale, "collections")} />
       <CollectionDetail collection={collection} />
     </main>

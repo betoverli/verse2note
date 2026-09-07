@@ -16,7 +16,7 @@ const TABS = [
 ];
 
 export function showTabBar(pathname: string) {
-  return pathname === "/app" || pathname === "/collections" || pathname === "/settings";
+  return pathname === "/app" || pathname === "/settings" || pathname.startsWith("/collections");
 }
 
 export function TabBar() {
