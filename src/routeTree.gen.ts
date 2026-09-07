@@ -25,6 +25,8 @@ import { Route as ApiPlansRouteImport } from './routes/api/plans'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
+import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as ProfileEditRouteImport } from './routes/profile.edit'
 import { Route as ReadingIndexRouteImport } from './routes/reading.index'
 import { Route as ReadingIdRouteImport } from './routes/reading.$id'
 import { Route as ReadingAllRouteImport } from './routes/reading.all'
@@ -112,6 +114,16 @@ const CollectionsThemesRoute = CollectionsThemesRouteImport.update({
   path: '/themes',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const ProfileIndexRoute = ProfileIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileEditRoute = ProfileEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ReadingIndexRoute = ReadingIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -152,7 +164,7 @@ export interface FileRoutesByFullPath {
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
@@ -161,9 +173,11 @@ export interface FileRoutesByFullPath {
   '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/profile/': typeof ProfileIndexRoute
   '/reading/': typeof ReadingIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
@@ -175,7 +189,6 @@ export interface FileRoutesByTo {
   '/app': typeof AppRoute
   '/for-ai': typeof ForAiRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
@@ -183,9 +196,11 @@ export interface FileRoutesByTo {
   '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
   '/collections': typeof CollectionsIndexRoute
+  '/profile': typeof ProfileIndexRoute
   '/reading': typeof ReadingIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
@@ -199,7 +214,7 @@ export interface FileRoutesById {
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
   '/login': typeof LoginRoute
-  '/profile': typeof ProfileRoute
+  '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
@@ -208,9 +223,11 @@ export interface FileRoutesById {
   '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/profile/edit': typeof ProfileEditRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/profile/': typeof ProfileIndexRoute
   '/reading/': typeof ReadingIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
@@ -234,9 +251,11 @@ export interface FileRouteTypes {
     | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
+    | '/profile/edit'
     | '/reading/$id'
     | '/reading/all'
     | '/collections/'
+    | '/profile/'
     | '/reading/'
     | '/api/auth/$'
     | '/collections/category/$categoryId'
@@ -248,7 +267,6 @@ export interface FileRouteTypes {
     | '/app'
     | '/for-ai'
     | '/login'
-    | '/profile'
     | '/settings'
     | '/api/collections'
     | '/api/link'
@@ -256,9 +274,11 @@ export interface FileRouteTypes {
     | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
+    | '/profile/edit'
     | '/reading/$id'
     | '/reading/all'
     | '/collections'
+    | '/profile'
     | '/reading'
     | '/api/auth/$'
     | '/collections/category/$categoryId'
@@ -280,9 +300,11 @@ export interface FileRouteTypes {
     | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
+    | '/profile/edit'
     | '/reading/$id'
     | '/reading/all'
     | '/collections/'
+    | '/profile/'
     | '/reading/'
     | '/api/auth/$'
     | '/collections/category/$categoryId'
@@ -296,7 +318,7 @@ export interface RootRouteChildren {
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ForAiRoute: typeof ForAiRoute
   LoginRoute: typeof LoginRoute
-  ProfileRoute: typeof ProfileRoute
+  ProfileRoute: typeof ProfileRouteWithChildren
   ReadingRoute: typeof ReadingRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   ApiCollectionsRoute: typeof ApiCollectionsRoute
@@ -420,6 +442,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsThemesRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/profile/': {
+      id: '/profile/'
+      path: '/'
+      fullPath: '/profile/'
+      preLoaderRoute: typeof ProfileIndexRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/edit': {
+      id: '/profile/edit'
+      path: '/edit'
+      fullPath: '/profile/edit'
+      preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/reading/': {
       id: '/reading/'
       path: '/'
@@ -483,6 +519,19 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
   CollectionsRouteChildren,
 )
 
+interface ProfileRouteChildren {
+  ProfileEditRoute: typeof ProfileEditRoute
+  ProfileIndexRoute: typeof ProfileIndexRoute
+}
+
+const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileEditRoute: ProfileEditRoute,
+  ProfileIndexRoute: ProfileIndexRoute,
+}
+
+const ProfileRouteWithChildren =
+  ProfileRoute._addFileChildren(ProfileRouteChildren)
+
 interface ReadingRouteChildren {
   ReadingIdRoute: typeof ReadingIdRoute
   ReadingAllRoute: typeof ReadingAllRoute
@@ -507,7 +556,7 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsRoute: CollectionsRouteWithChildren,
   ForAiRoute: ForAiRoute,
   LoginRoute: LoginRoute,
-  ProfileRoute: ProfileRoute,
+  ProfileRoute: ProfileRouteWithChildren,
   ReadingRoute: ReadingRouteWithChildren,
   SettingsRoute: SettingsRoute,
   ApiCollectionsRoute: ApiCollectionsRoute,

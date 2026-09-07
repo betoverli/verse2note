@@ -26,6 +26,7 @@ export function showTabBar(pathname: string) {
     pathname === "/app" ||
     pathname === "/settings" ||
     pathname === "/profile" ||
+    pathname.startsWith("/profile/") ||
     pathname.startsWith("/collections") ||
     pathname.startsWith("/reading")
   );

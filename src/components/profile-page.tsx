@@ -31,21 +31,12 @@ function snapshot() {
   };
 }
 
-export function ProfilePage() {
-  const locale = useAppStore((s) => s.locale);
-  const avatarId = useAppStore((s) => s.avatarId);
-  const handle = useAppStore((s) => s.handle);
+function usePrefillProfile() {
   const firstName = useAppStore((s) => s.firstName);
   const lastName = useAppStore((s) => s.lastName);
   const profileEmail = useAppStore((s) => s.profileEmail);
   const setProfile = useAppStore((s) => s.setProfile);
-  const { user, isPending } = useCurrentUserState();
-  const navigate = useNavigate();
-  const [signingOut, setSigningOut] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
+  const { user } = useCurrentUserState();
 
   useEffect(() => {
     if (!user) return;
@@ -58,25 +49,21 @@ export function ProfilePage() {
     }
     if (Object.keys(patch).length) setProfile(patch);
   }, [user, profileEmail, firstName, lastName, setProfile]);
+}
 
-  async function onSave() {
-    setError(null);
-    setSaved(false);
-    setSaving(true);
-    try {
-      const result = await savePrefs({ data: snapshot() });
-      if (result && "error" in result && result.error === "handle") {
-        setError(t(locale, "handleTaken"));
-        setSaving(false);
-        return;
-      }
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 1600);
-    } catch {
-      setError(t(locale, "accountError"));
-    }
-    setSaving(false);
-  }
+export function ProfileView() {
+  const locale = useAppStore((s) => s.locale);
+  const avatarId = useAppStore((s) => s.avatarId);
+  const handle = useAppStore((s) => s.handle);
+  const firstName = useAppStore((s) => s.firstName);
+  const lastName = useAppStore((s) => s.lastName);
+  const { user, isPending } = useCurrentUserState();
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+  const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
+  usePrefillProfile();
+
+  const name = [firstName, lastName].filter(Boolean).join(" ");
 
   if (isPending) {
     return <div className="h-40 rounded-md bg-surface" aria-hidden="true" />;
@@ -98,6 +85,76 @@ export function ProfilePage() {
         </Button>
       </div>
     );
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-6 pt-4">
+      <AvatarMark id={avatarId} className="size-24 bg-elevated" iconClassName="size-10" />
+      {handle ? (
+        <p className="font-display text-xl italic text-fg">@{handle}</p>
+      ) : (
+        <p className="text-sm text-muted">{t(locale, "handleMissing")}</p>
+      )}
+      {name ? <p className="text-base text-fg">{name}</p> : null}
+      <Button className="w-full" asChild>
+        <Link to="/profile/edit">{t(locale, "editProfile")}</Link>
+      </Button>
+      {authEnabled && !gateSession ? (
+        <Button
+          variant="ghost"
+          className="w-full text-muted"
+          disabled={signingOut}
+          onClick={() => {
+            setSigningOut(true);
+            void signOut()
+              .then(() => navigate({ to: "/app" }))
+              .catch(() => setSigningOut(false));
+          }}
+        >
+          {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+export function ProfileEdit() {
+  const locale = useAppStore((s) => s.locale);
+  const avatarId = useAppStore((s) => s.avatarId);
+  const handle = useAppStore((s) => s.handle);
+  const firstName = useAppStore((s) => s.firstName);
+  const lastName = useAppStore((s) => s.lastName);
+  const profileEmail = useAppStore((s) => s.profileEmail);
+  const setProfile = useAppStore((s) => s.setProfile);
+  const { user, isPending } = useCurrentUserState();
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  usePrefillProfile();
+
+  async function onSave() {
+    setError(null);
+    setSaving(true);
+    try {
+      const result = await savePrefs({ data: snapshot() });
+      if (result && "error" in result && result.error === "handle") {
+        setError(t(locale, "handleTaken"));
+        setSaving(false);
+        return;
+      }
+      await navigate({ to: "/profile" });
+    } catch {
+      setError(t(locale, "accountError"));
+      setSaving(false);
+    }
+  }
+
+  if (isPending) {
+    return <div className="h-40 rounded-md bg-surface" aria-hidden="true" />;
+  }
+
+  if (!user) {
+    return <ProfileView />;
   }
 
   return (
@@ -165,25 +222,9 @@ export function ProfilePage() {
         </label>
         {error ? <p className="text-sm text-accent">{error}</p> : null}
         <Button className="w-full" disabled={saving} onClick={() => void onSave()}>
-          {saving ? t(locale, "accountWait") : saved ? t(locale, "profileSaved") : t(locale, "saveProfile")}
+          {saving ? t(locale, "accountWait") : t(locale, "saveProfile")}
         </Button>
       </section>
-
-      {authEnabled && !gateSession ? (
-        <Button
-          variant="ghost"
-          className="w-full text-muted"
-          disabled={signingOut}
-          onClick={() => {
-            setSigningOut(true);
-            void signOut()
-              .then(() => navigate({ to: "/app" }))
-              .catch(() => setSigningOut(false));
-          }}
-        >
-          {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
-        </Button>
-      ) : null}
     </div>
   );
 }
