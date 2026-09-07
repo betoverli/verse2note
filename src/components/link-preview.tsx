@@ -204,32 +204,32 @@ export function LinkPreview() {
 
         {current ? (
           <>
-            <div className="flex items-end justify-between gap-3 px-4 pt-3 pb-2">
-              <div className="min-w-0">
+            <div className="px-4 pt-3 pb-2">
+              <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium tracking-wide text-muted uppercase">
                   {t(locale, "preview")}
                 </p>
-                <p className="mt-1 truncate font-display text-2xl leading-tight font-medium tracking-tight text-accent underline decoration-accent/30 underline-offset-4 sm:text-3xl">
-                  {current.label}
-                </p>
-                <p className="mt-1 flex items-center gap-2 truncate text-xs text-subtle">
-                  <img
-                    src={appIcon(app.id)}
-                    alt=""
-                    width={16}
-                    height={16}
-                    draggable={false}
-                    className="size-4 shrink-0 rounded-sm object-cover"
-                  />
-                  <span className="truncate">
-                    {app.names[locale]}
-                    {app.usesTranslation ? ` · ${translation.abbr}` : ""}
-                  </span>
-                </p>
+                <Button size="sm" variant="ghost" className="-mr-2 h-8 text-muted" onClick={clearPassage}>
+                  {t(locale, "clearList")}
+                </Button>
               </div>
-              <Button size="sm" variant="ghost" className="shrink-0 text-muted" onClick={clearPassage}>
-                {t(locale, "clearList")}
-              </Button>
+              <p className="mt-1 truncate font-display text-2xl leading-tight font-medium tracking-tight text-accent underline decoration-accent/30 underline-offset-4 sm:text-3xl">
+                {current.label}
+              </p>
+              <p className="mt-1 flex items-center gap-2 truncate text-xs text-subtle">
+                <img
+                  src={appIcon(app.id)}
+                  alt=""
+                  width={16}
+                  height={16}
+                  draggable={false}
+                  className="size-4 shrink-0 rounded-sm object-cover"
+                />
+                <span className="truncate">
+                  {app.names[locale]}
+                  {app.usesTranslation ? ` · ${translation.abbr}` : ""}
+                </span>
+              </p>
             </div>
             <div className="flex gap-2 p-2">
               <Button
