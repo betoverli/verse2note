@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
 import { ThemeList } from "@/components/theme-list";
 import { categoryById, themesInCategory } from "@/lib/bible/categories";
+import { pageHead } from "@/lib/seo";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
@@ -9,9 +10,14 @@ export const Route = createFileRoute("/collections/category/$categoryId")({
   component: CategoryRoute,
   head: ({ params }) => {
     const category = categoryById(params.categoryId);
-    return {
-      meta: [{ title: category ? `Verse2Note — ${category.names.pt}` : "Verse2Note" }],
-    };
+    const name = category?.names.pt ?? "Coleções";
+    return pageHead({
+      title: `Verse2Note — ${name}`,
+      description: category
+        ? `${category.names.pt} / ${category.names.en} / ${category.names.es}: listas de referências bíblicas para copiar com deep link.`
+        : "Coleções Verse2Note.",
+      path: `/collections/category/${params.categoryId}`,
+    });
   },
 });
 

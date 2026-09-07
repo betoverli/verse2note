@@ -13,18 +13,21 @@ const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "Verse2Note",
+  url: "https://verse2note.com",
   applicationCategory: "UtilitiesApplication",
   operatingSystem: "Web",
   browserRequirements: "Requires JavaScript",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   description:
-    "Rich-text Bible reference deep links for YouVersion, Logos, and other Bible apps. Portuguese, English, Spanish. Offline PWA.",
+    "Rich-text Bible reference deep links and 160 themed collections for YouVersion, Logos, and other Bible apps. Portuguese, English, Spanish. Offline PWA. API and MCP for agents.",
   inLanguage: ["pt", "en", "es"],
+  sameAs: ["https://github.com/betoverli/verse2note"],
   featureList: [
     "Book, chapter and verse picker",
     "Rich-text copy with a deep link",
     "Multiple Bible apps",
-    "Themed collections of references",
+    "160 themed collections in 14 categories",
+    "API, skill and MCP for AI agents",
     "Works offline after first open",
   ],
 };

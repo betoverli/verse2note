@@ -4,18 +4,17 @@ import { AboutPage } from "@/components/about-page";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
+import { pageHead } from "@/lib/seo";
+
 export const Route = createFileRoute("/about")({
   component: AboutRoute,
-  head: () => ({
-    meta: [
-      { title: "Verse2Note — Sobre e ajuda" },
-      {
-        name: "description",
-        content:
-          "Como surgiu o Verse2Note, como gerar links de referências bíblicas e como ajudar o projeto.",
-      },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Verse2Note — Sobre e ajuda",
+      description:
+        "Como surgiu o Verse2Note, como gerar links de referências bíblicas, coleções por tema e como ajudar o projeto.",
+      path: "/about",
+    }),
 });
 
 function AboutRoute() {

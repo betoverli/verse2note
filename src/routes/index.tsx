@@ -3,18 +3,17 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Landing } from "@/components/landing";
 import { useAppStore } from "@/lib/store";
 
-const TITLE = "Verse2Note — links ricos de referências bíblicas";
-const DESCRIPTION =
-  "Crie links ricos de referências bíblicas para YouVersion, Logos e outros apps. Português, English, Español. Sem conta, funciona offline.";
+import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/")({
   component: Home,
-  head: () => ({
-    meta: [
-      { title: TITLE },
-      { name: "description", content: DESCRIPTION },
-    ],
-  }),
+  head: () =>
+    pageHead({
+      title: "Verse2Note — links ricos de referências bíblicas",
+      description:
+        "Crie links ricos de referências bíblicas e listas por tema para YouVersion, Logos e outros apps. Português, English, Español. Sem conta, funciona offline.",
+      path: "/",
+    }),
 });
 
 function Home() {

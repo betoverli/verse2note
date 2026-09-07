@@ -4,13 +4,17 @@ import { AppHeader } from "@/components/app-header";
 import { ThemeList } from "@/components/theme-list";
 import { searchCollections } from "@/lib/bible/collections";
 import { t } from "@/lib/i18n";
+import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/collections/themes")({
   component: AllThemesRoute,
-  head: () => ({
-    meta: [{ title: "Verse2Note — Temas" }],
-  }),
+  head: () =>
+    pageHead({
+      title: "Verse2Note — Todos os temas",
+      description: "Lista A–Z de 160 temas bíblicos. Busque, abra uma lista e copie as referências com deep link.",
+      path: "/collections/themes",
+    }),
 });
 
 function AllThemesRoute() {

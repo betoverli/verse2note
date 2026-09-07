@@ -26,3 +26,5 @@ TanStack Start, React, Tailwind v4. Persistência no aparelho (`localStorage`).
 - `GET /api/collections?id=salvation`
 - Skill: [/skill.md](https://verse2note.com/skill.md)
 - MCP: `POST /api/mcp` (`verse2note_link`, `verse2note_collection`)
+- LLMs: [/llms.txt](https://verse2note.com/llms.txt)
+- Sitemap: [/sitemap.xml](https://verse2note.com/sitemap.xml)

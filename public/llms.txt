@@ -1,8 +1,10 @@
 # Verse2Note
 
-> A free, offline-first web app that turns a Bible book, chapter and verses into rich text with a deep link to the user's Bible app.
+> A free, offline-first web app that turns a Bible book, chapter and verses into rich text with a deep link to the user's Bible app. It also ships 160 themed collections in 14 categories.
 
 Verse2Note is a verse picker, not a Bible reader. Copy "João 3:16" / "John 3:16" / "Juan 3:16" already linked, and paste into Notes, WhatsApp or a document.
+
+Site: https://verse2note.com
 
 ## Languages
 
@@ -16,24 +18,34 @@ Verse2Note is a verse picker, not a Bible reader. Copy "João 3:16" / "John 3:16
 - Copy as rich text, Markdown or plain text
 - Deep links for YouVersion, Logos, Tecarta, Olive Tree, Bible Gateway, Blue Letter, ESV, Biblia Online, Bible Hub, Accordance, e-Sword, MySword, JW Library
 - Multi-reference list for meetings
+- 160 themed collections, 14 categories; a theme can belong to more than one category
+- Snippets are only the beginning of the verse (Bíblia Livre / WEB / Versión Biblia Libre)
 - Install as a PWA; works offline after the first open
 - No account. No ads.
+
+## Categories
+
+doctrine, jesus, personal, church-life, home, seasons, society, character, spirit, last-things, stories, emotions, work-money, worship-prayer
 
 ## What it is not
 
 - Not a Bible
-- Does not display verse text
+- Does not return full verse text
 - Does not sync notes across devices
 
 ## Pages
 
 - Home / landing: /
 - App (picker): /app
-- Collections (themed reference lists, search, public-domain snippets): /collections
+- Collections hub: /collections
+- All themes A–Z: /collections/themes
+- Category: /collections/category/{id}
+- Theme: /collections/{id}  (e.g. /collections/salvation)
 - About and help: /about
 - For AI (API, skill, MCP): /for-ai
 - Skill file: /skill.md
 - This file: /llms.txt
+- Sitemap: /sitemap.xml
 
 ## For agents
 
@@ -42,7 +54,11 @@ Do not invent Bible deep links. Call the API.
 ```
 GET /api/link?ref=John+3:16&app=youversion&locale=en
 POST /api/link   { "refs": ["John 3:16", "Romans 8:28"], "app": "youversion" }
-POST /api/mcp    JSON-RPC tool verse2note_link
+GET /api/collections?locale=pt
+GET /api/collections?q=oração&locale=pt
+GET /api/collections?category=doctrine&locale=pt
+GET /api/collections?id=salvation&app=youversion&locale=pt
+POST /api/mcp    JSON-RPC tools verse2note_link and verse2note_collection
 ```
 
 Returns `markdown` ready to paste, e.g. `[John 3:16](https://www.bible.com/bible/111/JHN.3.16)`.
@@ -50,11 +66,10 @@ Returns `markdown` ready to paste, e.g. `[John 3:16](https://www.bible.com/bible
 Full skill: /skill.md
 Docs: /for-ai
 
-
 ## Portuguese
 
-O Verse2Note gera um texto rico com o nome da passagem já ligado ao app de Bíblia escolhido. Escolha o livro, o capítulo e os versos; copie; cole no Notes, no WhatsApp ou no documento.
+O Verse2Note gera um texto rico com o nome da passagem já ligado ao app de Bíblia escolhido. Escolha o livro, o capítulo e os versos — ou abra uma coleção por tema — copie e cole no Notes, no WhatsApp ou no documento.
 
 ## Español
 
-Verse2Note genera un texto enriquecido con el nombre del pasaje ya enlazado a la app de Biblia elegida. Elige el libro, el capítulo y los versículos; copia; pega en Notes, WhatsApp o el documento.
+Verse2Note genera un texto enriquecido con el nombre del pasaje ya enlazado a la app de Biblia elegida. Elige el libro, el capítulo y los versículos — o abre una colección por tema — copia y pega en Notes, WhatsApp o el documento.

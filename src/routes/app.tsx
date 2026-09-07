@@ -6,13 +6,17 @@ import { RecentsMenu } from "@/components/recents-menu";
 import { bookById } from "@/lib/bible/books";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
+import { pageHead } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({
   component: AppPage,
-  head: () => ({
-    meta: [{ title: "Verse2Note" }],
-  }),
+  head: () =>
+    pageHead({
+      title: "Verse2Note — picker",
+      description: "Escolha livro, capítulo e versos e copie o link rico para o seu app de Bíblia.",
+      path: "/app",
+    }),
 });
 
 function AppPage() {

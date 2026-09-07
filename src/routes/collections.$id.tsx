@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/app-header";
 import { CollectionDetail } from "@/components/collection-detail";
 import { categoryById } from "@/lib/bible/categories";
 import { collectionById } from "@/lib/bible/collections";
+import { pageHead } from "@/lib/seo";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
@@ -13,9 +14,14 @@ export const Route = createFileRoute("/collections/$id")({
   }),
   head: ({ params }) => {
     const collection = collectionById(params.id);
-    return {
-      meta: [{ title: collection ? `Verse2Note — ${collection.names.pt}` : "Verse2Note" }],
-    };
+    const name = collection?.names.pt ?? "Coleção";
+    return pageHead({
+      title: `Verse2Note — ${name}`,
+      description: collection
+        ? `${collection.names.pt} / ${collection.names.en} / ${collection.names.es}: ${collection.passages.length} referências bíblicas para copiar com deep link.`
+        : "Coleção Verse2Note.",
+      path: `/collections/${params.id}`,
+    });
   },
 });
 

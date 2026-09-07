@@ -4,11 +4,17 @@ import { CollectionsPage } from "@/components/collections-page";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
+import { pageHead } from "@/lib/seo";
+
 export const Route = createFileRoute("/collections/")({
   component: CollectionsIndexRoute,
-  head: () => ({
-    meta: [{ title: "Verse2Note — Coleções" }],
-  }),
+  head: () =>
+    pageHead({
+      title: "Verse2Note — Coleções por tema",
+      description:
+        "160 listas de referências bíblicas em 14 categorias: doutrina, Jesus, vida pessoal, igreja, família e mais. Copie uma referência ou a lista toda.",
+      path: "/collections",
+    }),
 });
 
 function CollectionsIndexRoute() {
