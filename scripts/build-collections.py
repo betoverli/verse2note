@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build src/lib/bible/collections.ts from public-domain Bible texts.
+"""Build src/lib/bible/collections.ts from freely licensed Bible texts.
 
-EN: World English Bible
-PT: João Ferreira de Almeida (1911 reprint, public domain)
-ES: Reina-Valera (Wikisource 1909 / rv1858 module, public domain)
+EN: World English Bible (public domain)
+PT: Bíblia Livre (CC BY 3.0 BR)
+ES: Versión Biblia Libre (CC BY-SA 4.0)
 
 Snippets are the first few words only — not the full verse.
 """
@@ -22,8 +22,25 @@ CACHE.mkdir(parents=True, exist_ok=True)
 
 TRANSLATIONS = {
     "en": "web",
-    "pt": "almeida",
-    "es": "rv1858",
+    "pt": "blivre",
+    "es": "vbl",
+}
+
+VBL_BOOK = {
+    "GEN": "GEN", "EXO": "EXO", "LEV": "LEV", "NUM": "NUM", "DEU": "DEU",
+    "JOS": "JOS", "JDG": "JDG", "RUT": "RUT", "1SA": "1SA", "2SA": "2SA",
+    "1KI": "1KI", "2KI": "2KI", "1CH": "1CH", "2CH": "2CH", "EZR": "EZR",
+    "NEH": "NEH", "EST": "EST", "JOB": "JOB", "PSA": "PSA", "PRO": "PRO",
+    "ECC": "ECC", "SNG": "SOL", "ISA": "ISA", "JER": "JER", "LAM": "LAM",
+    "EZK": "EZE", "DAN": "DAN", "HOS": "HOS", "JOL": "JOE", "AMO": "AMO",
+    "OBA": "OBA", "JON": "JON", "MIC": "MIC", "NAM": "NAH", "HAB": "HAB",
+    "ZEP": "ZEP", "HAG": "HAG", "ZEC": "ZEC", "MAL": "MAL", "MAT": "MAT",
+    "MRK": "MAR", "LUK": "LUK", "JHN": "JOH", "ACT": "ACT", "ROM": "ROM",
+    "1CO": "1CO", "2CO": "2CO", "GAL": "GAL", "EPH": "EPH", "PHP": "PHI",
+    "COL": "COL", "1TH": "1TH", "2TH": "2TH", "1TI": "1TI", "2TI": "2TI",
+    "TIT": "TIT", "PHM": "PHM", "HEB": "HEB", "JAS": "JAM", "1PE": "1PE",
+    "2PE": "2PE", "1JN": "1JO", "2JN": "2JO", "3JN": "3JO", "JUD": "JUD",
+    "REV": "REV",
 }
 
 # id, pt, en, es, list of (bookId, chapter, verseStart, verseEnd|None)
@@ -153,18 +170,29 @@ def load_book_nums() -> dict[str, int]:
     return dict(zip(ids, nums, strict=False))
 
 
-def fetch_json(url: str) -> dict:
+def fetch_bytes(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "Verse2Note/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as res:
-        return json.loads(res.read().decode("utf-8"))
+    with urllib.request.urlopen(req, timeout=60) as res:
+        return res.read()
 
 
-def chapter_verses(trans: str, book_num: int, chapter: int) -> dict[int, str]:
-    path = CACHE / f"{trans}-{book_num}-{chapter}.json"
+def fetch_json(url: str) -> dict:
+    return json.loads(fetch_bytes(url).decode("utf-8"))
+
+
+def ensure_file(url: str, dest: Path) -> Path:
+    if dest.exists() and dest.stat().st_size > 1000:
+        return dest
+    dest.write_bytes(fetch_bytes(url))
+    return dest
+
+
+def chapter_verses_web(book_num: int, chapter: int) -> dict[int, str]:
+    path = CACHE / f"web-{book_num}-{chapter}.json"
     if path.exists():
         data = json.loads(path.read_text())
     else:
-        url = f"https://api.getbible.net/v2/{trans}/{book_num}/{chapter}.json"
+        url = f"https://api.getbible.net/v2/web/{book_num}/{chapter}.json"
         for attempt in range(4):
             try:
                 data = fetch_json(url)
@@ -181,11 +209,51 @@ def chapter_verses(trans: str, book_num: int, chapter: int) -> dict[int, str]:
     return out
 
 
+def load_blivre(nums: dict[str, int]) -> dict[tuple[str, int], dict[int, str]]:
+    path = ensure_file(
+        "https://raw.githubusercontent.com/Everson33rj/bibialivrejson/main/biblialivre.json",
+        CACHE / "biblialivre.json",
+    )
+    data = json.loads(path.read_text())
+    by_num = {int(item["id"]): item for item in data if isinstance(item, dict) and str(item.get("id", "")).isdigit()}
+    out: dict[tuple[str, int], dict[int, str]] = {}
+    for book_id, num in nums.items():
+        item = by_num.get(num)
+        if not item:
+            continue
+        for ch_i, verses in enumerate(item.get("capitulos") or [], start=1):
+            out[(book_id, ch_i)] = {i + 1: (v or "") for i, v in enumerate(verses)}
+    return out
+
+
+def load_vbl() -> dict[tuple[str, str, int], dict[int, str]]:
+    zip_path = ensure_file(
+        "https://ebible.org/Scriptures/spavbl_vpl.zip",
+        CACHE / "spavbl_vpl.zip",
+    )
+    import zipfile
+
+    with zipfile.ZipFile(zip_path) as zf:
+        text = zf.read("spavbl_vpl.txt").decode("utf-8")
+    code_to_ours = {code: book for book, code in VBL_BOOK.items()}
+    out: dict[tuple[str, int], dict[int, str]] = {}
+    for line in text.splitlines():
+        m = re.match(r"^([A-Z0-9]+)\s+(\d+):(\d+)\s+(.*)$", line)
+        if not m:
+            continue
+        code, ch, vs, body = m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)
+        book = code_to_ours.get(code)
+        if not book:
+            continue
+        out.setdefault((book, ch), {})[vs] = body
+    return out
+
+
 def snippet(text: str, max_words: int = 10) -> str:
     text = re.sub(r"<[^>]+>", " ", text)
     text = re.sub(r"\[[^\]]*\]", " ", text)
     text = text.replace("\xa0", " ")
-    text = re.sub(r"\s+", " ", text).strip(" \t\n\r-–—")
+    text = re.sub(r"\s+", " ", text).strip(" \t\n\r-–—“”\"'«»")
     words = text.split()
     if not words:
         return ""
@@ -213,10 +281,16 @@ def main() -> None:
         themes.append((cid, pt, en, es, clean))
 
     print(f"{len(themes)} themes, {len(needed)} unique chapters")
-    cache: dict[tuple[str, str, int], dict[int, str]] = {}
-    for trans in TRANSLATIONS.values():
-        for book, ch in sorted(needed):
-            cache[(trans, book, ch)] = chapter_verses(trans, nums[book], ch)
+    print("loading Bíblia Livre…")
+    blivre = load_blivre(nums)
+    print("loading Versión Biblia Libre…")
+    vbl = load_vbl()
+    print("loading WEB chapters…")
+    web: dict[tuple[str, int], dict[int, str]] = {}
+    for book, ch in sorted(needed):
+        web[(book, ch)] = chapter_verses_web(nums[book], ch)
+
+    sources = {"pt": blivre, "en": web, "es": vbl}
 
     missing = 0
     blocks = []
@@ -229,12 +303,12 @@ def main() -> None:
         ]
         for book, ch, vs, ve in refs:
             snips = {}
-            for loc, trans in TRANSLATIONS.items():
-                raw = cache[(trans, book, ch)].get(vs, "")
+            for loc in ("pt", "en", "es"):
+                raw = sources[loc].get((book, ch), {}).get(vs, "")
                 cut = snippet(raw)
                 if not cut:
                     missing += 1
-                    print(f"missing {trans} {book} {ch}:{vs}")
+                    print(f"missing {loc} {book} {ch}:{vs}")
                 snips[loc] = cut
             ve_js = "null" if ve is None else str(ve)
             lines.append(
@@ -263,9 +337,9 @@ export type Collection = {
 
 /** First words only. Full verse text is not stored. */
 export const SNIPPET_SOURCES: Record<Locale, string> = {
-  pt: "João Ferreira de Almeida (1911, domínio público)",
+  pt: "Bíblia Livre (CC BY 3.0)",
   en: "World English Bible (public domain)",
-  es: "Reina-Valera 1909 (dominio público)",
+  es: "Versión Biblia Libre (CC BY-SA 4.0)",
 };
 
 export const COLLECTIONS: Collection[] = [

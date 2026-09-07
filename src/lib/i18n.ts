@@ -63,7 +63,7 @@ const strings = {
     refs: "refs",
     collections: "Coleções",
     collectionsLead:
-      "Mais de cem listas por tema. Busque, abra uma referência ou copie a lista. Os trechos são só o começo do versículo, em versão de domínio público.",
+      "Mais de cem listas por tema. Busque, abra uma referência ou copie a lista. Os trechos são só o começo do versículo, na Bíblia Livre (licença aberta).",
     collectionsSearch: "Buscar tema ou passagem",
     collectionsEmpty: "Nenhuma coleção encontrada.",
     snippetNote: "Trecho (não o versículo inteiro):",
@@ -331,7 +331,7 @@ const strings = {
     refs: "refs",
     collections: "Colecciones",
     collectionsLead:
-      "Más de cien listas por tema. Busca, abre una referencia o copia la lista. Los fragmentos son solo el comienzo del versículo, en una versión de dominio público.",
+      "Más de cien listas por tema. Busca, abre una referencia o copia la lista. Los fragmentos son solo el comienzo del versículo, en la Versión Biblia Libre.",
     collectionsSearch: "Buscar tema o pasaje",
     collectionsEmpty: "Ninguna colección encontrada.",
     snippetNote: "Fragmento (no el versículo entero):",
