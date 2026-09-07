@@ -118,14 +118,31 @@ function extraTrustedOrigins(): string[] {
   return [...CUSTOM_ORIGINS, ...fromEnv];
 }
 
-const baseURL = explicitBaseURL ?? {
-  // Include loopback hosts so dynamic baseURL resolves for local email/password
-  // (not only the preview wildcard).
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
-  // `auto` → trust both http:// and https:// expansions of allowedHosts
-  // (preview is https; local dev is http).
+function hostOf(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return undefined;
+  }
+}
+
+// Always derive baseURL from the request Host so OAuth redirect_uri and
+// __Host- cookies land on verse2note.com (not only the grok.me publish URL).
+const deployedHost = hostOf(explicitBaseURL);
+const baseURL = {
+  allowedHosts: [
+    ...previewAllowedHosts,
+    "localhost",
+    "127.0.0.1",
+    "[::1]",
+    "verse2note.com",
+    "www.verse2note.com",
+    "*.grok.me",
+    ...(deployedHost ? [deployedHost] : []),
+  ],
   protocol: "auto" as const,
-  fallback: "http://localhost:8080",
+  fallback: explicitBaseURL ?? "http://localhost:8080",
 };
 
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
