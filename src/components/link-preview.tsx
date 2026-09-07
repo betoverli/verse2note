@@ -148,7 +148,7 @@ export function LinkPreview() {
   if (!current && list.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div className="pointer-events-none fixed inset-x-0 z-30 px-3 pb-3" style={{ bottom: "var(--tab-bar-height)" }}>
       <aside
         className="pointer-events-auto mx-auto max-w-4xl rounded-xl bg-elevated p-2 shadow-[var(--shadow-border)]"
         aria-live="polite"

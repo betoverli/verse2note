@@ -23,8 +23,7 @@ function ForAiRoute() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
-      <AppHeader backTo="/" />
-      <h1 className="font-display text-3xl tracking-tight text-fg italic">{t(locale, "forAiTitle")}</h1>
+      <AppHeader title={t(locale, "forAiTitle")} backTo="/" />
       <ForAiPage />
     </main>
   );

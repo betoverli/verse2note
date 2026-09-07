@@ -44,8 +44,20 @@ html.light {
 
 @layer components {
   .app-header {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 1.5rem);
+    padding-top: env(safe-area-inset-top, 0px);
   }
+
+  .tab-bar {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+:root {
+  --tab-bar-height: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+html.has-tab-bar {
+  --tab-bar-height: calc(3.25rem + env(safe-area-inset-bottom, 0px));
 }
 
 @layer base {

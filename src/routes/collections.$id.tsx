@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
 import { CollectionDetail } from "@/components/collection-detail";
 import { collectionById } from "@/lib/bible/collections";
+import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/collections/$id")({
@@ -21,9 +22,8 @@ function CollectionDetailRoute() {
   if (!collection) return <Navigate to="/collections" />;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
-      <AppHeader backTo="/collections" />
-      <h1 className="font-display text-3xl tracking-tight text-fg italic">{collection.names[locale]}</h1>
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
+      <AppHeader title={collection.names[locale]} backTo="/collections" backLabel={t(locale, "collections")} />
       <CollectionDetail collection={collection} />
     </main>
   );

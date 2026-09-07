@@ -10,9 +10,8 @@ function SettingsPage() {
   const locale = useAppStore((s) => s.locale);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
-      <AppHeader backTo="/app" />
-      <h1 className="font-display text-3xl tracking-tight text-fg italic">{t(locale, "settings")}</h1>
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+      <AppHeader title={t(locale, "settings")} />
       <SettingsPanel />
     </main>
   );

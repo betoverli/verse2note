@@ -1,41 +1,47 @@
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Library, Settings2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { RecentsMenu } from "@/components/recents-menu";
-import { Wordmark } from "@/components/wordmark";
 
-export function AppHeader({ backTo }: { backTo?: "/" | "/settings" | "/app" | "/collections" }) {
+type BackTo = "/" | "/settings" | "/app" | "/collections";
+
+export function AppHeader({
+  title,
+  backTo,
+  backLabel,
+  trailing,
+}: {
+  title?: string;
+  backTo?: BackTo;
+  backLabel?: string;
+  trailing?: ReactNode;
+}) {
   const locale = useAppStore((s) => s.locale);
+  const [apple, setApple] = useState(false);
+  useEffect(() => setApple(isAppleUa()), []);
+  const BackIcon = apple ? ChevronLeft : ArrowLeft;
 
   return (
-    <header className="app-header sticky top-0 z-20 -mx-4 flex items-center justify-between gap-4 bg-bg px-5 pb-3 sm:-mx-6 sm:px-7">
-      <Link to="/app" className="flex min-w-0 items-baseline gap-3">
-        <Wordmark />
-        <span className="hidden truncate text-sm text-muted sm:inline">{t(locale, "tagline")}</span>
-      </Link>
-      {backTo ? (
-        <Button variant="ghost" size="icon" asChild aria-label={t(locale, "back")}>
-          <Link to={backTo}>
-            <ArrowLeft />
-          </Link>
-        </Button>
-      ) : (
-        <div className="flex shrink-0 items-center">
-          <Button variant="ghost" size="icon" asChild aria-label={t(locale, "collections")}>
-            <Link to="/collections">
-              <Library />
-            </Link>
-          </Button>
-          <RecentsMenu />
-          <Button variant="ghost" size="icon" asChild aria-label={t(locale, "settings")}>
-            <Link to="/settings">
-              <Settings2 />
-            </Link>
-          </Button>
+    <header className="app-header sticky top-0 z-20 -mx-4 bg-bg/85 px-2 pb-2 backdrop-blur-xl sm:-mx-6 sm:px-3">
+      <div className="grid h-11 grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-1">
+        <div className="justify-self-start">
+          {backTo ? (
+            <Button variant="ghost" size={backLabel ? "sm" : "icon"} asChild className="-ml-1 text-fg">
+              <Link to={backTo} aria-label={t(locale, "back")}>
+                <BackIcon className="size-5" />
+                {backLabel ? <span className="max-w-[9rem] truncate font-normal">{backLabel}</span> : null}
+              </Link>
+            </Button>
+          ) : null}
         </div>
-      )}
+        <h1 className="truncate px-1 text-center text-[17px] font-semibold tracking-tight text-fg">
+          {title}
+        </h1>
+        <div className="justify-self-end">{trailing}</div>
+      </div>
     </header>
   );
 }
