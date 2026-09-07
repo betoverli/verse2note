@@ -30,6 +30,18 @@ export function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  async function onSocial(providerId: string) {
+    setError(null);
+    setBusy(true);
+    try {
+      await signIn(providerId, { callbackURL: "/settings" });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      setError(/pop-up|popup/i.test(message) ? t(locale, "accountPopup") : t(locale, "accountError"));
+      setBusy(false);
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -78,9 +90,11 @@ export function Login() {
           GROK_PROVIDERS.map((provider) => (
             <Button
               key={provider.providerId}
+              type="button"
               variant="secondary"
               className="w-full"
-              onClick={() => void signIn(provider.providerId, { callbackURL: "/settings" })}
+              disabled={busy}
+              onClick={() => void onSocial(provider.providerId)}
             >
               {provider.idp === "google" ? t(locale, "continueGoogle") : t(locale, "continueX")}
             </Button>

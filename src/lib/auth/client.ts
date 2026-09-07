@@ -73,10 +73,13 @@ function setBearerToken(token: string | null): void {
  * popup there and a normal redirect everywhere else.
  */
 function inLivePreview(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    window.location.hostname.endsWith(".grok-sandbox.com")
-  );
+  if (typeof window === "undefined") return false;
+  if (window.location.hostname.endsWith(".grok-sandbox.com")) return true;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
 }
 
 /** Message the popup posts back to the opener once sign-in completes. */
@@ -149,7 +152,11 @@ export async function signIn(
     errorCallbackURL,
   });
   if (error) throw new Error(error.message ?? "Sign-in failed");
-  if (data?.url) window.location.href = data.url;
+  if (data?.url) {
+    window.location.href = data.url;
+    return;
+  }
+  throw new Error("Sign-in did not return a redirect URL");
 }
 
 /**
