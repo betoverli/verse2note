@@ -32,6 +32,7 @@ type AppState = {
   planProgress: Record<string, number[]>;
   activePlans: string[];
   avatarId: string;
+  avatarUrl: string;
   handle: string;
   firstName: string;
   lastName: string;
@@ -63,6 +64,7 @@ type AppState = {
   applyCloud: (prefs: CloudPrefs) => void;
   setProfile: (profile: {
     avatarId?: string;
+    avatarUrl?: string;
     handle?: string;
     firstName?: string;
     lastName?: string;
@@ -95,6 +97,7 @@ export const useAppStore = create<AppState>()(
       planProgress: {},
       activePlans: [],
       avatarId: "book",
+      avatarUrl: "",
       handle: "",
       firstName: "",
       lastName: "",
@@ -210,6 +213,7 @@ export const useAppStore = create<AppState>()(
           activePlans: prefs.activePlans,
           planProgress: prefs.planProgress,
           avatarId: prefs.avatarId,
+          avatarUrl: prefs.avatarUrl,
           handle: prefs.handle,
           firstName: prefs.firstName,
           lastName: prefs.lastName,
@@ -228,6 +232,7 @@ export const useAppStore = create<AppState>()(
           activePlans: [],
           planProgress: {},
           avatarId: "book",
+          avatarUrl: "",
           handle: "",
           firstName: "",
           lastName: "",
@@ -264,6 +269,7 @@ export const useAppStore = create<AppState>()(
         planProgress: state.planProgress,
         activePlans: state.activePlans,
         avatarId: state.avatarId,
+        avatarUrl: state.avatarUrl,
         handle: state.handle,
         firstName: state.firstName,
         lastName: state.lastName,
@@ -280,6 +286,7 @@ export const useAppStore = create<AppState>()(
             saved.planProgress && typeof saved.planProgress === "object" ? saved.planProgress : {},
           activePlans: Array.isArray(saved.activePlans) ? saved.activePlans : [],
           avatarId: saved.avatarId || "book",
+          avatarUrl: saved.avatarUrl ?? "",
           handle: saved.handle ?? "",
           firstName: saved.firstName ?? "",
           lastName: saved.lastName ?? "",

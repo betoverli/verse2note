@@ -4,7 +4,7 @@ import { BookOpen, CircleHelp, Globe, Sun } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { AVATARS, AvatarMark } from "@/lib/avatars";
+import { AVATARS, PHOTO_AVATAR, AvatarMark, ProfileAvatar } from "@/lib/avatars";
 import { appById } from "@/lib/bible/apps";
 import { savePrefs } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
@@ -27,6 +27,7 @@ function snapshot() {
     activePlans: s.activePlans,
     planProgress: s.planProgress,
     avatarId: s.avatarId,
+    avatarUrl: s.avatarUrl,
     handle: s.handle,
     firstName: s.firstName,
     lastName: s.lastName,
@@ -38,6 +39,8 @@ function usePrefillProfile() {
   const firstName = useAppStore((s) => s.firstName);
   const lastName = useAppStore((s) => s.lastName);
   const profileEmail = useAppStore((s) => s.profileEmail);
+  const avatarUrl = useAppStore((s) => s.avatarUrl);
+  const avatarId = useAppStore((s) => s.avatarId);
   const setProfile = useAppStore((s) => s.setProfile);
   const { user } = useCurrentUserState();
 
@@ -45,13 +48,17 @@ function usePrefillProfile() {
     if (!user) return;
     const patch: Parameters<typeof setProfile>[0] = {};
     if (!profileEmail && user.primaryEmail) patch.profileEmail = user.primaryEmail;
+    if (user.profileImageUrl) {
+      patch.avatarUrl = user.profileImageUrl;
+      if (!avatarUrl) patch.avatarId = PHOTO_AVATAR;
+    }
     if (!firstName && user.displayName) {
       const [given, ...rest] = user.displayName.split(" ");
       patch.firstName = given ?? "";
       if (!lastName) patch.lastName = rest.join(" ");
     }
     if (Object.keys(patch).length) setProfile(patch);
-  }, [user, profileEmail, firstName, lastName, setProfile]);
+  }, [user, profileEmail, avatarUrl, firstName, lastName, setProfile]);
 }
 
 function SettingCards() {
@@ -114,6 +121,7 @@ function SettingCards() {
 export function ProfileView() {
   const locale = useAppStore((s) => s.locale);
   const avatarId = useAppStore((s) => s.avatarId);
+  const avatarUrl = useAppStore((s) => s.avatarUrl);
   const handle = useAppStore((s) => s.handle);
   const firstName = useAppStore((s) => s.firstName);
   const lastName = useAppStore((s) => s.lastName);
@@ -129,7 +137,7 @@ export function ProfileView() {
         <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
       ) : user ? (
         <section className="flex flex-col items-center gap-3 pt-2">
-          <AvatarMark id={avatarId} className="size-20 bg-elevated" iconClassName="size-8" />
+          <ProfileAvatar id={avatarId} url={avatarUrl} className="size-20 bg-elevated" iconClassName="size-8" />
           {handle ? (
             <p className="font-display text-xl italic text-fg">@{handle}</p>
           ) : (
@@ -179,6 +187,7 @@ export function ProfileView() {
 export function ProfileEdit() {
   const locale = useAppStore((s) => s.locale);
   const avatarId = useAppStore((s) => s.avatarId);
+  const avatarUrl = useAppStore((s) => s.avatarUrl);
   const handle = useAppStore((s) => s.handle);
   const firstName = useAppStore((s) => s.firstName);
   const lastName = useAppStore((s) => s.lastName);
@@ -220,6 +229,19 @@ export function ProfileEdit() {
       <section className="space-y-3">
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "avatar")}</h2>
         <div className="grid grid-cols-6 gap-2">
+          {avatarUrl ? (
+            <button
+              type="button"
+              onClick={() => setProfile({ avatarId: PHOTO_AVATAR, avatarUrl })}
+              aria-pressed={avatarId === PHOTO_AVATAR}
+              className={cn(
+                "grid aspect-square place-items-center overflow-hidden rounded-full transition-colors",
+                avatarId === PHOTO_AVATAR ? "ring-2 ring-accent ring-offset-2 ring-offset-bg" : "bg-surface",
+              )}
+            >
+              <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover" />
+            </button>
+          ) : null}
           {AVATARS.map((item) => {
             const active = avatarId === item.id;
             return (

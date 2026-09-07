@@ -17,6 +17,7 @@ export type CloudPrefs = {
   activePlans: string[];
   planProgress: Record<string, number[]>;
   avatarId: string;
+  avatarUrl: string;
   handle: string;
   firstName: string;
   lastName: string;
@@ -34,6 +35,7 @@ type PrefsRow = {
   active_plans: string;
   plan_progress: string;
   avatar_id: string;
+  avatar_url: string;
   handle: string;
   first_name: string;
   last_name: string;
@@ -76,6 +78,7 @@ function fromRow(row: PrefsRow): CloudPrefs {
     activePlans: parseJson<string[]>(row.active_plans, []),
     planProgress: parseJson<Record<string, number[]>>(row.plan_progress, {}),
     avatarId: isAvatarId(row.avatar_id) ? row.avatar_id : "book",
+    avatarUrl: row.avatar_url ?? "",
     handle: row.handle ?? "",
     firstName: row.first_name ?? "",
     lastName: row.last_name ?? "",
@@ -92,7 +95,7 @@ export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPr
       ...new Set([...(cloud.planProgress[id] ?? []), ...(local.planProgress[id] ?? [])]),
     ].sort((a, b) => a - b);
   }
-  const cloudHasProfile = Boolean(cloud.handle || cloud.firstName || cloud.profileEmail);
+  const cloudHasProfile = Boolean(cloud.handle || cloud.firstName || cloud.profileEmail || cloud.avatarUrl);
   return {
     locale: cloud.locale,
     appId: cloud.appId,
@@ -104,6 +107,7 @@ export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPr
     activePlans: ids,
     planProgress,
     avatarId: cloudHasProfile ? cloud.avatarId : local.avatarId,
+    avatarUrl: cloudHasProfile ? cloud.avatarUrl : local.avatarUrl,
     handle: cloudHasProfile ? cloud.handle : local.handle,
     firstName: cloudHasProfile ? cloud.firstName : local.firstName,
     lastName: cloudHasProfile ? cloud.lastName : local.lastName,
@@ -117,7 +121,7 @@ export const getPrefs = createServerFn({ method: "GET" })
     const sql = await getSql();
     const rows = await sql<PrefsRow>`
       select locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
-             active_plans, plan_progress, avatar_id, handle, first_name, last_name, email
+             active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email
       from user_prefs
       where user_id = ${context.userId}
     `;
@@ -142,11 +146,11 @@ export const savePrefs = createServerFn({ method: "POST" })
     await sql`
       insert into user_prefs (
         user_id, locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
-        active_plans, plan_progress, avatar_id, handle, first_name, last_name, email, updated_at
+        active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email, updated_at
       ) values (
         ${context.userId}, ${data.locale}, ${data.appId}, ${data.translationId}, ${data.preferNative},
         ${data.copyFormat}, ${data.booksCompact}, ${data.theme}, ${active}, ${progress},
-        ${avatarId}, ${handle}, ${data.firstName.trim()}, ${data.lastName.trim()}, ${data.profileEmail.trim()}, now()
+        ${avatarId}, ${data.avatarUrl.trim()}, ${handle}, ${data.firstName.trim()}, ${data.lastName.trim()}, ${data.profileEmail.trim()}, now()
       )
       on conflict (user_id) do update set
         locale = excluded.locale,
@@ -159,6 +163,7 @@ export const savePrefs = createServerFn({ method: "POST" })
         active_plans = excluded.active_plans,
         plan_progress = excluded.plan_progress,
         avatar_id = excluded.avatar_id,
+        avatar_url = excluded.avatar_url,
         handle = excluded.handle,
         first_name = excluded.first_name,
         last_name = excluded.last_name,
