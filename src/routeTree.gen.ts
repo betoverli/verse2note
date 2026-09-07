@@ -19,6 +19,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
 import { Route as ApiLinkRouteImport } from './routes/api/link'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as ApiPlansRouteImport } from './routes/api/plans'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
@@ -78,6 +79,11 @@ const ApiMcpRoute = ApiMcpRouteImport.update({
   path: '/api/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPlansRoute = ApiPlansRouteImport.update({
+  id: '/api/plans',
+  path: '/api/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/reading/$id': typeof ReadingIdRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/reading/$id': typeof ReadingIdRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/reading/$id': typeof ReadingIdRoute
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
+    | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
     | '/reading/$id'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
+    | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
     | '/reading/$id'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
+    | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
     | '/reading/$id'
@@ -252,6 +264,7 @@ export interface RootRouteChildren {
   ApiCollectionsRoute: typeof ApiCollectionsRoute
   ApiLinkRoute: typeof ApiLinkRoute
   ApiMcpRoute: typeof ApiMcpRoute
+  ApiPlansRoute: typeof ApiPlansRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/api/mcp'
       fullPath: '/api/mcp'
       preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/plans': {
+      id: '/api/plans'
+      path: '/api/plans'
+      fullPath: '/api/plans'
+      preLoaderRoute: typeof ApiPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/': {
@@ -431,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCollectionsRoute: ApiCollectionsRoute,
   ApiLinkRoute: ApiLinkRoute,
   ApiMcpRoute: ApiMcpRoute,
+  ApiPlansRoute: ApiPlansRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

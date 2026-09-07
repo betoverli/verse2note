@@ -12,7 +12,7 @@ export const Route = createFileRoute("/for-ai")({
     pageHead({
       title: "Verse2Note — API, skill e MCP",
       description:
-        "API, skill e MCP do Verse2Note: gere deep links de referências e coleções por tema para Grok, Claude, Cursor ou qualquer agente.",
+        "API, skill e MCP do Verse2Note: gere deep links de referências, coleções por tema e o dia de um plano de leitura para Grok, Claude, Cursor ou qualquer agente.",
       path: "/for-ai",
     }),
 });

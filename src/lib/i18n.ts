@@ -123,13 +123,15 @@ const strings = {
       "Keep e WhatsApp no Android não colam o link azul. Use o ícone de compartilhar, ou cole no Docs / Word.",
     helpCollections:
       "Coleções são listas prontas por tema (com busca). Abra uma, copie uma referência ou a lista inteira. O trecho é só o começo do versículo, em versão livre.",
+    helpPlans:
+      "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Escolha um plano; ele aparece em Meus planos. Marque o dia que já leu.",
     donateTitle: "Quer ajudar?",
     donateLead: "O Verse2Note é gratuito e sem anúncio. Se ele te serve, um café ajuda a manter o projeto.",
     donateCta: "Apoiar",
     landKicker: "Para reuniões, Notes e WhatsApp",
     landHeadline: "A passagem já vai com o link.",
     landLead:
-      "Escolha o livro, o capítulo e os versos. O Verse2Note gera um texto rico que abre no seu app de Bíblia. No iPhone, cola no Notes. No Android, no Google Docs ou no Word.",
+      "Escolha o livro, o capítulo e os versos — ou uma coleção por tema, ou um plano de leitura. O Verse2Note gera um texto rico que abre no seu app de Bíblia. No iPhone, cola no Notes. No Android, no Google Docs ou no Word.",
     landCta: "Acessar o app",
     landDemoLabel: "Reunião",
     landSample: "João 3:16",
@@ -142,20 +144,20 @@ const strings = {
     landFoot: "Sem conta. Depois da primeira abertura, funciona sem internet.",
     forAiTitle: "Para IA e agentes",
     forAiLead:
-      "O Verse2Note também gera o mesmo link — e as coleções por tema — para o Grok, o Claude, o Cursor ou qualquer agente. Sem conta. O modelo chama a API; não inventa a URL.",
+      "O Verse2Note também gera o mesmo link — coleções por tema e o dia de um plano de leitura — para o Grok, o Claude, o Cursor ou qualquer agente. Sem conta. O modelo chama a API; não inventa a URL.",
     forAiApiTitle: "API",
     forAiApiLead:
-      "GET /api/link para uma referência. GET /api/collections para buscar um tema ou devolver a lista toda em Markdown.",
+      "GET /api/link para uma referência. GET /api/collections para um tema. GET /api/plans?id=gospels-30&day=1 para o dia de um plano.",
     forAiSkillTitle: "Skill",
     forAiSkillLead:
       "Cole a skill no Claude, no Grok Build ou no Cursor. O agente lê as regras e chama a API deste site.",
     forAiSkillCta: "Abrir skill.md",
     forAiMcpTitle: "MCP",
     forAiMcpLead:
-      "JSON-RPC em POST /api/mcp. verse2note_link para uma referência; verse2note_collection para um tema.",
+      "JSON-RPC em POST /api/mcp. verse2note_link, verse2note_collection e verse2note_plan.",
     forAiAppsTitle: "Ids dos apps",
     forAiExample: "Resposta",
-    helpForAi: "API, skill e MCP para gerar os mesmos links — e coleções — a partir de um agente.",
+    helpForAi: "API, skill e MCP para gerar os mesmos links, coleções e planos a partir de um agente.",
   },
   en: {
     appName: "Verse2Note",
@@ -279,13 +281,15 @@ const strings = {
       "Keep and WhatsApp on Android will not paste a blue link. Use the share icon, or paste into Docs / Word.",
     helpCollections:
       "Collections are ready-made lists by theme (with search). Open one, copy a reference or the whole list. The snippet is only the start of the verse, from a free translation.",
+    helpPlans:
+      "Plans are whole-chapter readings (a year, the Gospels…). Choose a plan; it shows up under My plans. Check off the day you have read.",
     donateTitle: "Want to help?",
     donateLead: "Verse2Note is free and has no ads. If it serves you, a coffee helps keep it going.",
     donateCta: "Support",
     landKicker: "For meetings, Notes, and chat",
     landHeadline: "The passage name is already the link.",
     landLead:
-      "Pick the book, chapter, and verses. Verse2Note makes rich text that opens in your Bible app. On iPhone, paste into Notes. On Android, into Google Docs or Word.",
+      "Pick the book, chapter, and verses — or a themed collection, or a reading plan. Verse2Note makes rich text that opens in your Bible app. On iPhone, paste into Notes. On Android, into Google Docs or Word.",
     landCta: "Open the app",
     landDemoLabel: "Meeting",
     landSample: "John 3:16",
@@ -298,20 +302,20 @@ const strings = {
     landFoot: "No account. After the first open, it works offline.",
     forAiTitle: "For AI and agents",
     forAiLead:
-      "Verse2Note can mint the same link — and themed collections — for Grok, Claude, Cursor, or any agent. No account. The model calls the API; it should not invent the URL.",
+      "Verse2Note can mint the same link — themed collections and a reading-plan day — for Grok, Claude, Cursor, or any agent. No account. The model calls the API; it should not invent the URL.",
     forAiApiTitle: "API",
     forAiApiLead:
-      "GET /api/link for a reference. GET /api/collections to search a theme or return the whole list in Markdown.",
+      "GET /api/link for a reference. GET /api/collections for a theme. GET /api/plans?id=gospels-30&day=1 for a plan day.",
     forAiSkillTitle: "Skill",
     forAiSkillLead:
       "Drop the skill into Claude, Grok Build, or Cursor. The agent reads the rules and calls this site's API.",
     forAiSkillCta: "Open skill.md",
     forAiMcpTitle: "MCP",
     forAiMcpLead:
-      "JSON-RPC at POST /api/mcp. verse2note_link for a reference; verse2note_collection for a theme.",
+      "JSON-RPC at POST /api/mcp. verse2note_link, verse2note_collection, and verse2note_plan.",
     forAiAppsTitle: "App ids",
     forAiExample: "Response",
-    helpForAi: "API, skill, and MCP so an agent can generate the same links and collections.",
+    helpForAi: "API, skill, and MCP so an agent can generate the same links, collections, and plans.",
   },
   es: {
     appName: "Verse2Note",
@@ -435,13 +439,15 @@ const strings = {
       "Keep y WhatsApp en Android no pegan el enlace azul. Usa el icono de compartir, o pega en Docs / Word.",
     helpCollections:
       "Las colecciones son listas por tema (con búsqueda). Abre una, copia una referencia o la lista entera. El fragmento es solo el comienzo del versículo, en una versión libre.",
+    helpPlans:
+      "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Elige un plan; aparece en Mis planes. Marca el día que ya leíste.",
     donateTitle: "¿Quieres ayudar?",
     donateLead: "Verse2Note es gratis y sin anuncios. Si te sirve, un café ayuda a mantener el proyecto.",
     donateCta: "Apoyar",
     landKicker: "Para reuniones, Notes y WhatsApp",
     landHeadline: "El pasaje ya lleva el enlace.",
     landLead:
-      "Elige el libro, el capítulo y los versículos. Verse2Note genera un texto enriquecido que abre en tu app de Biblia. En el iPhone, pega en Notes. En Android, en Google Docs o Word.",
+      "Elige el libro, el capítulo y los versículos — o una colección por tema, o un plan de lectura. Verse2Note genera un texto enriquecido que abre en tu app de Biblia. En el iPhone, pega en Notes. En Android, en Google Docs o Word.",
     landCta: "Abrir la app",
     landDemoLabel: "Reunión",
     landSample: "Juan 3:16",
@@ -454,20 +460,20 @@ const strings = {
     landFoot: "Sin cuenta. Después de la primera apertura, funciona sin internet.",
     forAiTitle: "Para IA y agentes",
     forAiLead:
-      "Verse2Note también genera el mismo enlace — y las colecciones por tema — para Grok, Claude, Cursor o cualquier agente. Sin cuenta. El modelo llama a la API; no inventa la URL.",
+      "Verse2Note también genera el mismo enlace — colecciones por tema y el día de un plan de lectura — para Grok, Claude, Cursor o cualquier agente. Sin cuenta. El modelo llama a la API; no inventa la URL.",
     forAiApiTitle: "API",
     forAiApiLead:
-      "GET /api/link para una referencia. GET /api/collections para buscar un tema o devolver la lista en Markdown.",
+      "GET /api/link para una referencia. GET /api/collections para un tema. GET /api/plans?id=gospels-30&day=1 para el día de un plan.",
     forAiSkillTitle: "Skill",
     forAiSkillLead:
       "Pega la skill en Claude, Grok Build o Cursor. El agente lee las reglas y llama a la API de este sitio.",
     forAiSkillCta: "Abrir skill.md",
     forAiMcpTitle: "MCP",
     forAiMcpLead:
-      "JSON-RPC en POST /api/mcp. verse2note_link para una referencia; verse2note_collection para un tema.",
+      "JSON-RPC en POST /api/mcp. verse2note_link, verse2note_collection y verse2note_plan.",
     forAiAppsTitle: "Ids de las apps",
     forAiExample: "Respuesta",
-    helpForAi: "API, skill y MCP para generar los mismos enlaces y colecciones desde un agente.",
+    helpForAi: "API, skill y MCP para generar los mismos enlaces, colecciones y planes desde un agente.",
   },
 } as const;
 

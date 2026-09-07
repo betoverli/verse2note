@@ -19,7 +19,7 @@ const JSON_LD = {
   browserRequirements: "Requires JavaScript",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   description:
-    "Rich-text Bible reference deep links and 160 themed collections for YouVersion, Logos, and other Bible apps. Portuguese, English, Spanish. Offline PWA. API and MCP for agents.",
+    "Rich-text Bible reference deep links, 160 themed collections, and 14 reading plans of whole chapters for YouVersion, Logos, and other Bible apps. Portuguese, English, Spanish. Offline PWA. API and MCP for agents.",
   inLanguage: ["pt", "en", "es"],
   sameAs: ["https://github.com/betoverli/verse2note"],
   featureList: [
@@ -27,6 +27,7 @@ const JSON_LD = {
     "Rich-text copy with a deep link",
     "Multiple Bible apps",
     "160 themed collections in 14 categories",
+    "14 reading plans of whole chapters",
     "API, skill and MCP for AI agents",
     "Works offline after first open",
   ],
@@ -105,6 +106,10 @@ export function Landing() {
           <span className="text-subtle"> · </span>
           <Link to="/collections" className="underline-offset-2 hover:text-fg hover:underline">
             {t(locale, "collections")}
+          </Link>
+          <span className="text-subtle"> · </span>
+          <Link to="/reading" className="underline-offset-2 hover:text-fg hover:underline">
+            {t(locale, "reading")}
           </Link>
           <span className="text-subtle"> · </span>
           <Link to="/for-ai" className="underline-offset-2 hover:text-fg hover:underline">

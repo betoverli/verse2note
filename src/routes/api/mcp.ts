@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BIBLE_APPS } from "@/lib/bible/apps";
 import { resolveCollections } from "@/lib/bible/collections-api";
+import { resolvePlans } from "@/lib/bible/plans-api";
 import { collectRefs, corsJson, corsPreflight, resolveLinks } from "@/lib/bible/link-api";
 
 type Rpc = {
@@ -55,7 +56,33 @@ const COLLECTION_TOOL = {
   },
 };
 
-const TOOLS = [LINK_TOOL, COLLECTION_TOOL];
+const PLAN_TOOL = {
+  name: "verse2note_plan",
+  description:
+    "Browse Verse2Note Bible reading plans (whole chapters). List or search plans, or fetch one day's chapters as paste-ready markdown links. Does not return verse text. Progress is on-device only.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      q: { type: "string", description: "Search plans, e.g. evangelhos, psalms, 90." },
+      id: {
+        type: "string",
+        description:
+          "Plan id, e.g. bible-year, gospels-30, john-21, psalms-30. Without day, returns the day outline.",
+      },
+      day: { type: "number", description: "Day number in the plan. Returns markdown links for that day's chapters." },
+      category: {
+        type: "string",
+        description: "Category id: duration, gospels, new-testament, books.",
+      },
+      app: { type: "string", description: `Bible app id when fetching a day. One of: ${APPS}.` },
+      translation: { type: "string" },
+      locale: { type: "string", enum: ["pt", "en", "es"] },
+      native: { type: "boolean" },
+    },
+  },
+};
+
+const TOOLS = [LINK_TOOL, COLLECTION_TOOL, PLAN_TOOL];
 
 function rpcResult(id: Rpc["id"], result: unknown) {
   return corsJson({ jsonrpc: "2.0", id: id ?? null, result });
@@ -75,9 +102,9 @@ async function handleRpc(msg: Rpc): Promise<Response> {
     return rpcResult(msg.id, {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      serverInfo: { name: "verse2note", version: "1.1.0" },
+      serverInfo: { name: "verse2note", version: "1.2.0" },
       instructions:
-        "Use verse2note_link for a specific reference. Use verse2note_collection to search themes or fetch a whole list as markdown links. Default app is youversion. Do not invent URLs.",
+        "Use verse2note_link for a specific reference. Use verse2note_collection for a themed list. Use verse2note_plan for a reading-plan day (whole chapters). Default app is youversion. Do not invent URLs.",
     });
   }
   if (method === "notifications/initialized" || method === "initialized") {
@@ -93,6 +120,30 @@ async function handleRpc(msg: Rpc): Promise<Response> {
     const params = msg.params ?? {};
     const name = typeof params.name === "string" ? params.name : LINK_TOOL.name;
     const args = asArgs(params);
+
+    if (name === PLAN_TOOL.name) {
+      const resolved = resolvePlans({
+        q: typeof args.q === "string" ? args.q : undefined,
+        id: typeof args.id === "string" ? args.id : undefined,
+        category: typeof args.category === "string" ? args.category : undefined,
+        day: typeof args.day === "number" || typeof args.day === "string" ? args.day : undefined,
+        app: typeof args.app === "string" ? args.app : undefined,
+        translation: typeof args.translation === "string" ? args.translation : undefined,
+        locale: typeof args.locale === "string" ? args.locale : undefined,
+        native: args.native === true,
+      });
+      if (!resolved.ok) {
+        return rpcResult(msg.id, { isError: true, content: [{ type: "text", text: resolved.error }] });
+      }
+      const text =
+        "markdown" in resolved && resolved.markdown
+          ? resolved.markdown
+          : JSON.stringify(resolved, null, 2);
+      return rpcResult(msg.id, {
+        content: [{ type: "text", text }],
+        structuredContent: resolved,
+      });
+    }
 
     if (name === COLLECTION_TOOL.name) {
       const resolved = resolveCollections({

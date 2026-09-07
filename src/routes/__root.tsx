@@ -15,7 +15,7 @@ export const Route = createRootRoute({
     const seo = pageHead({
       title: "Verse2Note",
       description:
-        "Verse2Note — links ricos de referências bíblicas e coleções por tema para YouVersion, Logos e outros apps. Português, English, Español.",
+        "Verse2Note — links ricos de referências bíblicas, coleções por tema e planos de leitura para YouVersion, Logos e outros apps. Português, English, Español.",
       path: "/",
     });
     return {

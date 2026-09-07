@@ -1,6 +1,6 @@
 # Verse2Note
 
-> A free, offline-first web app that turns a Bible book, chapter and verses into rich text with a deep link to the user's Bible app. It also ships 160 themed collections in 14 categories.
+> A free, offline-first web app that turns a Bible book, chapter and verses into rich text with a deep link to the user's Bible app. It also ships 160 themed collections (14 categories) and 14 reading plans of whole chapters.
 
 Verse2Note is a verse picker, not a Bible reader. Copy "João 3:16" / "John 3:16" / "Juan 3:16" already linked, and paste into Notes, WhatsApp or a document.
 
@@ -20,18 +20,25 @@ Site: https://verse2note.com
 - Multi-reference list for meetings
 - 160 themed collections, 14 categories; a theme can belong to more than one category
 - Snippets are only the beginning of the verse (Bíblia Livre / WEB / Versión Biblia Libre)
+- 14 reading plans (Bible in a year, 90 days, Gospels, Psalms, Paul…). Always whole chapters. Progress is on-device (My plans)
 - Install as a PWA; works offline after the first open
 - No account. No ads.
 
-## Categories
+## Collection categories
 
 doctrine, jesus, personal, church-life, home, seasons, society, character, spirit, last-things, stories, emotions, work-money, worship-prayer
+
+## Reading-plan categories
+
+duration, gospels, new-testament, books
+
+Plan ids: bible-year, bible-90, nt-90, nt-30, gospels-30, john-21, matthew-28, luke-24, acts-28, romans-16, proverbs-31, psalms-30, pentateuch-90, paul-letters
 
 ## What it is not
 
 - Not a Bible
 - Does not return full verse text
-- Does not sync notes across devices
+- Does not sync notes or plan progress across devices
 
 ## Pages
 
@@ -39,8 +46,12 @@ doctrine, jesus, personal, church-life, home, seasons, society, character, spiri
 - App (picker): /app
 - Collections hub: /collections
 - All themes A–Z: /collections/themes
-- Category: /collections/category/{id}
+- Collection category: /collections/category/{id}
 - Theme: /collections/{id}  (e.g. /collections/salvation)
+- Reading plans: /reading
+- All plans: /reading/all
+- Plan category: /reading/category/{id}
+- Plan: /reading/{id}  (e.g. /reading/gospels-30)
 - About and help: /about
 - For AI (API, skill, MCP): /for-ai
 - Skill file: /skill.md
@@ -54,22 +65,20 @@ Do not invent Bible deep links. Call the API.
 ```
 GET /api/link?ref=John+3:16&app=youversion&locale=en
 POST /api/link   { "refs": ["John 3:16", "Romans 8:28"], "app": "youversion" }
-GET /api/collections?locale=pt
-GET /api/collections?q=oração&locale=pt
-GET /api/collections?category=doctrine&locale=pt
 GET /api/collections?id=salvation&app=youversion&locale=pt
-POST /api/mcp    JSON-RPC tools verse2note_link and verse2note_collection
+GET /api/plans?id=gospels-30&day=1&app=youversion&locale=pt
+POST /api/mcp    JSON-RPC tools verse2note_link, verse2note_collection, verse2note_plan
 ```
 
-Returns `markdown` ready to paste, e.g. `[John 3:16](https://www.bible.com/bible/111/JHN.3.16)`.
+Returns `markdown` ready to paste, e.g. `[John 3:16](https://www.bible.com/bible/111/JHN.3.16)` or `[Mateus 1](…)`.
 
 Full skill: /skill.md
 Docs: /for-ai
 
 ## Portuguese
 
-O Verse2Note gera um texto rico com o nome da passagem já ligado ao app de Bíblia escolhido. Escolha o livro, o capítulo e os versos — ou abra uma coleção por tema — copie e cole no Notes, no WhatsApp ou no documento.
+O Verse2Note gera um texto rico com o nome da passagem já ligado ao app de Bíblia escolhido. Escolha o livro, o capítulo e os versos — ou abra uma coleção por tema, ou um plano de leitura de capítulos — copie e cole no Notes, no WhatsApp ou no documento.
 
 ## Español
 
-Verse2Note genera un texto enriquecido con el nombre del pasaje ya enlazado a la app de Biblia elegida. Elige el libro, el capítulo y los versículos — o abre una colección por tema — copia y pega en Notes, WhatsApp o el documento.
+Verse2Note genera un texto enriquecido con el nombre del pasaje ya enlazado a la app de Biblia elegida. Elige el libro, el capítulo y los versículos — o abre una colección por tema, o un plan de lectura de capítulos — copia y pega en Notes, WhatsApp o el documento.

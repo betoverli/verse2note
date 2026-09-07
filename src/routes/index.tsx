@@ -11,7 +11,7 @@ export const Route = createFileRoute("/")({
     pageHead({
       title: "Verse2Note — links ricos de referências bíblicas",
       description:
-        "Crie links ricos de referências bíblicas e listas por tema para YouVersion, Logos e outros apps. Português, English, Español. Sem conta, funciona offline.",
+        "Crie links ricos de referências bíblicas, coleções por tema e planos de leitura de capítulos para YouVersion, Logos e outros apps. Português, English, Español. Sem conta, funciona offline.",
       path: "/",
     }),
 });

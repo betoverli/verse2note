@@ -67,6 +67,10 @@ export function ForAiPage() {
     ? `GET ${origin}/api/collections?id=salvation&app=youversion&locale=${locale}`
     : "GET /api/collections?id=salvation&app=youversion&locale=pt";
 
+  const plansExample = origin
+    ? `GET ${origin}/api/plans?id=gospels-30&day=1&app=youversion&locale=${locale}`
+    : "GET /api/plans?id=gospels-30&day=1&app=youversion&locale=pt";
+
   const postExample = `{
   "refs": ["John 3:16", "Romans 8:28"],
   "app": "youversion",
@@ -102,6 +106,7 @@ export function ForAiPage() {
         <p className="max-w-xl text-sm leading-relaxed text-fg">{t(locale, "forAiApiLead")}</p>
         <CopyBlock label="GET" value={getExample} />
         <CopyBlock label="GET /api/collections" value={collectionsExample} />
+        <CopyBlock label="GET /api/plans" value={plansExample} />
         <CopyBlock label="POST /api/link" value={postExample} />
         {sample ? <CopyBlock label={t(locale, "forAiExample")} value={sample} /> : null}
       </section>
@@ -119,6 +124,18 @@ export function ForAiPage() {
         <p className="max-w-xl text-sm leading-relaxed text-fg">{t(locale, "forAiMcpLead")}</p>
         <CopyBlock label="POST /api/mcp" value={mcpExample} />
         <CopyBlock label="verse2note_collection" value={mcpCollectionExample} />
+        <CopyBlock
+          label="verse2note_plan"
+          value={`{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "verse2note_plan",
+    "arguments": { "id": "gospels-30", "day": 1, "app": "youversion", "locale": "pt" }
+  }
+}`}
+        />
       </section>
 
       <section className="space-y-3">
