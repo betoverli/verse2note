@@ -352,8 +352,15 @@ export function collectionById(id: string): Collection | undefined {
 
 export function searchCollections(query: string, locale: Locale): Collection[] {
   const q = fold(query);
-  if (!q) return COLLECTIONS;
-  return COLLECTIONS.filter((item) => haystack(item, locale).includes(q));
+  const list = !q ? COLLECTIONS : COLLECTIONS.filter((item) => haystack(item, locale).includes(q));
+  return sortCollections(list, locale);
+}
+
+function sortCollections(items: Collection[], locale: Locale): Collection[] {
+  const collator = new Intl.Collator(locale === "pt" ? "pt" : locale === "es" ? "es" : "en", {
+    sensitivity: "base",
+  });
+  return [...items].sort((a, b) => collator.compare(a.names[locale], b.names[locale]));
 }
 
 function fold(value: string): string {
