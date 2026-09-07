@@ -19,7 +19,7 @@ export function CollectionsPage() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t(locale, "collectionsSearch")}
-          className="h-11 w-full rounded-md bg-surface px-4 text-sm text-fg shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/70"
+          className="h-11 w-full rounded-md bg-surface px-4 text-base text-fg shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/70"
         />
       </label>
       {items.length === 0 ? (
