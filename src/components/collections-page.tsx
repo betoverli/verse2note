@@ -1,14 +1,39 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  BookMarked,
+  CalendarDays,
+  Church,
+  Cross,
+  Heart,
+  Home,
+  Library,
+  Scale,
+  Sparkles,
+} from "lucide-react";
+import { useMemo, useState, type ComponentType } from "react";
+import { searchCategories, THEME_TOTAL, type Category } from "@/lib/bible/categories";
 import { searchCollections } from "@/lib/bible/collections";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
+import { ThemeList } from "@/components/theme-list";
+
+const ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  doctrine: BookMarked,
+  jesus: Cross,
+  personal: Heart,
+  "church-life": Church,
+  home: Home,
+  seasons: CalendarDays,
+  society: Scale,
+  character: Sparkles,
+};
 
 export function CollectionsPage() {
   const locale = useAppStore((s) => s.locale);
   const [query, setQuery] = useState("");
-  const items = useMemo(() => searchCollections(query, locale), [query, locale]);
+  const categories = useMemo(() => searchCategories(query, locale), [query, locale]);
+  const themes = useMemo(() => searchCollections(query, locale), [query, locale]);
+  const searching = query.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-6">
@@ -22,29 +47,63 @@ export function CollectionsPage() {
           className="h-11 w-full rounded-md bg-surface px-4 text-base text-fg shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/70"
         />
       </label>
-      {items.length === 0 ? (
-        <p className="text-sm text-muted">{t(locale, "collectionsEmpty")}</p>
+
+      {searching ? (
+        <>
+          {categories.length > 0 ? <CategoryGrid items={categories} /> : null}
+          <ThemeList items={themes} />
+        </>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                to="/collections/$id"
-                params={{ id: item.id }}
-                className="flex min-h-11 items-center justify-between gap-3 rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
-              >
-                <span>
-                  <span className="block text-sm font-medium">{item.names[locale]}</span>
-                  <span className="mt-0.5 block text-xs text-muted">
-                    {item.passages.length} {t(locale, "refs")}
-                  </span>
+        <>
+          <CategoryGrid items={categories} />
+          <Link
+            to="/collections/themes"
+            className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+          >
+            <span className="flex items-center gap-3">
+              <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+                <Library className="size-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-medium">{t(locale, "allThemes")}</span>
+                <span className="mt-0.5 block text-xs text-muted">
+                  {THEME_TOTAL} {t(locale, "themes")}
                 </span>
-                <ChevronRight className="size-4 shrink-0 text-muted" />
-              </Link>
-            </li>
-          ))}
-        </ul>
+              </span>
+            </span>
+          </Link>
+        </>
       )}
     </div>
+  );
+}
+
+function CategoryGrid({ items }: { items: Category[] }) {
+  const locale = useAppStore((s) => s.locale);
+  return (
+    <ul className="grid grid-cols-2 gap-3">
+      {items.map((item) => {
+        const Icon = ICONS[item.id] ?? BookMarked;
+        return (
+          <li key={item.id}>
+            <Link
+              to="/collections/category/$categoryId"
+              params={{ categoryId: item.id }}
+              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-lg bg-surface p-4 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+            >
+              <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+                <Icon className="size-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-medium leading-snug">{item.names[locale]}</span>
+                <span className="mt-1 block text-xs text-muted">
+                  {item.themeIds.length} {t(locale, "themes")}
+                </span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

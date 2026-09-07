@@ -6,16 +6,18 @@ import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
-type BackTo = "/" | "/settings" | "/app" | "/collections";
+type BackTo = "/" | "/settings" | "/app" | "/collections" | "/collections/themes" | "/collections/category/$categoryId";
 
 export function AppHeader({
   title,
   backTo,
+  backParams,
   backLabel,
   trailing,
 }: {
   title?: string;
   backTo?: BackTo;
+  backParams?: { categoryId: string };
   backLabel?: string;
   trailing?: ReactNode;
 }) {
@@ -30,10 +32,17 @@ export function AppHeader({
         <div className="justify-self-start">
           {backTo ? (
             <Button variant="ghost" size={backLabel ? "sm" : "icon"} asChild className="-ml-1 text-fg">
-              <Link to={backTo} aria-label={t(locale, "back")}>
-                <BackIcon className="size-5" />
-                {backLabel ? <span className="max-w-[9rem] truncate font-normal">{backLabel}</span> : null}
-              </Link>
+              {backTo === "/collections/category/$categoryId" && backParams ? (
+                <Link to={backTo} params={backParams} aria-label={t(locale, "back")}>
+                  <BackIcon className="size-5" />
+                  {backLabel ? <span className="max-w-[9rem] truncate font-normal">{backLabel}</span> : null}
+                </Link>
+              ) : (
+                <Link to={backTo} aria-label={t(locale, "back")}>
+                  <BackIcon className="size-5" />
+                  {backLabel ? <span className="max-w-[9rem] truncate font-normal">{backLabel}</span> : null}
+                </Link>
+              )}
             </Button>
           ) : null}
         </div>

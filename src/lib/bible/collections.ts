@@ -1340,7 +1340,7 @@ export function searchCollections(query: string, locale: Locale): Collection[] {
   return sortCollections(list, locale);
 }
 
-function sortCollections(items: Collection[], locale: Locale): Collection[] {
+export function sortCollections(items: Collection[], locale: Locale): Collection[] {
   const collator = new Intl.Collator(locale === "pt" ? "pt" : locale === "es" ? "es" : "en", {
     sensitivity: "base",
   });

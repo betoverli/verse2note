@@ -19,6 +19,8 @@ import { Route as ApiLinkRouteImport } from './routes/api/link'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
+import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
+import { Route as CollectionsCategoryCategoryIdRouteImport } from './routes/collections.category.$categoryId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +72,17 @@ const CollectionsIdRoute = CollectionsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const CollectionsThemesRoute = CollectionsThemesRouteImport.update({
+  id: '/themes',
+  path: '/themes',
+  getParentRoute: () => CollectionsRoute,
+} as any)
+const CollectionsCategoryCategoryIdRoute =
+  CollectionsCategoryCategoryIdRouteImport.update({
+    id: '/category/$categoryId',
+    path: '/category/$categoryId',
+    getParentRoute: () => CollectionsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,7 +94,9 @@ export interface FileRoutesByFullPath {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
+  '/collections/themes': typeof CollectionsThemesRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,7 +107,9 @@ export interface FileRoutesByTo {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
+  '/collections/themes': typeof CollectionsThemesRoute
   '/collections': typeof CollectionsIndexRoute
+  '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,7 +122,9 @@ export interface FileRoutesById {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
+  '/collections/themes': typeof CollectionsThemesRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,7 +138,9 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
+    | '/collections/themes'
     | '/collections/'
+    | '/collections/category/$categoryId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -130,7 +151,9 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
+    | '/collections/themes'
     | '/collections'
+    | '/collections/category/$categoryId'
   id:
     | '__root__'
     | '/'
@@ -142,7 +165,9 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
+    | '/collections/themes'
     | '/collections/'
+    | '/collections/category/$categoryId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,17 +253,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsIdRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/collections/themes': {
+      id: '/collections/themes'
+      path: '/themes'
+      fullPath: '/collections/themes'
+      preLoaderRoute: typeof CollectionsThemesRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
+    '/collections/category/$categoryId': {
+      id: '/collections/category/$categoryId'
+      path: '/category/$categoryId'
+      fullPath: '/collections/category/$categoryId'
+      preLoaderRoute: typeof CollectionsCategoryCategoryIdRouteImport
+      parentRoute: typeof CollectionsRoute
+    }
   }
 }
 
 interface CollectionsRouteChildren {
   CollectionsIdRoute: typeof CollectionsIdRoute
+  CollectionsThemesRoute: typeof CollectionsThemesRoute
   CollectionsIndexRoute: typeof CollectionsIndexRoute
+  CollectionsCategoryCategoryIdRoute: typeof CollectionsCategoryCategoryIdRoute
 }
 
 const CollectionsRouteChildren: CollectionsRouteChildren = {
   CollectionsIdRoute: CollectionsIdRoute,
+  CollectionsThemesRoute: CollectionsThemesRoute,
   CollectionsIndexRoute: CollectionsIndexRoute,
+  CollectionsCategoryCategoryIdRoute: CollectionsCategoryCategoryIdRoute,
 }
 
 const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
