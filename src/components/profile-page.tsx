@@ -198,6 +198,7 @@ export function ProfileEdit() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   usePrefillProfile();
+  const photoUrl = avatarUrl || user?.profileImageUrl || "";
 
   async function onSave() {
     setError(null);
@@ -229,17 +230,18 @@ export function ProfileEdit() {
       <section className="space-y-3">
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "avatar")}</h2>
         <div className="grid grid-cols-6 gap-2">
-          {avatarUrl ? (
+          {photoUrl ? (
             <button
               type="button"
-              onClick={() => setProfile({ avatarId: PHOTO_AVATAR, avatarUrl })}
+              onClick={() => setProfile({ avatarId: PHOTO_AVATAR, avatarUrl: photoUrl })}
               aria-pressed={avatarId === PHOTO_AVATAR}
+              aria-label={t(locale, "avatarPhoto")}
               className={cn(
                 "grid aspect-square place-items-center overflow-hidden rounded-full transition-colors",
                 avatarId === PHOTO_AVATAR ? "ring-2 ring-accent ring-offset-2 ring-offset-bg" : "bg-surface",
               )}
             >
-              <img src={avatarUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover" />
+              <img src={photoUrl} alt="" referrerPolicy="no-referrer" className="size-full object-cover" />
             </button>
           ) : null}
           {AVATARS.map((item) => {

@@ -201,6 +201,16 @@ const grokOAuthPlugin = authConfigured
         // `prompt=select_account`, the user always gets the account chooser
         // and can pick (or switch) which account to sign in with.
         authorizationUrlParams: { idp, prompt: "login" },
+        mapProfileToUser: (profile: Record<string, unknown>) => ({
+          name: String(profile.name ?? profile.login ?? ""),
+          email: typeof profile.email === "string" ? profile.email : undefined,
+          image:
+            (typeof profile.picture === "string" && profile.picture) ||
+            (typeof profile.image === "string" && profile.image) ||
+            (typeof profile.profile_image_url_https === "string" && profile.profile_image_url_https) ||
+            (typeof profile.profile_image_url === "string" && profile.profile_image_url) ||
+            undefined,
+        }),
       })),
     })
   : null;
