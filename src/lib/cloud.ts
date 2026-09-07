@@ -5,6 +5,7 @@ import type { Locale } from "@/lib/bible/books";
 import type { CopyFormat } from "@/lib/copy-rich";
 import type { Theme } from "@/lib/theme";
 import { getSql } from "@/lib/db";
+import { pictureFromJwt } from "@/lib/oauth-photo";
 
 export type CloudPrefs = {
   locale: Locale;
@@ -172,3 +173,25 @@ export const savePrefs = createServerFn({ method: "POST" })
     `;
     return { ok: true as const };
   });
+
+export const syncAccountPhoto = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const users = await sql<{ image: string | null }>`
+      select image from "user" where id = ${context.userId}
+    `;
+    const existing = users[0]?.image?.trim();
+    if (existing) return existing;
+    const accounts = await sql<{ idToken: string | null }>`
+      select "idToken" from account where "userId" = ${context.userId}
+    `;
+    for (const account of accounts) {
+      const picture = pictureFromJwt(account.idToken);
+      if (!picture) continue;
+      await sql`update "user" set image = ${picture} where id = ${context.userId}`;
+      return picture;
+    }
+    return null;
+  });
+

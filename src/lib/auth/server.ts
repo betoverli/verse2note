@@ -46,6 +46,7 @@ import {
   PREVIEW_CLIENT_ID,
   PREVIEW_CLIENT_SECRET,
 } from "./preview";
+import { decodeJwtPayload, extractImage, pictureFromJwt } from "@/lib/oauth-photo";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -201,15 +202,42 @@ const grokOAuthPlugin = authConfigured
         // `prompt=select_account`, the user always gets the account chooser
         // and can pick (or switch) which account to sign in with.
         authorizationUrlParams: { idp, prompt: "login" },
+        overrideUserInfo: true,
+        getUserInfo: async (tokens) => {
+          const fromJwt = decodeJwtPayload(tokens.idToken) ?? {};
+          let fromApi: Record<string, unknown> = {};
+          if (tokens.accessToken) {
+            try {
+              const response = await fetch(grokUserInfoUrl, {
+                headers: { Authorization: `Bearer ${tokens.accessToken}` },
+              });
+              if (response.ok) {
+                const body: unknown = await response.json();
+                if (body && typeof body === "object") fromApi = body as Record<string, unknown>;
+              }
+            } catch {
+              /* userinfo is best-effort; id token may still have the picture */
+            }
+          }
+          const profile = { ...fromJwt, ...fromApi };
+          const image =
+            extractImage(fromApi) ||
+            extractImage(fromJwt) ||
+            pictureFromJwt(tokens.idToken);
+          const id = String(profile.sub ?? profile.id ?? "");
+          if (!id) return null;
+          return {
+            id,
+            name: String(profile.name ?? profile.login ?? ""),
+            email: typeof profile.email === "string" ? profile.email : undefined,
+            emailVerified: Boolean(profile.email_verified),
+            image,
+          };
+        },
         mapProfileToUser: (profile: Record<string, unknown>) => ({
           name: String(profile.name ?? profile.login ?? ""),
           email: typeof profile.email === "string" ? profile.email : undefined,
-          image:
-            (typeof profile.picture === "string" && profile.picture) ||
-            (typeof profile.image === "string" && profile.image) ||
-            (typeof profile.profile_image_url_https === "string" && profile.profile_image_url_https) ||
-            (typeof profile.profile_image_url === "string" && profile.profile_image_url) ||
-            undefined,
+          image: extractImage(profile) || (typeof profile.image === "string" ? profile.image : undefined),
         }),
       })),
     })

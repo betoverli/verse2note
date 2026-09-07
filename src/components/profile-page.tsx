@@ -6,7 +6,7 @@ import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AVATARS, PHOTO_AVATAR, AvatarMark, ProfileAvatar } from "@/lib/avatars";
 import { appById } from "@/lib/bible/apps";
-import { savePrefs } from "@/lib/cloud";
+import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
 import { localeLabel, themeLabel } from "@/components/settings-panel";
 import { useAppStore } from "@/lib/store";
@@ -48,16 +48,19 @@ function usePrefillProfile() {
     if (!user) return;
     const patch: Parameters<typeof setProfile>[0] = {};
     if (!profileEmail && user.primaryEmail) patch.profileEmail = user.primaryEmail;
-    if (user.profileImageUrl) {
-      patch.avatarUrl = user.profileImageUrl;
-      if (!avatarUrl) patch.avatarId = PHOTO_AVATAR;
-    }
+    const photo = user.profileImageUrl;
+    if (photo) patch.avatarUrl = photo;
     if (!firstName && user.displayName) {
       const [given, ...rest] = user.displayName.split(" ");
       patch.firstName = given ?? "";
       if (!lastName) patch.lastName = rest.join(" ");
     }
     if (Object.keys(patch).length) setProfile(patch);
+    if (!photo && !avatarUrl) {
+      void syncAccountPhoto().then((url) => {
+        if (url) setProfile({ avatarUrl: url });
+      });
+    }
   }, [user, profileEmail, avatarUrl, firstName, lastName, setProfile]);
 }
 
