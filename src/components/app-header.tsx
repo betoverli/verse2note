@@ -5,7 +5,6 @@ import { t } from "@/lib/i18n";
 import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { ProfileButton } from "@/components/profile-button";
 
 type BackTo =
   | "/"
@@ -56,9 +55,7 @@ export function AppHeader({
                 </Link>
               )}
             </Button>
-          ) : (
-            <ProfileButton />
-          )}
+          ) : null}
         </div>
         <h1 className="truncate px-1 text-center text-[17px] font-semibold tracking-tight text-fg">
           {title}

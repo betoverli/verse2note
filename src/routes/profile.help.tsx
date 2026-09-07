@@ -1,19 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
-import { ProfileView } from "@/components/profile-page";
+import { HelpSettings } from "@/components/settings-panel";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
-export const Route = createFileRoute("/profile/")({
-  component: ProfileIndex,
+export const Route = createFileRoute("/profile/help")({
+  component: ProfileHelp,
 });
 
-function ProfileIndex() {
+function ProfileHelp() {
   const locale = useAppStore((s) => s.locale);
   return (
     <>
-      <AppHeader title={t(locale, "profile")} />
-      <ProfileView />
+      <AppHeader title={t(locale, "aboutTitle")} backTo="/profile" />
+      <HelpSettings />
     </>
   );
 }

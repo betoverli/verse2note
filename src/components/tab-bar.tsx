@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Library, Settings2 } from "lucide-react";
+import { BookOpen, CalendarDays, Library, User } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -18,13 +18,17 @@ const TABS = [
     icon: CalendarDays,
     match: (path: string) => path === "/reading" || path.startsWith("/reading/"),
   },
-  { to: "/settings" as const, key: "settings" as const, icon: Settings2, match: (path: string) => path === "/settings" },
+  {
+    to: "/profile" as const,
+    key: "profile" as const,
+    icon: User,
+    match: (path: string) => path === "/profile" || path.startsWith("/profile/"),
+  },
 ];
 
 export function showTabBar(pathname: string) {
   return (
     pathname === "/app" ||
-    pathname === "/settings" ||
     pathname === "/profile" ||
     pathname.startsWith("/profile/") ||
     pathname.startsWith("/collections") ||
@@ -55,7 +59,7 @@ export function TabBar() {
                     ? "collections"
                     : tab.to === "/reading"
                       ? "reading"
-                      : tab.to === "/settings"
+                      : tab.to === "/profile"
                         ? "settings"
                         : undefined
                 }

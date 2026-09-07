@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { BookOpen, CircleHelp, Globe, Sun } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AVATARS, AvatarMark } from "@/lib/avatars";
+import { appById } from "@/lib/bible/apps";
 import { savePrefs } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
+import { localeLabel, themeLabel } from "@/components/settings-panel";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +54,63 @@ function usePrefillProfile() {
   }, [user, profileEmail, firstName, lastName, setProfile]);
 }
 
+function SettingCards() {
+  const locale = useAppStore((s) => s.locale);
+  const theme = useAppStore((s) => s.theme);
+  const appId = useAppStore((s) => s.appId);
+  const app = appById(appId);
+  const cards = [
+    {
+      to: "/profile/theme" as const,
+      icon: Sun,
+      title: t(locale, "appearance"),
+      subtitle: themeLabel(locale, theme),
+    },
+    {
+      to: "/profile/bible" as const,
+      icon: BookOpen,
+      title: t(locale, "bibleApp"),
+      subtitle: app?.names[locale] ?? t(locale, "bibleApp"),
+    },
+    {
+      to: "/profile/language" as const,
+      icon: Globe,
+      title: t(locale, "language"),
+      subtitle: localeLabel(locale),
+    },
+    {
+      to: "/profile/help" as const,
+      icon: CircleHelp,
+      title: t(locale, "aboutTitle"),
+      subtitle: t(locale, "helpTitle"),
+    },
+  ];
+
+  return (
+    <ul className="grid grid-cols-2 gap-3">
+      {cards.map((card) => {
+        const Icon = card.icon;
+        return (
+          <li key={card.to}>
+            <Link
+              to={card.to}
+              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-lg bg-surface p-4 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+            >
+              <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+                <Icon className="size-5" />
+              </span>
+              <span>
+                <span className="block text-sm font-medium leading-snug">{card.title}</span>
+                <span className="mt-1 block text-xs text-muted">{card.subtitle}</span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function ProfileView() {
   const locale = useAppStore((s) => s.locale);
   const avatarId = useAppStore((s) => s.avatarId);
@@ -61,44 +121,44 @@ export function ProfileView() {
   const [signingOut, setSigningOut] = useState(false);
   const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
   usePrefillProfile();
-
   const name = [firstName, lastName].filter(Boolean).join(" ");
 
-  if (isPending) {
-    return <div className="h-40 rounded-md bg-surface" aria-hidden="true" />;
-  }
-
-  if (!user) {
-    return (
-      <div className="flex flex-col gap-6">
-        <p className="max-w-md text-pretty text-sm leading-relaxed text-muted">{t(locale, "profileGuest")}</p>
-        <Button className="w-full" asChild>
-          <Link to="/login" search={{ create: false }}>
-            {t(locale, "signIn")}
-          </Link>
-        </Button>
-        <Button variant="secondary" className="w-full" asChild>
-          <Link to="/login" search={{ create: true }}>
-            {t(locale, "createAccount")}
-          </Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col items-center gap-6 pt-4">
-      <AvatarMark id={avatarId} className="size-24 bg-elevated" iconClassName="size-10" />
-      {handle ? (
-        <p className="font-display text-xl italic text-fg">@{handle}</p>
+    <div className="flex flex-col gap-8">
+      {isPending ? (
+        <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
+      ) : user ? (
+        <section className="flex flex-col items-center gap-3 pt-2">
+          <AvatarMark id={avatarId} className="size-20 bg-elevated" iconClassName="size-8" />
+          {handle ? (
+            <p className="font-display text-xl italic text-fg">@{handle}</p>
+          ) : (
+            <p className="text-sm text-muted">{t(locale, "handleMissing")}</p>
+          )}
+          {name ? <p className="text-sm text-muted">{name}</p> : null}
+          <Button variant="secondary" className="w-full" asChild>
+            <Link to="/profile/edit">{t(locale, "editProfile")}</Link>
+          </Button>
+        </section>
       ) : (
-        <p className="text-sm text-muted">{t(locale, "handleMissing")}</p>
+        <section className="flex flex-col gap-3">
+          <p className="text-pretty text-sm leading-relaxed text-muted">{t(locale, "profileGuest")}</p>
+          <Button className="w-full" asChild>
+            <Link to="/login" search={{ create: false }}>
+              {t(locale, "signIn")}
+            </Link>
+          </Button>
+          <Button variant="secondary" className="w-full" asChild>
+            <Link to="/login" search={{ create: true }}>
+              {t(locale, "createAccount")}
+            </Link>
+          </Button>
+        </section>
       )}
-      {name ? <p className="text-base text-fg">{name}</p> : null}
-      <Button className="w-full" asChild>
-        <Link to="/profile/edit">{t(locale, "editProfile")}</Link>
-      </Button>
-      {authEnabled && !gateSession ? (
+
+      <SettingCards />
+
+      {user && authEnabled && !gateSession ? (
         <Button
           variant="ghost"
           className="w-full text-muted"

@@ -26,7 +26,11 @@ import { Route as CollectionsIndexRouteImport } from './routes/collections.index
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as ProfileBibleRouteImport } from './routes/profile.bible'
 import { Route as ProfileEditRouteImport } from './routes/profile.edit'
+import { Route as ProfileHelpRouteImport } from './routes/profile.help'
+import { Route as ProfileLanguageRouteImport } from './routes/profile.language'
+import { Route as ProfileThemeRouteImport } from './routes/profile.theme'
 import { Route as ReadingIndexRouteImport } from './routes/reading.index'
 import { Route as ReadingIdRouteImport } from './routes/reading.$id'
 import { Route as ReadingAllRouteImport } from './routes/reading.all'
@@ -119,9 +123,29 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProfileRoute,
 } as any)
+const ProfileBibleRoute = ProfileBibleRouteImport.update({
+  id: '/bible',
+  path: '/bible',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ProfileEditRoute = ProfileEditRouteImport.update({
   id: '/edit',
   path: '/edit',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileHelpRoute = ProfileHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileLanguageRoute = ProfileLanguageRouteImport.update({
+  id: '/language',
+  path: '/language',
+  getParentRoute: () => ProfileRoute,
+} as any)
+const ProfileThemeRoute = ProfileThemeRouteImport.update({
+  id: '/theme',
+  path: '/theme',
   getParentRoute: () => ProfileRoute,
 } as any)
 const ReadingIndexRoute = ReadingIndexRouteImport.update({
@@ -173,7 +197,11 @@ export interface FileRoutesByFullPath {
   '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
+  '/profile/help': typeof ProfileHelpRoute
+  '/profile/language': typeof ProfileLanguageRoute
+  '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
@@ -196,7 +224,11 @@ export interface FileRoutesByTo {
   '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
+  '/profile/help': typeof ProfileHelpRoute
+  '/profile/language': typeof ProfileLanguageRoute
+  '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
   '/collections': typeof CollectionsIndexRoute
@@ -223,7 +255,11 @@ export interface FileRoutesById {
   '/api/plans': typeof ApiPlansRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
+  '/profile/help': typeof ProfileHelpRoute
+  '/profile/language': typeof ProfileLanguageRoute
+  '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
@@ -251,7 +287,11 @@ export interface FileRouteTypes {
     | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
+    | '/profile/bible'
     | '/profile/edit'
+    | '/profile/help'
+    | '/profile/language'
+    | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
     | '/collections/'
@@ -274,7 +314,11 @@ export interface FileRouteTypes {
     | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
+    | '/profile/bible'
     | '/profile/edit'
+    | '/profile/help'
+    | '/profile/language'
+    | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
     | '/collections'
@@ -300,7 +344,11 @@ export interface FileRouteTypes {
     | '/api/plans'
     | '/collections/$id'
     | '/collections/themes'
+    | '/profile/bible'
     | '/profile/edit'
+    | '/profile/help'
+    | '/profile/language'
+    | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
     | '/collections/'
@@ -449,11 +497,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof ProfileRoute
     }
+    '/profile/bible': {
+      id: '/profile/bible'
+      path: '/bible'
+      fullPath: '/profile/bible'
+      preLoaderRoute: typeof ProfileBibleRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/profile/edit': {
       id: '/profile/edit'
       path: '/edit'
       fullPath: '/profile/edit'
       preLoaderRoute: typeof ProfileEditRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/help': {
+      id: '/profile/help'
+      path: '/help'
+      fullPath: '/profile/help'
+      preLoaderRoute: typeof ProfileHelpRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/language': {
+      id: '/profile/language'
+      path: '/language'
+      fullPath: '/profile/language'
+      preLoaderRoute: typeof ProfileLanguageRouteImport
+      parentRoute: typeof ProfileRoute
+    }
+    '/profile/theme': {
+      id: '/profile/theme'
+      path: '/theme'
+      fullPath: '/profile/theme'
+      preLoaderRoute: typeof ProfileThemeRouteImport
       parentRoute: typeof ProfileRoute
     }
     '/reading/': {
@@ -520,12 +596,20 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
 )
 
 interface ProfileRouteChildren {
+  ProfileBibleRoute: typeof ProfileBibleRoute
   ProfileEditRoute: typeof ProfileEditRoute
+  ProfileHelpRoute: typeof ProfileHelpRoute
+  ProfileLanguageRoute: typeof ProfileLanguageRoute
+  ProfileThemeRoute: typeof ProfileThemeRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileBibleRoute: ProfileBibleRoute,
   ProfileEditRoute: ProfileEditRoute,
+  ProfileHelpRoute: ProfileHelpRoute,
+  ProfileLanguageRoute: ProfileLanguageRoute,
+  ProfileThemeRoute: ProfileThemeRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
 

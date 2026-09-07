@@ -1,6 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Monitor, Moon, Sun } from "lucide-react";
 import type { Locale } from "@/lib/bible/books";
 import { appById, appHasOptions, appIcon } from "@/lib/bible/apps";
 import { TRANSLATIONS } from "@/lib/bible/translations";
@@ -8,6 +7,7 @@ import { clipboardDropsHtmlLinks, type CopyFormat } from "@/lib/copy-rich";
 import { t, type I18nKey } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import type { Theme } from "@/lib/theme";
+import { AboutPage } from "@/components/about-page";
 import { BibleAppList } from "@/components/bible-app-list";
 import { BibleAppOptions } from "@/components/bible-app-options";
 import { Choice } from "@/components/choice";
@@ -67,19 +67,68 @@ function appSummary(
   return parts.join(" · ");
 }
 
-export function SettingsPanel() {
+export function LanguageSettings() {
   const locale = useAppStore((s) => s.locale);
   const setLocale = useAppStore((s) => s.setLocale);
+  return (
+    <Section title={t(locale, "language")}>
+      <div className="grid grid-cols-3 gap-2">
+        {LOCALES.map((item) => (
+          <Choice
+            key={item}
+            active={locale === item}
+            title={item.toUpperCase()}
+            subtitle={t(locale, LOCALE_LABEL[item])}
+            onClick={() => setLocale(item)}
+          />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+export function AppearanceSettings() {
+  const locale = useAppStore((s) => s.locale);
+  const theme = useAppStore((s) => s.theme);
+  const setTheme = useAppStore((s) => s.setTheme);
+  return (
+    <Section title={t(locale, "appearance")} lead={theme === "system" ? t(locale, "themeSystemHint") : undefined}>
+      <div className="grid grid-cols-3 gap-2">
+        {THEMES.map((item) => {
+          const Icon = THEME_ICON[item];
+          const active = theme === item;
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setTheme(item)}
+              aria-pressed={active}
+              className={cn(
+                "flex min-h-20 w-full flex-col items-center justify-center gap-2 rounded-md px-2 py-3 text-center transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.99]",
+                active
+                  ? "bg-accent text-accent-fg"
+                  : "bg-surface text-fg shadow-[var(--shadow-border)] hover:bg-elevated",
+              )}
+            >
+              <Icon className="size-5" />
+              <span className="text-sm font-medium">{t(locale, THEME_LABEL[item])}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Section>
+  );
+}
+
+export function BibleSettings() {
+  const locale = useAppStore((s) => s.locale);
   const appId = useAppStore((s) => s.appId);
   const setAppId = useAppStore((s) => s.setAppId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
   const copyFormat = useAppStore((s) => s.copyFormat);
   const setCopyFormat = useAppStore((s) => s.setCopyFormat);
-  const theme = useAppStore((s) => s.theme);
-  const setTheme = useAppStore((s) => s.setTheme);
   const [appView, setAppView] = useState<"list" | "options">("list");
-
   const app = appById(appId);
 
   useEffect(() => {
@@ -121,50 +170,7 @@ export function SettingsPanel() {
   }
 
   return (
-    <div className="flex flex-col gap-10">
-      <Section title={t(locale, "language")}>
-        <div className="grid grid-cols-3 gap-2">
-          {LOCALES.map((item) => (
-            <Choice
-              key={item}
-              active={locale === item}
-              title={item.toUpperCase()}
-              subtitle={t(locale, LOCALE_LABEL[item])}
-              onClick={() => setLocale(item)}
-            />
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        title={t(locale, "appearance")}
-        lead={theme === "system" ? t(locale, "themeSystemHint") : undefined}
-      >
-        <div className="grid grid-cols-3 gap-2">
-          {THEMES.map((item) => {
-            const Icon = THEME_ICON[item];
-            const active = theme === item;
-            return (
-              <button
-                key={item}
-                type="button"
-                onClick={() => setTheme(item)}
-                aria-pressed={active}
-                className={cn(
-                  "flex min-h-20 w-full flex-col items-center justify-center gap-2 rounded-md px-2 py-3 text-center transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.99]",
-                  active
-                    ? "bg-accent text-accent-fg"
-                    : "bg-surface text-fg shadow-[var(--shadow-border)] hover:bg-elevated",
-                )}
-              >
-                <Icon className="size-5" />
-                <span className="text-sm font-medium">{t(locale, THEME_LABEL[item])}</span>
-              </button>
-            );
-          })}
-        </div>
-      </Section>
-
+    <div className="flex flex-col gap-8">
       <Section title={t(locale, "bibleApp")}>
         <BibleAppList
           locale={locale}
@@ -173,37 +179,31 @@ export function SettingsPanel() {
           summary={appSummary(locale, appId, translationId, preferNative)}
         />
       </Section>
-
       <Section title={t(locale, "copyFormat")} lead={clipboardDropsHtmlLinks() ? t(locale, "copyAndroidHint") : undefined}>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {COPY_FORMATS.map((item) => (
-            <Choice
-              key={item}
-              active={copyFormat === item}
-              title={t(locale, item)}
-              onClick={() => setCopyFormat(item)}
-            />
+            <Choice key={item} active={copyFormat === item} title={t(locale, item)} onClick={() => setCopyFormat(item)} />
           ))}
         </div>
       </Section>
-
-      <Section title={t(locale, "install")} lead={t(locale, "installHint")} />
-
-      <Link
-        to="/about"
-        className="flex min-h-11 items-center justify-between rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
-      >
-        <span className="text-sm font-medium">{t(locale, "aboutTitle")}</span>
-        <ChevronRight className="size-4 text-muted" />
-      </Link>
-
-      <Link
-        to="/for-ai"
-        className="flex min-h-11 items-center justify-between rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
-      >
-        <span className="text-sm font-medium">{t(locale, "forAiTitle")}</span>
-        <ChevronRight className="size-4 text-muted" />
-      </Link>
     </div>
   );
+}
+
+export function HelpSettings() {
+  const locale = useAppStore((s) => s.locale);
+  return (
+    <div className="flex flex-col gap-8">
+      <Section title={t(locale, "install")} lead={t(locale, "installHint")} />
+      <AboutPage />
+    </div>
+  );
+}
+
+export function themeLabel(locale: Locale, theme: Theme) {
+  return t(locale, THEME_LABEL[theme]);
+}
+
+export function localeLabel(locale: Locale) {
+  return t(locale, LOCALE_LABEL[locale]);
 }
