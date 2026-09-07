@@ -2,7 +2,7 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
-import type { Collection } from "@/lib/bible/collections";
+import { SNIPPET_SOURCES, type Collection } from "@/lib/bible/collections";
 import { bookById, type Locale } from "@/lib/bible/books";
 import { formatPassage, type Passage } from "@/lib/bible/passage";
 import { translationById } from "@/lib/bible/translations";
@@ -83,7 +83,12 @@ export function CollectionDetail({ collection }: { collection: Collection }) {
               key={key}
               className="flex min-h-11 items-center gap-1 rounded-md bg-surface shadow-[var(--shadow-border)]"
             >
-              <p className="min-w-0 flex-1 px-4 py-3 font-display text-lg italic text-fg">{item.label}</p>
+              <div className="min-w-0 flex-1 px-4 py-3">
+                <p className="font-display text-lg italic text-fg">{item.label}</p>
+                {passage.snippet[locale] ? (
+                  <p className="mt-1 text-xs leading-relaxed text-muted">{passage.snippet[locale]}</p>
+                ) : null}
+              </div>
               <Button
                 size="icon"
                 variant="ghost"
@@ -105,6 +110,7 @@ export function CollectionDetail({ collection }: { collection: Collection }) {
         {copied === "all" ? <Check /> : <Copy />}
         {copied === "all" ? t(locale, "copiedCollection") : t(locale, "copyCollection")}
       </Button>
+      <p className="text-center text-xs leading-relaxed text-subtle">{t(locale, "snippetNote")} {SNIPPET_SOURCES[locale]}</p>
     </div>
   );
 }

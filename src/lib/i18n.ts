@@ -63,7 +63,10 @@ const strings = {
     refs: "refs",
     collections: "Coleções",
     collectionsLead:
-      "Listas curtas por tema, para reunião. Copie uma passagem ou a lista inteira — o nome já vai com o link.",
+      "Mais de cem listas por tema. Busque, abra uma referência ou copie a lista. Os trechos são só o começo do versículo, em versão de domínio público.",
+    collectionsSearch: "Buscar tema ou passagem",
+    collectionsEmpty: "Nenhuma coleção encontrada.",
+    snippetNote: "Trecho (não o versículo inteiro):",
     copyCollection: "Copiar lista",
     copiedCollection: "Lista copiada",
     copyList: "Copiar lista",
@@ -97,7 +100,7 @@ const strings = {
     helpLimits:
       "Keep e WhatsApp no Android não colam o link azul. Use o ícone de compartilhar, ou cole no Docs / Word.",
     helpCollections:
-      "Coleções são listas prontas por tema. Abra uma, copie uma referência ou a lista inteira.",
+      "Coleções são listas prontas por tema (com busca). Abra uma, copie uma referência ou a lista inteira. O trecho é só o começo do versículo, em versão livre.",
     donateTitle: "Quer ajudar?",
     donateLead: "O Verse2Note é gratuito e sem anúncio. Se ele te serve, um café ajuda a manter o projeto.",
     donateCta: "Apoiar",
@@ -194,7 +197,10 @@ const strings = {
     refs: "refs",
     collections: "Collections",
     collectionsLead:
-      "Short lists by theme, for a meeting. Copy one passage or the whole list — the name is already the link.",
+      "A hundred lists by theme. Search, open a reference, or copy the list. Snippets are only the start of the verse, from a public-domain translation.",
+    collectionsSearch: "Search a theme or passage",
+    collectionsEmpty: "No collections found.",
+    snippetNote: "Snippet (not the full verse):",
     copyCollection: "Copy list",
     copiedCollection: "List copied",
     copyList: "Copy list",
@@ -228,7 +234,7 @@ const strings = {
     helpLimits:
       "Keep and WhatsApp on Android will not paste a blue link. Use the share icon, or paste into Docs / Word.",
     helpCollections:
-      "Collections are ready-made lists by theme. Open one, copy a reference or the whole list.",
+      "Collections are ready-made lists by theme (with search). Open one, copy a reference or the whole list. The snippet is only the start of the verse, from a free translation.",
     donateTitle: "Want to help?",
     donateLead: "Verse2Note is free and has no ads. If it serves you, a coffee helps keep it going.",
     donateCta: "Support",
@@ -325,7 +331,10 @@ const strings = {
     refs: "refs",
     collections: "Colecciones",
     collectionsLead:
-      "Listas cortas por tema, para una reunión. Copia un pasaje o la lista entera — el nombre ya lleva el enlace.",
+      "Más de cien listas por tema. Busca, abre una referencia o copia la lista. Los fragmentos son solo el comienzo del versículo, en una versión de dominio público.",
+    collectionsSearch: "Buscar tema o pasaje",
+    collectionsEmpty: "Ninguna colección encontrada.",
+    snippetNote: "Fragmento (no el versículo entero):",
     copyCollection: "Copiar lista",
     copiedCollection: "Lista copiada",
     copyList: "Copiar lista",
@@ -359,7 +368,7 @@ const strings = {
     helpLimits:
       "Keep y WhatsApp en Android no pegan el enlace azul. Usa el icono de compartir, o pega en Docs / Word.",
     helpCollections:
-      "Las colecciones son listas listas por tema. Abre una, copia una referencia o la lista entera.",
+      "Las colecciones son listas por tema (con búsqueda). Abre una, copia una referencia o la lista entera. El fragmento es solo el comienzo del versículo, en una versión libre.",
     donateTitle: "¿Quieres ayudar?",
     donateLead: "Verse2Note es gratis y sin anuncios. Si te sirve, un café ayuda a mantener el proyecto.",
     donateCta: "Apoyar",
