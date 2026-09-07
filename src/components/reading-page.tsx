@@ -57,23 +57,26 @@ export function ReadingPage() {
               <PlanList items={mine} />
             </section>
           ) : null}
-          <CategoryGrid items={categories} />
-          <Link
-            to="/reading/all"
-            className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
-          >
-            <span className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
-                <CalendarDays className="size-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-medium">{t(locale, "allPlans")}</span>
-                <span className="mt-0.5 block text-xs text-muted">
-                  {PLAN_TOTAL} {t(locale, "plans")}
+          <section className="space-y-3">
+            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "browsePlans")}</h2>
+            <CategoryGrid items={categories} />
+            <Link
+              to="/reading/all"
+              className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+                  <CalendarDays className="size-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">{t(locale, "allPlans")}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {PLAN_TOTAL} {t(locale, "plans")}
+                  </span>
                 </span>
               </span>
-            </span>
-          </Link>
+            </Link>
+          </section>
         </>
       )}
     </div>
