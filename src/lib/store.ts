@@ -28,6 +28,7 @@ type AppState = {
   step: Step;
   recent: Passage[];
   list: Passage[];
+  planProgress: Record<string, number[]>;
   setLocale: (locale: Locale) => void;
   setAppId: (id: string) => void;
   setTranslationId: (id: string) => void;
@@ -47,6 +48,8 @@ type AppState = {
   addToList: (passage: Passage) => boolean;
   removeFromList: (passage: Passage) => void;
   clearList: () => void;
+  togglePlanDay: (planId: string, day: number) => void;
+  resetPlanProgress: (planId: string) => void;
   resetSelection: () => void;
   passage: () => Passage | null;
 };
@@ -70,6 +73,7 @@ export const useAppStore = create<AppState>()(
       step: "book",
       recent: [],
       list: [],
+      planProgress: {},
       setLocale: (locale) => {
         const available = translationsFor(locale);
         const current = get().translationId;
@@ -144,6 +148,15 @@ export const useAppStore = create<AppState>()(
       removeFromList: (passage) =>
         set({ list: get().list.filter((item) => !samePassage(item, passage)) }),
       clearList: () => set({ list: [] }),
+      togglePlanDay: (planId, day) => {
+        const current = get().planProgress[planId] ?? [];
+        const next = current.includes(day) ? current.filter((item) => item !== day) : [...current, day];
+        set({ planProgress: { ...get().planProgress, [planId]: next } });
+      },
+      resetPlanProgress: (planId) => {
+        const { [planId]: _removed, ...rest } = get().planProgress;
+        set({ planProgress: rest });
+      },
       resetSelection: () =>
         set({
           bookId: null,
@@ -172,6 +185,7 @@ export const useAppStore = create<AppState>()(
         tourDone: state.tourDone,
         recent: state.recent,
         list: state.list,
+        planProgress: state.planProgress,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
@@ -180,6 +194,8 @@ export const useAppStore = create<AppState>()(
           ...saved,
           onboarded: typeof saved.onboarded === "boolean" ? saved.onboarded : Boolean(persisted),
           tourDone: saved.tourDone === true,
+          planProgress:
+            saved.planProgress && typeof saved.planProgress === "object" ? saved.planProgress : {},
           theme: saved.theme ?? "system",
         };
       },

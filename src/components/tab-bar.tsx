@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, Library, Settings2 } from "lucide-react";
+import { BookOpen, CalendarDays, Library, Settings2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -12,11 +12,22 @@ const TABS = [
     icon: Library,
     match: (path: string) => path === "/collections" || path.startsWith("/collections/"),
   },
+  {
+    to: "/reading" as const,
+    key: "reading" as const,
+    icon: CalendarDays,
+    match: (path: string) => path === "/reading" || path.startsWith("/reading/"),
+  },
   { to: "/settings" as const, key: "settings" as const, icon: Settings2, match: (path: string) => path === "/settings" },
 ];
 
 export function showTabBar(pathname: string) {
-  return pathname === "/app" || pathname === "/settings" || pathname.startsWith("/collections");
+  return (
+    pathname === "/app" ||
+    pathname === "/settings" ||
+    pathname.startsWith("/collections") ||
+    pathname.startsWith("/reading")
+  );
 }
 
 export function TabBar() {
@@ -37,7 +48,15 @@ export function TabBar() {
               <Link
                 to={tab.to}
                 aria-current={active ? "page" : undefined}
-                data-tour={tab.to === "/collections" ? "collections" : tab.to === "/settings" ? "settings" : undefined}
+                data-tour={
+                  tab.to === "/collections"
+                    ? "collections"
+                    : tab.to === "/reading"
+                      ? "reading"
+                      : tab.to === "/settings"
+                        ? "settings"
+                        : undefined
+                }
                 className={cn(
                   "flex min-h-12 flex-col items-center justify-center gap-0.5 pt-1 text-[10px] font-medium",
                   active ? "text-fg" : "text-subtle",

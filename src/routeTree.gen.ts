@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ForAiRouteImport } from './routes/for-ai'
+import { Route as ReadingRouteImport } from './routes/reading'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
 import { Route as ApiLinkRouteImport } from './routes/api/link'
@@ -21,7 +22,11 @@ import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
+import { Route as ReadingIndexRouteImport } from './routes/reading.index'
+import { Route as ReadingIdRouteImport } from './routes/reading.$id'
+import { Route as ReadingAllRouteImport } from './routes/reading.all'
 import { Route as CollectionsCategoryCategoryIdRouteImport } from './routes/collections.category.$categoryId'
+import { Route as ReadingCategoryCategoryIdRouteImport } from './routes/reading.category.$categoryId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,6 +51,11 @@ const CollectionsRoute = CollectionsRouteImport.update({
 const ForAiRoute = ForAiRouteImport.update({
   id: '/for-ai',
   path: '/for-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReadingRoute = ReadingRouteImport.update({
+  id: '/reading',
+  path: '/reading',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -83,11 +93,32 @@ const CollectionsThemesRoute = CollectionsThemesRouteImport.update({
   path: '/themes',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const ReadingIndexRoute = ReadingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ReadingRoute,
+} as any)
+const ReadingIdRoute = ReadingIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ReadingRoute,
+} as any)
+const ReadingAllRoute = ReadingAllRouteImport.update({
+  id: '/all',
+  path: '/all',
+  getParentRoute: () => ReadingRoute,
+} as any)
 const CollectionsCategoryCategoryIdRoute =
   CollectionsCategoryCategoryIdRouteImport.update({
     id: '/category/$categoryId',
     path: '/category/$categoryId',
     getParentRoute: () => CollectionsRoute,
+  } as any)
+const ReadingCategoryCategoryIdRoute =
+  ReadingCategoryCategoryIdRouteImport.update({
+    id: '/category/$categoryId',
+    path: '/category/$categoryId',
+    getParentRoute: () => ReadingRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -96,14 +127,19 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/reading/$id': typeof ReadingIdRoute
+  '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/reading/': typeof ReadingIndexRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
+  '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -116,8 +152,12 @@ export interface FileRoutesByTo {
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/reading/$id': typeof ReadingIdRoute
+  '/reading/all': typeof ReadingAllRoute
   '/collections': typeof CollectionsIndexRoute
+  '/reading': typeof ReadingIndexRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
+  '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,14 +166,19 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/reading/$id': typeof ReadingIdRoute
+  '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/reading/': typeof ReadingIndexRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
+  '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,14 +188,19 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/reading'
     | '/settings'
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
     | '/collections/themes'
+    | '/reading/$id'
+    | '/reading/all'
     | '/collections/'
+    | '/reading/'
     | '/collections/category/$categoryId'
+    | '/reading/category/$categoryId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -163,8 +213,12 @@ export interface FileRouteTypes {
     | '/api/mcp'
     | '/collections/$id'
     | '/collections/themes'
+    | '/reading/$id'
+    | '/reading/all'
     | '/collections'
+    | '/reading'
     | '/collections/category/$categoryId'
+    | '/reading/category/$categoryId'
   id:
     | '__root__'
     | '/'
@@ -172,14 +226,19 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/reading'
     | '/settings'
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/collections/$id'
     | '/collections/themes'
+    | '/reading/$id'
+    | '/reading/all'
     | '/collections/'
+    | '/reading/'
     | '/collections/category/$categoryId'
+    | '/reading/category/$categoryId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -188,6 +247,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ForAiRoute: typeof ForAiRoute
+  ReadingRoute: typeof ReadingRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   ApiCollectionsRoute: typeof ApiCollectionsRoute
   ApiLinkRoute: typeof ApiLinkRoute
@@ -229,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/for-ai'
       fullPath: '/for-ai'
       preLoaderRoute: typeof ForAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reading': {
+      id: '/reading'
+      path: '/reading'
+      fullPath: '/reading'
+      preLoaderRoute: typeof ReadingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -280,12 +347,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsThemesRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/reading/': {
+      id: '/reading/'
+      path: '/'
+      fullPath: '/reading/'
+      preLoaderRoute: typeof ReadingIndexRouteImport
+      parentRoute: typeof ReadingRoute
+    }
+    '/reading/$id': {
+      id: '/reading/$id'
+      path: '/$id'
+      fullPath: '/reading/$id'
+      preLoaderRoute: typeof ReadingIdRouteImport
+      parentRoute: typeof ReadingRoute
+    }
+    '/reading/all': {
+      id: '/reading/all'
+      path: '/all'
+      fullPath: '/reading/all'
+      preLoaderRoute: typeof ReadingAllRouteImport
+      parentRoute: typeof ReadingRoute
+    }
     '/collections/category/$categoryId': {
       id: '/collections/category/$categoryId'
       path: '/category/$categoryId'
       fullPath: '/collections/category/$categoryId'
       preLoaderRoute: typeof CollectionsCategoryCategoryIdRouteImport
       parentRoute: typeof CollectionsRoute
+    }
+    '/reading/category/$categoryId': {
+      id: '/reading/category/$categoryId'
+      path: '/category/$categoryId'
+      fullPath: '/reading/category/$categoryId'
+      preLoaderRoute: typeof ReadingCategoryCategoryIdRouteImport
+      parentRoute: typeof ReadingRoute
     }
   }
 }
@@ -308,12 +403,30 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
   CollectionsRouteChildren,
 )
 
+interface ReadingRouteChildren {
+  ReadingIdRoute: typeof ReadingIdRoute
+  ReadingAllRoute: typeof ReadingAllRoute
+  ReadingIndexRoute: typeof ReadingIndexRoute
+  ReadingCategoryCategoryIdRoute: typeof ReadingCategoryCategoryIdRoute
+}
+
+const ReadingRouteChildren: ReadingRouteChildren = {
+  ReadingIdRoute: ReadingIdRoute,
+  ReadingAllRoute: ReadingAllRoute,
+  ReadingIndexRoute: ReadingIndexRoute,
+  ReadingCategoryCategoryIdRoute: ReadingCategoryCategoryIdRoute,
+}
+
+const ReadingRouteWithChildren =
+  ReadingRoute._addFileChildren(ReadingRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AppRoute: AppRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   ForAiRoute: ForAiRoute,
+  ReadingRoute: ReadingRouteWithChildren,
   SettingsRoute: SettingsRoute,
   ApiCollectionsRoute: ApiCollectionsRoute,
   ApiLinkRoute: ApiLinkRoute,
