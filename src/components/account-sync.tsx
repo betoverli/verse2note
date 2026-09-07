@@ -15,6 +15,11 @@ function snapshot(): CloudPrefs {
     theme: s.theme,
     activePlans: s.activePlans,
     planProgress: s.planProgress,
+    avatarId: s.avatarId,
+    handle: s.handle,
+    firstName: s.firstName,
+    lastName: s.lastName,
+    profileEmail: s.profileEmail,
   };
 }
 
@@ -36,7 +41,10 @@ export function AccountSync() {
         const merged = mergePrefs(snapshot(), cloud);
         useAppStore.getState().applyCloud(merged);
         last.current = JSON.stringify(merged);
-        await savePrefs({ data: merged });
+        const saved = await savePrefs({ data: merged });
+        if (saved && "error" in saved && saved.error === "handle") {
+          /* keep local handle; profile page shows the conflict */
+        }
         ready.current = true;
       } catch {
         ready.current = true;
@@ -62,6 +70,11 @@ export function AccountSync() {
         theme: state.theme,
         activePlans: state.activePlans,
         planProgress: state.planProgress,
+        avatarId: state.avatarId,
+        handle: state.handle,
+        firstName: state.firstName,
+        lastName: state.lastName,
+        profileEmail: state.profileEmail,
       });
       if (next === last.current) return;
       last.current = next;

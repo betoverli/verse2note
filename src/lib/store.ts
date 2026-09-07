@@ -31,6 +31,11 @@ type AppState = {
   list: Passage[];
   planProgress: Record<string, number[]>;
   activePlans: string[];
+  avatarId: string;
+  handle: string;
+  firstName: string;
+  lastName: string;
+  profileEmail: string;
   setLocale: (locale: Locale) => void;
   setAppId: (id: string) => void;
   setTranslationId: (id: string) => void;
@@ -56,6 +61,13 @@ type AppState = {
   startPlan: (planId: string) => void;
   stopPlan: (planId: string) => void;
   applyCloud: (prefs: CloudPrefs) => void;
+  setProfile: (profile: {
+    avatarId?: string;
+    handle?: string;
+    firstName?: string;
+    lastName?: string;
+    profileEmail?: string;
+  }) => void;
   resetSelection: () => void;
   passage: () => Passage | null;
 };
@@ -81,6 +93,11 @@ export const useAppStore = create<AppState>()(
       list: [],
       planProgress: {},
       activePlans: [],
+      avatarId: "book",
+      handle: "",
+      firstName: "",
+      lastName: "",
+      profileEmail: "",
       setLocale: (locale) => {
         const available = translationsFor(locale);
         const current = get().translationId;
@@ -191,6 +208,11 @@ export const useAppStore = create<AppState>()(
           theme: prefs.theme,
           activePlans: prefs.activePlans,
           planProgress: prefs.planProgress,
+          avatarId: prefs.avatarId,
+          handle: prefs.handle,
+          firstName: prefs.firstName,
+          lastName: prefs.lastName,
+          profileEmail: prefs.profileEmail,
           onboarded: true,
           tourDone: true,
         });
@@ -199,6 +221,7 @@ export const useAppStore = create<AppState>()(
           applyTheme(prefs.theme);
         }
       },
+      setProfile: (profile) => set(profile),
       resetSelection: () =>
         set({
           bookId: null,
@@ -229,6 +252,11 @@ export const useAppStore = create<AppState>()(
         list: state.list,
         planProgress: state.planProgress,
         activePlans: state.activePlans,
+        avatarId: state.avatarId,
+        handle: state.handle,
+        firstName: state.firstName,
+        lastName: state.lastName,
+        profileEmail: state.profileEmail,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
@@ -240,6 +268,11 @@ export const useAppStore = create<AppState>()(
           planProgress:
             saved.planProgress && typeof saved.planProgress === "object" ? saved.planProgress : {},
           activePlans: Array.isArray(saved.activePlans) ? saved.activePlans : [],
+          avatarId: saved.avatarId || "book",
+          handle: saved.handle ?? "",
+          firstName: saved.firstName ?? "",
+          lastName: saved.lastName ?? "",
+          profileEmail: saved.profileEmail ?? "",
           theme: saved.theme ?? "system",
         };
       },

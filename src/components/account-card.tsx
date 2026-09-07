@@ -24,6 +24,7 @@ export function AccountCard() {
     return (
       <Link
         to="/login"
+        search={{ create: false }}
         className="flex min-h-16 items-center justify-between gap-3 rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
       >
         <span>

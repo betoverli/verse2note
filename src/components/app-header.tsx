@@ -5,11 +5,13 @@ import { t } from "@/lib/i18n";
 import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { ProfileButton } from "@/components/profile-button";
 
 type BackTo =
   | "/"
   | "/settings"
   | "/app"
+  | "/profile"
   | "/collections"
   | "/collections/themes"
   | "/collections/category/$categoryId"
@@ -54,7 +56,9 @@ export function AppHeader({
                 </Link>
               )}
             </Button>
-          ) : null}
+          ) : (
+            <ProfileButton />
+          )}
         </div>
         <h1 className="truncate px-1 text-center text-[17px] font-semibold tracking-tight text-fg">
           {title}

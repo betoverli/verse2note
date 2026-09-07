@@ -10,6 +10,9 @@ import { Wordmark } from "@/components/wordmark";
 
 export const Route = createFileRoute("/login")({
   component: Login,
+  validateSearch: (search: Record<string, unknown>) => ({
+    create: search.create === true || search.create === "1" || search.create === "true",
+  }),
   head: () => {
     const seo = pageHead({
       title: "Verse2Note — Entrar",
@@ -23,7 +26,8 @@ export const Route = createFileRoute("/login")({
 export function Login() {
   const locale = useAppStore((s) => s.locale);
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const { create } = Route.useSearch();
+  const [mode, setMode] = useState<"in" | "up">(create ? "up" : "in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,7 +38,7 @@ export function Login() {
     setError(null);
     setBusy(true);
     try {
-      await signIn(providerId, { callbackURL: "/settings" });
+      await signIn(providerId, { callbackURL: "/profile" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       setError(/pop-up|popup/i.test(message) ? t(locale, "accountPopup") : t(locale, "accountError"));
@@ -53,12 +57,12 @@ export function Login() {
               name: name.trim() || email.split("@")[0] || "Verse2Note",
               email: email.trim(),
               password,
-              callbackURL: "/settings",
+              callbackURL: "/profile",
             })
           : await authClient.signIn.email({
               email: email.trim(),
               password,
-              callbackURL: "/settings",
+              callbackURL: "/profile",
             });
       if (result.error) {
         setError(result.error.message || t(locale, "accountError"));
@@ -70,7 +74,7 @@ export function Login() {
       } catch {
         /* cookie session will land on the next page */
       }
-      await navigate({ to: "/settings" });
+      await navigate({ to: "/profile" });
     } catch {
       setError(t(locale, "accountError"));
       setBusy(false);
@@ -155,7 +159,7 @@ export function Login() {
       ) : null}
 
       <p className="mt-6 text-xs leading-relaxed text-subtle">{t(locale, "accountHint")}</p>
-      <Link to="/settings" className="mt-auto pt-8 text-center text-sm text-muted hover:text-fg">
+      <Link to="/profile" className="mt-auto pt-8 text-center text-sm text-muted hover:text-fg">
         {t(locale, "back")}
       </Link>
     </main>

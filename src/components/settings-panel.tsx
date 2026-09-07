@@ -11,7 +11,6 @@ import type { Theme } from "@/lib/theme";
 import { BibleAppList } from "@/components/bible-app-list";
 import { BibleAppOptions } from "@/components/bible-app-options";
 import { Choice } from "@/components/choice";
-import { AccountCard } from "@/components/account-card";
 import { cn } from "@/lib/utils";
 
 const LOCALES: Locale[] = ["pt", "en", "es"];
@@ -123,10 +122,6 @@ export function SettingsPanel() {
 
   return (
     <div className="flex flex-col gap-10">
-      <Section title={t(locale, "account")} lead={t(locale, "accountLead")}>
-        <AccountCard />
-      </Section>
-
       <Section title={t(locale, "language")}>
         <div className="grid grid-cols-3 gap-2">
           {LOCALES.map((item) => (
