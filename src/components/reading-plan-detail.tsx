@@ -43,6 +43,34 @@ const EMPTY_DAYS: number[] = [];
 
 export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   const locale = useAppStore((s) => s.locale);
+  const started = useAppStore((s) => s.activePlans.includes(plan.id));
+  const startPlan = useAppStore((s) => s.startPlan);
+
+  if (!started) {
+    const chapters = plan.days.reduce((n, day) => n + day.readings.length, 0);
+    const perDay = Math.max(1, Math.round(chapters / plan.days.length));
+    return (
+      <div className="flex flex-col gap-8 pb-8">
+        <div className="space-y-2">
+          <p className="text-sm text-muted">
+            {plan.days.length} {t(locale, "days")}
+          </p>
+          <p className="text-sm text-muted">
+            {perDay} {t(locale, "planChaptersPerDay")}
+          </p>
+        </div>
+        <Button className="w-full" onClick={() => startPlan(plan.id)}>
+          {t(locale, "startPlan")}
+        </Button>
+      </div>
+    );
+  }
+
+  return <PlanTracker plan={plan} />;
+}
+
+function PlanTracker({ plan }: { plan: ReadingPlan }) {
+  const locale = useAppStore((s) => s.locale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -51,6 +79,7 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   const doneDays = useAppStore((s) => s.planProgress[plan.id]) ?? EMPTY_DAYS;
   const togglePlanDay = useAppStore((s) => s.togglePlanDay);
   const resetPlanProgress = useAppStore((s) => s.resetPlanProgress);
+  const stopPlan = useAppStore((s) => s.stopPlan);
   const [copied, setCopied] = useState<string | null>(null);
   const firstOpen = useRef<HTMLLIElement | null>(null);
 
@@ -163,11 +192,16 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
           );
         })}
       </ul>
-      {done > 0 ? (
-        <Button variant="secondary" className="w-full" onClick={() => resetPlanProgress(plan.id)}>
-          {t(locale, "readingReset")}
+      <div className="flex flex-col gap-2">
+        {done > 0 ? (
+          <Button variant="secondary" className="w-full" onClick={() => resetPlanProgress(plan.id)}>
+            {t(locale, "readingReset")}
+          </Button>
+        ) : null}
+        <Button variant="ghost" className="w-full text-muted" onClick={() => stopPlan(plan.id)}>
+          {t(locale, "stopPlan")}
         </Button>
-      ) : null}
+      </div>
     </div>
   );
 }

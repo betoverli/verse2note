@@ -29,6 +29,7 @@ type AppState = {
   recent: Passage[];
   list: Passage[];
   planProgress: Record<string, number[]>;
+  activePlans: string[];
   setLocale: (locale: Locale) => void;
   setAppId: (id: string) => void;
   setTranslationId: (id: string) => void;
@@ -50,6 +51,8 @@ type AppState = {
   clearList: () => void;
   togglePlanDay: (planId: string, day: number) => void;
   resetPlanProgress: (planId: string) => void;
+  startPlan: (planId: string) => void;
+  stopPlan: (planId: string) => void;
   resetSelection: () => void;
   passage: () => Passage | null;
 };
@@ -74,6 +77,7 @@ export const useAppStore = create<AppState>()(
       recent: [],
       list: [],
       planProgress: {},
+      activePlans: [],
       setLocale: (locale) => {
         const available = translationsFor(locale);
         const current = get().translationId;
@@ -157,6 +161,13 @@ export const useAppStore = create<AppState>()(
         const { [planId]: _removed, ...rest } = get().planProgress;
         set({ planProgress: rest });
       },
+      startPlan: (planId) => {
+        const activePlans = [planId, ...get().activePlans.filter((id) => id !== planId)];
+        set({ activePlans });
+      },
+      stopPlan: (planId) => {
+        set({ activePlans: get().activePlans.filter((id) => id !== planId) });
+      },
       resetSelection: () =>
         set({
           bookId: null,
@@ -186,6 +197,7 @@ export const useAppStore = create<AppState>()(
         recent: state.recent,
         list: state.list,
         planProgress: state.planProgress,
+        activePlans: state.activePlans,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
@@ -196,6 +208,7 @@ export const useAppStore = create<AppState>()(
           tourDone: saved.tourDone === true,
           planProgress:
             saved.planProgress && typeof saved.planProgress === "object" ? saved.planProgress : {},
+          activePlans: Array.isArray(saved.activePlans) ? saved.activePlans : [],
           theme: saved.theme ?? "system",
         };
       },
