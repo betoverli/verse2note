@@ -37,6 +37,7 @@ export function TabBar() {
               <Link
                 to={tab.to}
                 aria-current={active ? "page" : undefined}
+                data-tour={tab.to === "/collections" ? "collections" : tab.to === "/settings" ? "settings" : undefined}
                 className={cn(
                   "flex min-h-12 flex-col items-center justify-center gap-0.5 pt-1 text-[10px] font-medium",
                   active ? "text-fg" : "text-subtle",

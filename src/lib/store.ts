@@ -20,6 +20,7 @@ type AppState = {
   booksCompact: boolean;
   theme: Theme;
   onboarded: boolean;
+  tourDone: boolean;
   bookId: string | null;
   chapter: number | null;
   verseStart: number | null;
@@ -35,6 +36,7 @@ type AppState = {
   setBooksCompact: (value: boolean) => void;
   setTheme: (theme: Theme) => void;
   completeOnboarding: () => void;
+  completeTour: () => void;
   setStep: (step: Step) => void;
   selectBook: (bookId: string) => void;
   selectChapter: (chapter: number) => void;
@@ -60,6 +62,7 @@ export const useAppStore = create<AppState>()(
       booksCompact: true,
       theme: "system",
       onboarded: false,
+      tourDone: false,
       bookId: null,
       chapter: null,
       verseStart: null,
@@ -85,6 +88,7 @@ export const useAppStore = create<AppState>()(
         applyTheme(theme);
       },
       completeOnboarding: () => set({ onboarded: true }),
+      completeTour: () => set({ tourDone: true }),
       setStep: (step) => set({ step }),
       selectBook: (bookId) =>
         set({
@@ -165,6 +169,7 @@ export const useAppStore = create<AppState>()(
         booksCompact: state.booksCompact,
         theme: state.theme,
         onboarded: state.onboarded,
+        tourDone: state.tourDone,
         recent: state.recent,
         list: state.list,
       }),
@@ -174,6 +179,7 @@ export const useAppStore = create<AppState>()(
           ...current,
           ...saved,
           onboarded: typeof saved.onboarded === "boolean" ? saved.onboarded : Boolean(persisted),
+          tourDone: saved.tourDone === true,
           theme: saved.theme ?? "system",
         };
       },

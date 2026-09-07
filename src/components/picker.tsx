@@ -98,7 +98,7 @@ export function Picker() {
   }, [step]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" data-tour="books">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <nav className="flex flex-wrap items-center gap-1 text-sm text-muted">
           <button

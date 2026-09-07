@@ -13,7 +13,7 @@ export function RecentsMenu() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t(locale, "recent")}>
+        <Button variant="ghost" size="icon" aria-label={t(locale, "recent")} data-tour="recents">
           <Clock />
         </Button>
       </DropdownMenu.Trigger>

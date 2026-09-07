@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Coachmarks } from "@/components/coachmarks";
 import { Onboarding } from "@/components/onboarding";
 import { showTabBar, TabBar } from "@/components/tab-bar";
 import { useAppStore } from "@/lib/store";
@@ -38,6 +39,7 @@ export function AppShell() {
     <>
       <Outlet />
       {tabs ? <TabBar /> : null}
+      <Coachmarks />
     </>
   );
 }
