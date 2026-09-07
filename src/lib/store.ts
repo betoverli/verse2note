@@ -7,6 +7,7 @@ import { samePassage } from "@/lib/bible/passage";
 import { DEFAULT_TRANSLATION, translationsFor } from "@/lib/bible/translations";
 import type { CopyFormat } from "@/lib/copy-rich";
 import { detectLocale } from "@/lib/i18n";
+import type { CloudPrefs } from "@/lib/cloud";
 import { applyTheme, type Theme } from "@/lib/theme";
 
 export type Step = "book" | "chapter" | "verse";
@@ -54,6 +55,7 @@ type AppState = {
   resetPlanProgress: (planId: string) => void;
   startPlan: (planId: string) => void;
   stopPlan: (planId: string) => void;
+  applyCloud: (prefs: CloudPrefs) => void;
   resetSelection: () => void;
   passage: () => Passage | null;
 };
@@ -177,6 +179,25 @@ export const useAppStore = create<AppState>()(
       },
       stopPlan: (planId) => {
         set({ activePlans: get().activePlans.filter((id) => id !== planId) });
+      },
+      applyCloud: (prefs) => {
+        set({
+          locale: prefs.locale,
+          appId: prefs.appId,
+          translationId: prefs.translationId,
+          preferNative: prefs.preferNative,
+          copyFormat: prefs.copyFormat,
+          booksCompact: prefs.booksCompact,
+          theme: prefs.theme,
+          activePlans: prefs.activePlans,
+          planProgress: prefs.planProgress,
+          onboarded: true,
+          tourDone: true,
+        });
+        if (typeof document !== "undefined") {
+          document.documentElement.lang = prefs.locale;
+          applyTheme(prefs.theme);
+        }
       },
       resetSelection: () =>
         set({

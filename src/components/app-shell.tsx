@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { AccountSync } from "@/components/account-sync";
 import { Coachmarks } from "@/components/coachmarks";
 import { Onboarding } from "@/components/onboarding";
 import { showTabBar, TabBar } from "@/components/tab-bar";
 import { useAppStore } from "@/lib/store";
 
-const PUBLIC = new Set(["/", "/about", "/for-ai"]);
+const PUBLIC = new Set(["/", "/about", "/for-ai", "/login"]);
 
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -40,6 +41,7 @@ export function AppShell() {
       <Outlet />
       {tabs ? <TabBar /> : null}
       <Coachmarks />
+      <AccountSync />
     </>
   );
 }

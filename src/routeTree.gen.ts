@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ForAiRouteImport } from './routes/for-ai'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ReadingRouteImport } from './routes/reading'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
@@ -26,6 +27,7 @@ import { Route as CollectionsThemesRouteImport } from './routes/collections.them
 import { Route as ReadingIndexRouteImport } from './routes/reading.index'
 import { Route as ReadingIdRouteImport } from './routes/reading.$id'
 import { Route as ReadingAllRouteImport } from './routes/reading.all'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as CollectionsCategoryCategoryIdRouteImport } from './routes/collections.category.$categoryId'
 import { Route as ReadingCategoryCategoryIdRouteImport } from './routes/reading.category.$categoryId'
 
@@ -52,6 +54,11 @@ const CollectionsRoute = CollectionsRouteImport.update({
 const ForAiRoute = ForAiRouteImport.update({
   id: '/for-ai',
   path: '/for-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReadingRoute = ReadingRouteImport.update({
@@ -114,6 +121,11 @@ const ReadingAllRoute = ReadingAllRouteImport.update({
   path: '/all',
   getParentRoute: () => ReadingRoute,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CollectionsCategoryCategoryIdRoute =
   CollectionsCategoryCategoryIdRouteImport.update({
     id: '/category/$categoryId',
@@ -133,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/login': typeof LoginRoute
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
@@ -145,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
   '/reading/': typeof ReadingIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
@@ -153,6 +167,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/app': typeof AppRoute
   '/for-ai': typeof ForAiRoute
+  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
@@ -164,6 +179,7 @@ export interface FileRoutesByTo {
   '/reading/all': typeof ReadingAllRoute
   '/collections': typeof CollectionsIndexRoute
   '/reading': typeof ReadingIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
@@ -174,6 +190,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/login': typeof LoginRoute
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
@@ -186,6 +203,7 @@ export interface FileRoutesById {
   '/reading/all': typeof ReadingAllRoute
   '/collections/': typeof CollectionsIndexRoute
   '/reading/': typeof ReadingIndexRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
@@ -197,6 +215,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/login'
     | '/reading'
     | '/settings'
     | '/api/collections'
@@ -209,6 +228,7 @@ export interface FileRouteTypes {
     | '/reading/all'
     | '/collections/'
     | '/reading/'
+    | '/api/auth/$'
     | '/collections/category/$categoryId'
     | '/reading/category/$categoryId'
   fileRoutesByTo: FileRoutesByTo
@@ -217,6 +237,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/app'
     | '/for-ai'
+    | '/login'
     | '/settings'
     | '/api/collections'
     | '/api/link'
@@ -228,6 +249,7 @@ export interface FileRouteTypes {
     | '/reading/all'
     | '/collections'
     | '/reading'
+    | '/api/auth/$'
     | '/collections/category/$categoryId'
     | '/reading/category/$categoryId'
   id:
@@ -237,6 +259,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/login'
     | '/reading'
     | '/settings'
     | '/api/collections'
@@ -249,6 +272,7 @@ export interface FileRouteTypes {
     | '/reading/all'
     | '/collections/'
     | '/reading/'
+    | '/api/auth/$'
     | '/collections/category/$categoryId'
     | '/reading/category/$categoryId'
   fileRoutesById: FileRoutesById
@@ -259,12 +283,14 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ForAiRoute: typeof ForAiRoute
+  LoginRoute: typeof LoginRoute
   ReadingRoute: typeof ReadingRouteWithChildren
   SettingsRoute: typeof SettingsRoute
   ApiCollectionsRoute: typeof ApiCollectionsRoute
   ApiLinkRoute: typeof ApiLinkRoute
   ApiMcpRoute: typeof ApiMcpRoute
   ApiPlansRoute: typeof ApiPlansRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -302,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/for-ai'
       fullPath: '/for-ai'
       preLoaderRoute: typeof ForAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reading': {
@@ -388,6 +421,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReadingAllRouteImport
       parentRoute: typeof ReadingRoute
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/collections/category/$categoryId': {
       id: '/collections/category/$categoryId'
       path: '/category/$categoryId'
@@ -446,12 +486,14 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   ForAiRoute: ForAiRoute,
+  LoginRoute: LoginRoute,
   ReadingRoute: ReadingRouteWithChildren,
   SettingsRoute: SettingsRoute,
   ApiCollectionsRoute: ApiCollectionsRoute,
   ApiLinkRoute: ApiLinkRoute,
   ApiMcpRoute: ApiMcpRoute,
   ApiPlansRoute: ApiPlansRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -21,6 +21,7 @@ Site: https://verse2note.com
 - 160 themed collections, 14 categories; a theme can belong to more than one category
 - Snippets are only the beginning of the verse (Bíblia Livre / WEB / Versión Biblia Libre)
 - 14 reading plans (Bible in a year, 90 days, Gospels, Psalms, Paul…). Always whole chapters. Progress is on-device (My plans)
+- Optional account (Google or X) to sync Bible-app prefs and reading-plan progress across devices
 - Install as a PWA; works offline after the first open
 - No account. No ads.
 
