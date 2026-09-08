@@ -3,12 +3,14 @@ import { pageHead } from "@/lib/seo";
 
 export const Route = createFileRoute("/profile")({
   component: ProfileLayout,
-  head: () =>
-    pageHead({
+  head: () => {
+    const seo = pageHead({
       title: "Verse2Note — Perfil",
       description: "Conta Verse2Note: avatar, @ e nome.",
       path: "/profile",
-    }),
+    });
+    return { ...seo, meta: [...seo.meta, { name: "robots", content: "noindex" }] };
+  },
 });
 
 function ProfileLayout() {

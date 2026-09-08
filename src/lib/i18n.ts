@@ -149,7 +149,7 @@ const strings = {
     helpCopy:
       "Copiar coloca o nome da passagem já com o link. No iPhone, cole no Notes. No Android, o texto rico funciona no Google Docs e no Word.",
     helpList: "Se forem várias referências, use Adicionar e, no fim, Copiar lista.",
-    helpSettings: "Em Configurações: idioma, app da Bíblia, aparência e formato do texto.",
+    helpSettings: "No Perfil: idioma, app da Bíblia, aparência e ajuda.",
     helpInstall: "No Safari ou Chrome, use Adicionar à Tela de Início. Depois da primeira abertura, funciona sem internet.",
     helpLimits:
       "Keep e WhatsApp no Android não colam o link azul. Use o ícone de compartilhar, ou cole no Docs / Word.",
@@ -157,6 +157,8 @@ const strings = {
       "Coleções são listas prontas por tema (com busca). Abra uma, copie uma referência ou a lista inteira. O trecho é só o começo do versículo, em versão livre.",
     helpPlans:
       "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Escolha um plano; ele aparece em Meus planos. Marque o dia que já leu. Com conta, o progresso acompanha você.",
+    helpAccount:
+      "Conta é opcional (Google, X ou e-mail). Sem ela o app fica neste aparelho. Com ela, Meus planos e o perfil acompanham você. A API para IA não usa conta.",
     donateTitle: "Quer ajudar?",
     donateLead: "O Verse2Note é gratuito e sem anúncio. Se ele te serve, um café ajuda a manter o projeto.",
     donateCta: "Apoiar",
@@ -176,7 +178,7 @@ const strings = {
     landFoot: "Conta opcional. Depois da primeira abertura, funciona sem internet.",
     forAiTitle: "Para IA e agentes",
     forAiLead:
-      "O Verse2Note também gera o mesmo link — coleções por tema e o dia de um plano de leitura — para o Grok, o Claude, o Cursor ou qualquer agente. Sem conta. O modelo chama a API; não inventa a URL.",
+      "O Verse2Note também gera o mesmo link — coleções por tema e o dia de um plano de leitura — para o Grok, o Claude, o Cursor ou qualquer agente. A API é pública, sem login. O modelo chama a API; não inventa a URL.",
     forAiApiTitle: "API",
     forAiApiLead:
       "GET /api/link para uma referência. GET /api/collections para um tema. GET /api/plans?id=gospels-30&day=1 para o dia de um plano.",
@@ -339,7 +341,7 @@ const strings = {
     helpCopy:
       "Copy puts the passage name on the clipboard already as a link. On iPhone, paste into Notes. On Android, rich text works in Google Docs and Word.",
     helpList: "For several references, tap Add, then Copy list at the end.",
-    helpSettings: "In Settings: language, Bible app, appearance, and copy format.",
+    helpSettings: "In Profile: language, Bible app, appearance, and help.",
     helpInstall: "In Safari or Chrome, use Add to Home Screen. After the first open, it works offline.",
     helpLimits:
       "Keep and WhatsApp on Android will not paste a blue link. Use the share icon, or paste into Docs / Word.",
@@ -347,6 +349,8 @@ const strings = {
       "Collections are ready-made lists by theme (with search). Open one, copy a reference or the whole list. The snippet is only the start of the verse, from a free translation.",
     helpPlans:
       "Plans are whole-chapter readings (a year, the Gospels…). Choose a plan; it shows up under My plans. Check off the day you have read. With an account, progress follows you.",
+    helpAccount:
+      "An account is optional (Google, X, or email). Without it the app stays on this device. With it, My plans and your profile follow you. The AI API does not use an account.",
     donateTitle: "Want to help?",
     donateLead: "Verse2Note is free and has no ads. If it serves you, a coffee helps keep it going.",
     donateCta: "Support",
@@ -366,7 +370,7 @@ const strings = {
     landFoot: "Optional account. After the first open, it works offline.",
     forAiTitle: "For AI and agents",
     forAiLead:
-      "Verse2Note can mint the same link — themed collections and a reading-plan day — for Grok, Claude, Cursor, or any agent. No account. The model calls the API; it should not invent the URL.",
+      "Verse2Note can mint the same link — themed collections and a reading-plan day — for Grok, Claude, Cursor, or any agent. The API is public, no login. The model calls the API; it should not invent the URL.",
     forAiApiTitle: "API",
     forAiApiLead:
       "GET /api/link for a reference. GET /api/collections for a theme. GET /api/plans?id=gospels-30&day=1 for a plan day.",
@@ -529,7 +533,7 @@ const strings = {
     helpCopy:
       "Copiar deja el nombre del pasaje ya como enlace. En el iPhone, pégalo en Notes. En Android, el texto enriquecido funciona en Google Docs y Word.",
     helpList: "Si hay varias referencias, usa Añadir y, al final, Copiar lista.",
-    helpSettings: "En Ajustes: idioma, app de Biblia, apariencia y formato del texto.",
+    helpSettings: "En Perfil: idioma, app de Biblia, apariencia y ayuda.",
     helpInstall: "En Safari o Chrome, usa Añadir a pantalla de inicio. Después de abrirlo una vez, funciona sin conexión.",
     helpLimits:
       "Keep y WhatsApp en Android no pegan el enlace azul. Usa el icono de compartir, o pega en Docs / Word.",
@@ -537,6 +541,8 @@ const strings = {
       "Las colecciones son listas por tema (con búsqueda). Abre una, copia una referencia o la lista entera. El fragmento es solo el comienzo del versículo, en una versión libre.",
     helpPlans:
       "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Elige un plan; aparece en Mis planes. Marca el día que ya leíste. Con una cuenta, el progreso te sigue.",
+    helpAccount:
+      "La cuenta es opcional (Google, X o correo). Sin ella la app queda en este dispositivo. Con ella, Mis planes y el perfil te siguen. La API para IA no usa cuenta.",
     donateTitle: "¿Quieres ayudar?",
     donateLead: "Verse2Note es gratis y sin anuncios. Si te sirve, un café ayuda a mantener el proyecto.",
     donateCta: "Apoyar",
@@ -556,7 +562,7 @@ const strings = {
     landFoot: "Cuenta opcional. Después de la primera apertura, funciona sin internet.",
     forAiTitle: "Para IA y agentes",
     forAiLead:
-      "Verse2Note también genera el mismo enlace — colecciones por tema y el día de un plan de lectura — para Grok, Claude, Cursor o cualquier agente. Sin cuenta. El modelo llama a la API; no inventa la URL.",
+      "Verse2Note también genera el mismo enlace — colecciones por tema y el día de un plan de lectura — para Grok, Claude, Cursor o cualquier agente. La API es pública, sin login. El modelo llama a la API; no inventa la URL.",
     forAiApiTitle: "API",
     forAiApiLead:
       "GET /api/link para una referencia. GET /api/collections para un tema. GET /api/plans?id=gospels-30&day=1 para el día de un plan.",

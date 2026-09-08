@@ -48,7 +48,11 @@ Category ids: `doctrine`, `jesus`, `personal`, `church-life`, `home`, `seasons`,
 
 ## Call the API — reading plans (whole chapters)
 
-14 plans (Bible in a year, Gospels in 30 days, Psalms, Paul…). Links are always **complete chapters**. Progress lives on the user's device, not in the API.
+14 plans (Bible in a year, Gospels in 30 days, Psalms, Paul…). Links are always **complete chapters**. The API does not store progress. In the web app, “My plans” lives on an optional user account.
+
+## Human accounts vs agents
+
+Google / X / email accounts exist only in the Verse2Note web app (profile, My plans, Bible-app prefs). **Do not** send cookies, tokens, or a login to `/api/*` or `/api/mcp`. Those endpoints are public and anonymous.
 
 ```
 GET {origin}/api/plans?locale=pt

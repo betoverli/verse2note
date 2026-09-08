@@ -12,7 +12,7 @@ export const Route = createFileRoute("/about")({
     pageHead({
       title: "Verse2Note — Sobre e ajuda",
       description:
-        "Como surgiu o Verse2Note, como gerar links de referências bíblicas, coleções por tema, planos de leitura e como ajudar o projeto.",
+        "Como surgiu o Verse2Note, como gerar links, coleções, planos de leitura, conta opcional e como ajudar o projeto.",
       path: "/about",
     }),
 });

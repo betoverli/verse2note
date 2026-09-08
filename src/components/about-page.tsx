@@ -5,7 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 
-const HELP_KEYS = ["helpPick", "helpCopy", "helpList", "helpCollections", "helpPlans", "helpSettings", "helpInstall", "helpLimits"] as const;
+const HELP_KEYS = [
+  "helpPick",
+  "helpCopy",
+  "helpList",
+  "helpCollections",
+  "helpPlans",
+  "helpAccount",
+  "helpSettings",
+  "helpInstall",
+  "helpLimits",
+] as const;
 
 export function AboutPage() {
   const locale = useAppStore((s) => s.locale);

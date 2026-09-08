@@ -20,10 +20,10 @@ Site: https://verse2note.com
 - Multi-reference list for meetings
 - 160 themed collections, 14 categories; a theme can belong to more than one category
 - Snippets are only the beginning of the verse (Bíblia Livre / WEB / Versión Biblia Libre)
-- 14 reading plans (Bible in a year, 90 days, Gospels, Psalms, Paul…). Always whole chapters. Progress is on-device (My plans)
-- Optional account (Google or X) to sync Bible-app prefs and reading-plan progress across devices
+- 14 reading plans (Bible in a year, 90 days, Gospels, Psalms, Paul…). Always whole chapters
+- Optional account (Google, X, or email) in the web app to sync Bible-app prefs, profile, and reading-plan progress across devices. Without an account the app stays on that device
 - Install as a PWA; works offline after the first open
-- No account. No ads.
+- No ads. The picker, collections, and plans work without signing in
 
 ## Collection categories
 
@@ -39,7 +39,8 @@ Plan ids: bible-year, bible-90, nt-90, nt-30, gospels-30, john-21, matthew-28, l
 
 - Not a Bible
 - Does not return full verse text
-- Does not sync notes or plan progress across devices
+- API / MCP / skill do not read or write a human account (no login, no plan progress, no profile)
+- Does not sync notes to Apple Notes / Google Keep
 
 ## Pages
 
@@ -59,9 +60,11 @@ Plan ids: bible-year, bible-90, nt-90, nt-30, gospels-30, john-21, matthew-28, l
 - This file: /llms.txt
 - Sitemap: /sitemap.xml
 
+Private (noindex, not for agents): /login, /profile, /profile/*
+
 ## For agents
 
-Do not invent Bible deep links. Call the API.
+Do not invent Bible deep links. Call the public API — no API key, no account.
 
 ```
 GET /api/link?ref=John+3:16&app=youversion&locale=en
@@ -78,8 +81,8 @@ Docs: /for-ai
 
 ## Portuguese
 
-O Verse2Note gera um texto rico com o nome da passagem já ligado ao app de Bíblia escolhido. Escolha o livro, o capítulo e os versos — ou abra uma coleção por tema, ou um plano de leitura de capítulos — copie e cole no Notes, no WhatsApp ou no documento.
+O Verse2Note gera um texto rico com o nome da passagem já ligado ao app de Bíblia escolhido. Escolha o livro, o capítulo e os versos — ou abra uma coleção por tema, ou um plano de leitura de capítulos — copie e cole no Notes, no WhatsApp ou no documento. Conta (Google, X ou e-mail) é opcional: guarda Meus planos e o perfil entre aparelhos.
 
 ## Español
 
-Verse2Note genera un texto enriquecido con el nombre del pasaje ya enlazado a la app de Biblia elegida. Elige el libro, el capítulo y los versículos — o abre una colección por tema, o un plan de lectura de capítulos — copia y pega en Notes, WhatsApp o el documento.
+Verse2Note genera un texto enriquecido con el nombre del pasaje ya enlazado a la app de Biblia elegida. Elige el libro, el capítulo y los versículos — o abre una colección por tema, o un plan de lectura de capítulos — copia y pega en Notes, WhatsApp o el documento. La cuenta (Google, X o correo) es opcional: guarda Mis planes y el perfil entre dispositivos.

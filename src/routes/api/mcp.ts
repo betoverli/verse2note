@@ -59,7 +59,7 @@ const COLLECTION_TOOL = {
 const PLAN_TOOL = {
   name: "verse2note_plan",
   description:
-    "Browse Verse2Note Bible reading plans (whole chapters). List or search plans, or fetch one day's chapters as paste-ready markdown links. Does not return verse text. Progress is on-device only.",
+    "Browse Verse2Note Bible reading plans (whole chapters). List or search plans, or fetch one day's chapters as paste-ready markdown links. Does not return verse text. Does not read a user account; progress lives only in the web app.",
   inputSchema: {
     type: "object",
     properties: {
