@@ -49,7 +49,7 @@ export function CollectionsPage() {
   const searching = query.trim().length > 0;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <label className="block">
         <span className="sr-only">{t(locale, "collectionsSearch")}</span>
         <input
@@ -69,23 +69,26 @@ export function CollectionsPage() {
       ) : (
         <>
           <MyCollections />
-          <CategoryGrid items={categories} />
-          <Link
-            to="/collections/themes"
-            className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
-          >
-            <span className="flex items-center gap-3">
-              <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
-                <Library className="size-5" />
-              </span>
-              <span>
-                <span className="block text-sm font-medium">{t(locale, "allThemes")}</span>
-                <span className="mt-0.5 block text-xs text-muted">
-                  {THEME_TOTAL} {t(locale, "themes")}
+          <section className="space-y-3">
+            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "browseCollections")}</h2>
+            <CategoryGrid items={categories} />
+            <Link
+              to="/collections/themes"
+              className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-3">
+                <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+                  <Library className="size-5" />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium">{t(locale, "allThemes")}</span>
+                  <span className="mt-0.5 block text-xs text-muted">
+                    {THEME_TOTAL} {t(locale, "themes")}
+                  </span>
                 </span>
               </span>
-            </span>
-          </Link>
+            </Link>
+          </section>
         </>
       )}
     </div>
