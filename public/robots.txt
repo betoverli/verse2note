@@ -2,6 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /login
 Disallow: /profile
+Disallow: /c/
 Disallow: /api/auth
 
 User-agent: GPTBot

@@ -14,6 +14,7 @@ import {
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { SaveToCollectionButton } from "@/components/save-to-collection";
 
 function toCopyItem(
   passage: Passage,
@@ -170,6 +171,7 @@ export function LinkPreview() {
                   {copied === "list" ? <Check /> : <Copy />}
                   {copied === "list" ? t(locale, "copiedList") : t(locale, "copyList")}
                 </Button>
+                <SaveToCollectionButton passages={list} />
                 <Button size="sm" variant="ghost" onClick={clearList}>
                   {t(locale, "clearList")}
                 </Button>
@@ -255,6 +257,11 @@ export function LinkPreview() {
                 </a>
               </Button>
             </div>
+            {passage ? (
+              <div className="px-2 pb-2">
+                <SaveToCollectionButton passages={[passage]} />
+              </div>
+            ) : null}
           </>
         ) : null}
       </aside>

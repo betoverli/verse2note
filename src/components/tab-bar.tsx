@@ -10,7 +10,8 @@ const TABS = [
     to: "/collections" as const,
     key: "collections" as const,
     icon: Library,
-    match: (path: string) => path === "/collections" || path.startsWith("/collections/"),
+    match: (path: string) =>
+      path === "/collections" || path.startsWith("/collections/") || path.startsWith("/c/"),
   },
   {
     to: "/reading" as const,
@@ -32,6 +33,7 @@ export function showTabBar(pathname: string) {
     pathname === "/profile" ||
     pathname.startsWith("/profile/") ||
     pathname.startsWith("/collections") ||
+    pathname.startsWith("/c/") ||
     pathname.startsWith("/reading")
   );
 }

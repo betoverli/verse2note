@@ -21,6 +21,7 @@ import { searchCategories, THEME_TOTAL, type Category } from "@/lib/bible/catego
 import { searchCollections } from "@/lib/bible/collections";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
+import { MyCollections } from "@/components/my-collections";
 import { ThemeList } from "@/components/theme-list";
 
 const ICONS: Record<string, ComponentType<{ className?: string }>> = {
@@ -67,6 +68,7 @@ export function CollectionsPage() {
         </>
       ) : (
         <>
+          <MyCollections />
           <CategoryGrid items={categories} />
           <Link
             to="/collections/themes"

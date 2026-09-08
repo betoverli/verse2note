@@ -22,6 +22,7 @@ import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
 import { Route as ApiLinkRouteImport } from './routes/api/link'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as ApiPlansRouteImport } from './routes/api/plans'
+import { Route as CIdRouteImport } from './routes/c.$id'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
@@ -101,6 +102,11 @@ const ApiMcpRoute = ApiMcpRouteImport.update({
 const ApiPlansRoute = ApiPlansRouteImport.update({
   id: '/api/plans',
   path: '/api/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CIdRoute = CIdRouteImport.update({
+  id: '/c/$id',
+  path: '/c/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CollectionsIndexRoute = CollectionsIndexRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/profile/bible': typeof ProfileBibleRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/profile/bible': typeof ProfileBibleRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/profile/bible': typeof ProfileBibleRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
     | '/profile/bible'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
     | '/profile/bible'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
     | '/profile/bible'
@@ -373,6 +385,7 @@ export interface RootRouteChildren {
   ApiLinkRoute: typeof ApiLinkRoute
   ApiMcpRoute: typeof ApiMcpRoute
   ApiPlansRoute: typeof ApiPlansRoute
+  CIdRoute: typeof CIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -467,6 +480,13 @@ declare module '@tanstack/react-router' {
       path: '/api/plans'
       fullPath: '/api/plans'
       preLoaderRoute: typeof ApiPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$id': {
+      id: '/c/$id'
+      path: '/c/$id'
+      fullPath: '/c/$id'
+      preLoaderRoute: typeof CIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/collections/': {
@@ -647,6 +667,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLinkRoute: ApiLinkRoute,
   ApiMcpRoute: ApiMcpRoute,
   ApiPlansRoute: ApiPlansRoute,
+  CIdRoute: CIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

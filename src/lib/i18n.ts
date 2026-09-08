@@ -94,6 +94,19 @@ const strings = {
     collections: "Coleções",
     collectionsSearch: "Buscar tema ou passagem",
     collectionsEmpty: "Nenhuma coleção encontrada.",
+    myCollections: "Minhas coleções",
+    newCollection: "Nova coleção",
+    collectionName: "Nome da lista",
+    collectionSave: "Guardar",
+    addToCollection: "Adicionar à coleção",
+    addedToCollection: "Adicionado à coleção",
+    saveListAsCollection: "Guardar lista",
+    collectionLogin: "Entre para criar suas listas",
+    collectionEmpty: "Ainda sem referências. Adicione pelo seletor de livros.",
+    collectionDelete: "Apagar lista",
+    collectionDeleteConfirm: "Apagar esta lista?",
+    collectionRename: "Renomear",
+    removeFromCollection: "Tirar",
     allThemes: "Todos os temas",
     themes: "temas",
     reading: "Planos",
@@ -154,7 +167,7 @@ const strings = {
     helpLimits:
       "Keep e WhatsApp no Android não colam o link azul. Use o ícone de compartilhar, ou cole no Docs / Word.",
     helpCollections:
-      "Coleções são listas prontas por tema (com busca). Abra uma, copie uma referência ou a lista inteira. O trecho é só o começo do versículo, em versão livre.",
+      "Coleções são listas prontas por tema (com busca). Abra uma, copie uma referência ou a lista inteira. O trecho é só o começo do versículo, em versão livre. Com conta, você também cria as suas listas.",
     helpPlans:
       "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Escolha um plano; ele aparece em Meus planos. Marque o dia que já leu. Com conta, o progresso acompanha você.",
     helpAccount:
@@ -286,6 +299,19 @@ const strings = {
     collections: "Collections",
     collectionsSearch: "Search a theme or passage",
     collectionsEmpty: "No collections found.",
+    myCollections: "My collections",
+    newCollection: "New collection",
+    collectionName: "List name",
+    collectionSave: "Save",
+    addToCollection: "Add to collection",
+    addedToCollection: "Added to collection",
+    saveListAsCollection: "Save list",
+    collectionLogin: "Sign in to create your lists",
+    collectionEmpty: "No references yet. Add some from the book picker.",
+    collectionDelete: "Delete list",
+    collectionDeleteConfirm: "Delete this list?",
+    collectionRename: "Rename",
+    removeFromCollection: "Remove",
     allThemes: "All themes",
     themes: "themes",
     reading: "Plans",
@@ -346,7 +372,7 @@ const strings = {
     helpLimits:
       "Keep and WhatsApp on Android will not paste a blue link. Use the share icon, or paste into Docs / Word.",
     helpCollections:
-      "Collections are ready-made lists by theme (with search). Open one, copy a reference or the whole list. The snippet is only the start of the verse, from a free translation.",
+      "Collections are ready-made lists by theme (with search). Open one, copy a reference or the whole list. The snippet is only the start of the verse, from a free translation. With an account you can also make your own lists.",
     helpPlans:
       "Plans are whole-chapter readings (a year, the Gospels…). Choose a plan; it shows up under My plans. Check off the day you have read. With an account, progress follows you.",
     helpAccount:
@@ -478,6 +504,19 @@ const strings = {
     collections: "Colecciones",
     collectionsSearch: "Buscar tema o pasaje",
     collectionsEmpty: "Ninguna colección encontrada.",
+    myCollections: "Mis colecciones",
+    newCollection: "Nueva colección",
+    collectionName: "Nombre de la lista",
+    collectionSave: "Guardar",
+    addToCollection: "Añadir a la colección",
+    addedToCollection: "Añadido a la colección",
+    saveListAsCollection: "Guardar lista",
+    collectionLogin: "Entra para crear tus listas",
+    collectionEmpty: "Aún no hay referencias. Añade desde el selector de libros.",
+    collectionDelete: "Borrar lista",
+    collectionDeleteConfirm: "¿Borrar esta lista?",
+    collectionRename: "Renombrar",
+    removeFromCollection: "Quitar",
     allThemes: "Todos los temas",
     themes: "temas",
     reading: "Planes",
@@ -538,7 +577,7 @@ const strings = {
     helpLimits:
       "Keep y WhatsApp en Android no pegan el enlace azul. Usa el icono de compartir, o pega en Docs / Word.",
     helpCollections:
-      "Las colecciones son listas por tema (con búsqueda). Abre una, copia una referencia o la lista entera. El fragmento es solo el comienzo del versículo, en una versión libre.",
+      "Las colecciones son listas por tema (con búsqueda). Abre una, copia una referencia o la lista entera. El fragmento es solo el comienzo del versículo, en una versión libre. Con una cuenta también puedes crear las tuyas.",
     helpPlans:
       "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Elige un plan; aparece en Mis planes. Marca el día que ya leíste. Con una cuenta, el progreso te sigue.",
     helpAccount:
