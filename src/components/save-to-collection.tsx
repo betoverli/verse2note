@@ -58,6 +58,8 @@ export function SaveToCollectionButton({
       if (!merged.some((item) => samePassage(item, passage))) merged.push(passage);
     }
     await updateMyCollection({ data: { id: target.id, passages: merged } });
+    const rows = await listMyCollections();
+    useAppStore.getState().setMyCollections(rows);
     setBusy(false);
     setOpen(false);
     const id = toast.success(t(locale, "addedToCollection"));
@@ -73,6 +75,8 @@ export function SaveToCollectionButton({
     if (result && "ok" in result && result.ok) {
       setTitle("");
       setOpen(false);
+      const rows = await listMyCollections();
+      useAppStore.getState().setMyCollections(rows);
       const id = toast.success(t(locale, "addedToCollection"));
       window.setTimeout(() => toast.dismiss(id), 2000);
     }

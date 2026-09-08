@@ -8,6 +8,7 @@ import { DEFAULT_TRANSLATION, translationsFor } from "@/lib/bible/translations";
 import type { CopyFormat } from "@/lib/copy-rich";
 import { detectLocale } from "@/lib/i18n";
 import type { CloudPrefs } from "@/lib/cloud";
+import type { UserCollection } from "@/lib/user-collection";
 import { applyTheme, type Theme } from "@/lib/theme";
 
 export type Step = "book" | "chapter" | "verse";
@@ -37,6 +38,7 @@ type AppState = {
   firstName: string;
   lastName: string;
   profileEmail: string;
+  myCollections: UserCollection[];
   setLocale: (locale: Locale) => void;
   setAppId: (id: string) => void;
   setTranslationId: (id: string) => void;
@@ -70,6 +72,7 @@ type AppState = {
     lastName?: string;
     profileEmail?: string;
   }) => void;
+  setMyCollections: (items: UserCollection[]) => void;
   clearAccount: () => void;
   resetSelection: () => void;
   passage: () => Passage | null;
@@ -102,6 +105,7 @@ export const useAppStore = create<AppState>()(
       firstName: "",
       lastName: "",
       profileEmail: "",
+      myCollections: [],
       setLocale: (locale) => {
         const available = translationsFor(locale);
         const current = get().translationId;
@@ -227,6 +231,7 @@ export const useAppStore = create<AppState>()(
         }
       },
       setProfile: (profile) => set(profile),
+      setMyCollections: (myCollections) => set({ myCollections }),
       clearAccount: () =>
         set({
           activePlans: [],
@@ -237,6 +242,7 @@ export const useAppStore = create<AppState>()(
           firstName: "",
           lastName: "",
           profileEmail: "",
+          myCollections: [],
         }),
       resetSelection: () =>
         set({
@@ -274,6 +280,7 @@ export const useAppStore = create<AppState>()(
         firstName: state.firstName,
         lastName: state.lastName,
         profileEmail: state.profileEmail,
+        myCollections: state.myCollections,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
@@ -291,6 +298,7 @@ export const useAppStore = create<AppState>()(
           firstName: saved.firstName ?? "",
           lastName: saved.lastName ?? "",
           profileEmail: saved.profileEmail ?? "",
+          myCollections: Array.isArray(saved.myCollections) ? saved.myCollections : [],
           theme: saved.theme ?? "system",
         };
       },

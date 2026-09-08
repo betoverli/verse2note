@@ -6,7 +6,6 @@ import { t } from "@/lib/i18n";
 import {
   createMyCollection,
   listMyCollections,
-  type UserCollection,
 } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -14,30 +13,26 @@ import { Input } from "@/components/ui/input";
 
 export function MyCollections() {
   const locale = useAppStore((s) => s.locale);
+  const items = useAppStore((s) => s.myCollections);
+  const setMyCollections = useAppStore((s) => s.setMyCollections);
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
-  const [items, setItems] = useState<UserCollection[] | null>(null);
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      setItems([]);
-      return;
-    }
+    if (!user) return;
     let cancelled = false;
     void listMyCollections().then((rows) => {
-      if (!cancelled) setItems(rows);
+      if (!cancelled) setMyCollections(rows);
     });
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, setMyCollections]);
 
-  if (isPending) return <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />;
-
-  if (!user) {
+  if (!user && !isPending) {
     return (
       <section className="space-y-3">
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "myCollections")}</h2>
@@ -66,6 +61,8 @@ export function MyCollections() {
     if (result && "ok" in result && result.ok) {
       setTitle("");
       setCreating(false);
+      const rows = await listMyCollections();
+      setMyCollections(rows);
       await navigate({ to: "/c/$id", params: { id: result.id } });
     }
   }

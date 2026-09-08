@@ -10,6 +10,7 @@ import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
 import {
   deleteMyCollection,
+  listMyCollections,
   updateMyCollection,
   type UserCollection,
 } from "@/lib/user-collections";
@@ -39,6 +40,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   const preferNative = useAppStore((s) => s.preferNative);
   const copyFormat = useAppStore((s) => s.copyFormat);
   const remember = useAppStore((s) => s.remember);
+  const setMyCollections = useAppStore((s) => s.setMyCollections);
   const navigate = useNavigate();
   const [title, setTitle] = useState(collection.title);
   const [passages, setPassages] = useState(collection.passages);
@@ -63,6 +65,8 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
     await updateMyCollection({
       data: { id: collection.id, title: next.title ?? title, passages: next.passages ?? passages },
     });
+    const rows = await listMyCollections();
+    setMyCollections(rows);
   }
 
   async function onCopyOne(item: CopyItem, passage: Passage) {
@@ -105,6 +109,8 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
       return;
     }
     await deleteMyCollection({ data: { id: collection.id } });
+    const rows = await listMyCollections();
+    setMyCollections(rows);
     await navigate({ to: "/collections" });
   }
 

@@ -3,17 +3,9 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { bookById } from "@/lib/bible/books";
 import { samePassage, type Passage } from "@/lib/bible/passage";
 import { getSql } from "@/lib/db";
+import type { CollectionVisibility, UserCollection } from "@/lib/user-collection";
 
-export type CollectionVisibility = "private" | "unlisted" | "public";
-
-export type UserCollection = {
-  id: string;
-  title: string;
-  slug: string;
-  visibility: CollectionVisibility;
-  passages: Passage[];
-  updatedAt: string;
-};
+export type { CollectionVisibility, UserCollection };
 
 const MAX_COLLECTIONS = 40;
 const MAX_PASSAGES = 80;

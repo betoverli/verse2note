@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
+import { listMyCollections } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
 
 function snapshot(): CloudPrefs {
@@ -39,10 +40,11 @@ export function AccountSync() {
     let cancelled = false;
     void (async () => {
       try {
-        const cloud = await getPrefs();
+        const [cloud, collections] = await Promise.all([getPrefs(), listMyCollections()]);
         if (cancelled) return;
         const merged = mergePrefs(snapshot(), cloud);
         useAppStore.getState().applyCloud(merged);
+        useAppStore.getState().setMyCollections(collections);
         last.current = JSON.stringify(merged);
         const saved = await savePrefs({ data: merged });
         if (saved && "error" in saved && saved.error === "handle") {
