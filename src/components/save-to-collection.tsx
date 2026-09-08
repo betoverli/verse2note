@@ -16,7 +16,13 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function SaveToCollectionButton({ passages }: { passages: Passage[] }) {
+export function SaveToCollectionButton({
+  passages,
+  iconOnly = false,
+}: {
+  passages: Passage[];
+  iconOnly?: boolean;
+}) {
   const locale = useAppStore((s) => s.locale);
   const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
@@ -31,12 +37,14 @@ export function SaveToCollectionButton({ passages }: { passages: Passage[] }) {
 
   if (passages.length === 0) return null;
 
+  const label = passages.length > 1 ? t(locale, "saveListAsCollection") : t(locale, "addToCollection");
+
   if (!user) {
     return (
-      <Button size="sm" variant="outline" asChild>
-        <Link to="/login" search={{ create: false }}>
+      <Button size={iconOnly ? "icon" : "sm"} variant={iconOnly ? "ghost" : "outline"} className={iconOnly ? "size-8 text-muted" : undefined} asChild>
+        <Link to="/login" search={{ create: false }} aria-label={label}>
           <BookmarkPlus />
-          {t(locale, "addToCollection")}
+          {iconOnly ? null : label}
         </Link>
       </Button>
     );
@@ -127,9 +135,15 @@ export function SaveToCollectionButton({ passages }: { passages: Passage[] }) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+      <Button
+        size={iconOnly ? "icon" : "sm"}
+        variant={iconOnly ? "ghost" : "outline"}
+        className={iconOnly ? "size-8 text-muted" : undefined}
+        onClick={() => setOpen(true)}
+        aria-label={label}
+      >
         <BookmarkPlus />
-        {passages.length > 1 ? t(locale, "saveListAsCollection") : t(locale, "addToCollection")}
+        {iconOnly ? null : label}
       </Button>
       {sheet}
     </>

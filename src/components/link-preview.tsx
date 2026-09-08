@@ -171,9 +171,9 @@ export function LinkPreview() {
                   {copied === "list" ? <Check /> : <Copy />}
                   {copied === "list" ? t(locale, "copiedList") : t(locale, "copyList")}
                 </Button>
-                <SaveToCollectionButton passages={list} />
-                <Button size="sm" variant="ghost" onClick={clearList}>
-                  {t(locale, "clearList")}
+                <SaveToCollectionButton passages={list} iconOnly />
+                <Button size="icon" variant="ghost" className="size-9 text-muted" onClick={clearList} aria-label={t(locale, "clearList")}>
+                  <X />
                 </Button>
               </div>
             </div>
@@ -211,9 +211,18 @@ export function LinkPreview() {
                 <p className="text-xs font-medium tracking-wide text-muted uppercase">
                   {t(locale, "preview")}
                 </p>
-                <Button size="sm" variant="ghost" className="-mr-2 h-8 text-muted" onClick={clearPassage}>
-                  {t(locale, "clearList")}
-                </Button>
+                <div className="-mr-1 flex shrink-0 items-center">
+                  {passage ? <SaveToCollectionButton passages={[passage]} iconOnly /> : null}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-8 text-muted"
+                    onClick={clearPassage}
+                    aria-label={t(locale, "clearList")}
+                  >
+                    <X />
+                  </Button>
+                </div>
               </div>
               <p className="mt-1 truncate font-display text-2xl leading-tight font-medium tracking-tight text-accent underline decoration-accent/30 underline-offset-4 sm:text-3xl">
                 {current.label}
@@ -257,11 +266,6 @@ export function LinkPreview() {
                 </a>
               </Button>
             </div>
-            {passage ? (
-              <div className="px-2 pb-2">
-                <SaveToCollectionButton passages={[passage]} />
-              </div>
-            ) : null}
           </>
         ) : null}
       </aside>
