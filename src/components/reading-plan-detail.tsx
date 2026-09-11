@@ -107,6 +107,7 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
   const { user } = useCurrentUserState();
   const [copied, setCopied] = useState<string | null>(null);
   const [groups, setGroups] = useState<PlanGroup[]>([]);
+  const [peopleOpen, setPeopleOpen] = useState(false);
   const firstOpen = useRef<HTMLLIElement | null>(null);
 
   const done = doneDays.length;
@@ -200,35 +201,56 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
             style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }}
           />
         </div>
-        <section className="space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "planParticipants")}</h2>
-            <Button size="sm" variant="outline" onClick={() => void onInvite()}>
+        <section>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPeopleOpen((open) => !open)}
+              aria-expanded={peopleOpen}
+              aria-label={`${participants.length} ${t(locale, "planMembers")}`}
+              className="flex min-h-11 min-w-0 items-center gap-2"
+            >
+              <span className="flex items-center">
+                {participants.slice(0, 3).map((member, index) => (
+                  <ProfileAvatar
+                    key={member.userId}
+                    id={member.avatarId}
+                    url={member.avatarUrl}
+                    className={cn(
+                      "relative size-8 bg-elevated ring-2 ring-bg",
+                      index > 0 ? "-ml-2" : "",
+                    )}
+                    iconClassName="size-3.5"
+                  />
+                ))}
+              </span>
+              <span className="text-sm font-medium tabular-nums text-fg">{participants.length}</span>
+            </button>
+            <Button size="sm" variant="outline" className="ml-auto shrink-0" onClick={() => void onInvite()}>
               <Share2 className="size-4" />
               {t(locale, "collectionShare")}
             </Button>
           </div>
-          <ul className="flex flex-col gap-2">
-            {participants.map((member) => (
-              <li
-                key={member.userId}
-                className="flex min-h-14 items-center gap-3 rounded-lg bg-surface px-3 py-2 shadow-[var(--shadow-border)]"
-              >
-                <ProfileAvatar
-                  id={member.avatarId}
-                  url={member.avatarUrl}
-                  className="size-9 bg-elevated"
-                  iconClassName="size-4"
-                />
-                <span className="min-w-0 flex-1 truncate text-sm text-fg">
-                  {memberLabel(member, t(locale, "planYou"))}
-                </span>
-                <span className="shrink-0 text-xs text-muted">
-                  {member.me ? done : member.days.length} / {total}
-                </span>
-              </li>
-            ))}
-          </ul>
+          {peopleOpen ? (
+            <ul className="mt-2 flex flex-col">
+              {participants.map((member) => (
+                <li key={member.userId} className="flex items-center gap-2 py-1.5">
+                  <ProfileAvatar
+                    id={member.avatarId}
+                    url={member.avatarUrl}
+                    className="size-6 bg-elevated"
+                    iconClassName="size-3"
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm text-fg">
+                    {memberLabel(member, t(locale, "planYou"))}
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted">
+                    {member.me ? done : member.days.length}/{total}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </section>
       </div>
       <ul className="flex flex-col gap-2">
