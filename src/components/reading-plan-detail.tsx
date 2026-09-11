@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Copy, ExternalLink, UserPlus } from "lucide-react";
+import { Check, Copy, ExternalLink, Share2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
@@ -9,8 +9,9 @@ import { readingToPassage, type PlanDay, type ReadingPlan } from "@/lib/bible/re
 import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
+import { ProfileAvatar } from "@/lib/avatars";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { createPlanInvite, listPlanGroups, type PlanGroup } from "@/lib/plan-groups";
+import { createPlanInvite, listPlanGroups, type GroupMember, type PlanGroup } from "@/lib/plan-groups";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -99,6 +100,11 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
   const togglePlanDay = useAppStore((s) => s.togglePlanDay);
   const resetPlanProgress = useAppStore((s) => s.resetPlanProgress);
   const stopPlan = useAppStore((s) => s.stopPlan);
+  const meAvatarId = useAppStore((s) => s.avatarId);
+  const meAvatarUrl = useAppStore((s) => s.avatarUrl);
+  const meHandle = useAppStore((s) => s.handle);
+  const meFirst = useAppStore((s) => s.firstName);
+  const { user } = useCurrentUserState();
   const [copied, setCopied] = useState<string | null>(null);
   const [groups, setGroups] = useState<PlanGroup[]>([]);
   const firstOpen = useRef<HTMLLIElement | null>(null);
@@ -108,6 +114,21 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
   const nextDay = plan.days.find((day) => !doneDays.includes(day.day))?.day ?? null;
   const group = groups[0];
   const others = group?.members.filter((item) => !item.me) ?? [];
+  const participants: GroupMember[] =
+    group?.members ??
+    (user
+      ? [
+          {
+            userId: user.id,
+            handle: meHandle,
+            firstName: meFirst,
+            avatarId: meAvatarId,
+            avatarUrl: meAvatarUrl,
+            days: doneDays,
+            me: true,
+          },
+        ]
+      : []);
 
   useEffect(() => {
     firstOpen.current?.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -150,8 +171,17 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
     if (!result || !("ok" in result) || !result.ok) return;
     const rows = await listPlanGroups({ data: { planId: plan.id } });
     setGroups(rows);
+    const url = `${window.location.origin}/g/${result.id}`;
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/g/${result.id}`);
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: plan.names[locale], url });
+        return;
+      }
+    } catch {
+      /* fall through to copy */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
       notify(t(locale, "inviteCopied"));
     } catch {
       notify(t(locale, "invitePlan"), "error");
@@ -161,33 +191,45 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
   return (
     <div className="flex flex-col gap-6 pb-8">
       <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted">
-            {done} / {total} {t(locale, "days")}
-          </p>
-          <Button size="sm" variant="outline" onClick={() => void onInvite()}>
-            <UserPlus className="size-4" />
-            {t(locale, "invitePlan")}
-          </Button>
-        </div>
+        <p className="text-sm text-muted">
+          {done} / {total} {t(locale, "days")}
+        </p>
         <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
           <div
             className="h-full rounded-full bg-accent"
             style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }}
           />
         </div>
-        {others.length > 0 ? (
-          <ul className="flex flex-col gap-1.5">
-            {group?.members.map((member) => (
-              <li key={member.userId} className="flex items-center justify-between text-xs text-muted">
-                <span>{memberLabel(member, t(locale, "planYou"))}</span>
-                <span>
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "planParticipants")}</h2>
+            <Button size="sm" variant="outline" onClick={() => void onInvite()}>
+              <Share2 className="size-4" />
+              {t(locale, "collectionShare")}
+            </Button>
+          </div>
+          <ul className="flex flex-col gap-2">
+            {participants.map((member) => (
+              <li
+                key={member.userId}
+                className="flex min-h-14 items-center gap-3 rounded-lg bg-surface px-3 py-2 shadow-[var(--shadow-border)]"
+              >
+                <ProfileAvatar
+                  id={member.avatarId}
+                  url={member.avatarUrl}
+                  className="size-9 bg-elevated"
+                  iconClassName="size-4"
+                />
+                <span className="min-w-0 flex-1 truncate text-sm text-fg">
+                  {memberLabel(member, t(locale, "planYou"))}
+                </span>
+                <span className="shrink-0 text-xs text-muted">
                   {member.me ? done : member.days.length} / {total}
                 </span>
               </li>
             ))}
           </ul>
-        ) : null}
+        </section>
       </div>
       <ul className="flex flex-col gap-2">
         {plan.days.map((day) => {
@@ -243,9 +285,17 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
                   ))}
                 </div>
                 {who.length > 0 ? (
-                  <p className="mt-1.5 text-xs text-subtle">
-                    {who.map((member) => memberLabel(member, t(locale, "planYou"))).join(" · ")}
-                  </p>
+                  <div className="mt-1.5 flex items-center gap-1">
+                    {who.map((member) => (
+                      <ProfileAvatar
+                        key={member.userId}
+                        id={member.avatarId}
+                        url={member.avatarUrl}
+                        className="size-5 bg-elevated"
+                        iconClassName="size-2.5"
+                      />
+                    ))}
+                  </div>
                 ) : null}
               </div>
               <Button

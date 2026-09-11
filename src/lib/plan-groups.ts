@@ -7,6 +7,8 @@ export type GroupMember = {
   userId: string;
   handle: string;
   firstName: string;
+  avatarId: string;
+  avatarUrl: string;
   days: number[];
   me: boolean;
 };
@@ -43,14 +45,22 @@ async function loadGroup(sql: Awaited<ReturnType<typeof getSql>>, groupId: strin
   `;
   const members: GroupMember[] = [];
   for (const row of memberRows) {
-    const prefs = await sql<{ handle: string; first_name: string; plan_progress: string }>`
-      select handle, first_name, plan_progress from user_prefs where user_id = ${row.user_id}
+    const prefs = await sql<{
+      handle: string;
+      first_name: string;
+      avatar_id: string;
+      avatar_url: string;
+      plan_progress: string;
+    }>`
+      select handle, first_name, avatar_id, avatar_url, plan_progress from user_prefs where user_id = ${row.user_id}
     `;
     const pref = prefs[0];
     members.push({
       userId: row.user_id,
       handle: pref?.handle ?? "",
       firstName: pref?.first_name ?? "",
+      avatarId: pref?.avatar_id || "book",
+      avatarUrl: pref?.avatar_url ?? "",
       days: parseDays(pref?.plan_progress ?? "{}", group.plan_id),
       me: row.user_id === me,
     });
