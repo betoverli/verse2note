@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { t } from "@/lib/i18n";
+import { safeNext } from "@/lib/invite";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,13 @@ import { Wordmark } from "@/components/wordmark";
 
 export const Route = createFileRoute("/login")({
   component: Login,
-  validateSearch: (search: Record<string, unknown>) => ({
-    create: search.create === true || search.create === "1" || search.create === "true",
-  }),
+  validateSearch: (search: Record<string, unknown>): { create: boolean; next?: string } => {
+    const next = safeNext(search.next);
+    return {
+      create: search.create === true || search.create === "1" || search.create === "true",
+      ...(next ? { next } : {}),
+    };
+  },
   head: () => {
     const seo = pageHead({
       title: "Verse2Note — Entrar",
@@ -26,7 +31,8 @@ export const Route = createFileRoute("/login")({
 export function Login() {
   const locale = useAppStore((s) => s.locale);
   const navigate = useNavigate();
-  const { create } = Route.useSearch();
+  const { create, next } = Route.useSearch();
+  const afterAuth = next ?? "/profile";
   const [mode, setMode] = useState<"in" | "up">(create ? "up" : "in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,7 +44,7 @@ export function Login() {
     setError(null);
     setBusy(true);
     try {
-      await signIn(providerId, { callbackURL: "/profile" });
+      await signIn(providerId, { callbackURL: afterAuth });
     } catch (err) {
       const message = err instanceof Error ? err.message : "";
       setError(/pop-up|popup/i.test(message) ? t(locale, "accountPopup") : message || t(locale, "accountError"));
@@ -57,12 +63,12 @@ export function Login() {
               name: name.trim() || email.split("@")[0] || "Verse2Note",
               email: email.trim(),
               password,
-              callbackURL: "/profile",
+              callbackURL: afterAuth,
             })
           : await authClient.signIn.email({
               email: email.trim(),
               password,
-              callbackURL: "/profile",
+              callbackURL: afterAuth,
             });
       if (result.error) {
         setError(result.error.message || t(locale, "accountError"));
@@ -74,7 +80,12 @@ export function Login() {
       } catch {
         /* cookie session will land on the next page */
       }
-      await navigate({ to: "/profile" });
+      if (afterAuth.startsWith("/g/")) {
+        const id = afterAuth.slice(3).split("/")[0];
+        await navigate({ to: "/g/$id", params: { id } });
+      } else {
+        await navigate({ to: "/profile" });
+      }
     } catch {
       setError(t(locale, "accountError"));
       setBusy(false);

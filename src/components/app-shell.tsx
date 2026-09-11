@@ -6,6 +6,9 @@ import { Onboarding } from "@/components/onboarding";
 import { SplashScreen } from "@/components/splash-screen";
 import { showTabBar, TabBar } from "@/components/tab-bar";
 import { UsagePing } from "@/components/usage-ping";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { takeInvite } from "@/lib/invite";
+import { joinPlanGroup } from "@/lib/plan-groups";
 import { useAppStore } from "@/lib/store";
 
 const PUBLIC = new Set(["/", "/about", "/for-ai", "/login"]);
@@ -14,7 +17,10 @@ export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const onboarded = useAppStore((s) => s.onboarded);
-  const publicPage = PUBLIC.has(pathname);
+  const startPlan = useAppStore((s) => s.startPlan);
+  const { user } = useCurrentUserState();
+  const invitePage = pathname.startsWith("/g/");
+  const publicPage = PUBLIC.has(pathname) || invitePage;
   const [hydrated, setHydrated] = useState(publicPage);
   const [minTime, setMinTime] = useState(publicPage);
   const tabs = onboarded && showTabBar(pathname);
@@ -42,6 +48,18 @@ export function AppShell() {
     document.documentElement.classList.toggle("has-tab-bar", Boolean(tabs));
     return () => document.documentElement.classList.remove("has-tab-bar");
   }, [tabs]);
+
+  useEffect(() => {
+    if (!onboarded || !user) return;
+    const id = takeInvite();
+    if (!id) return;
+    void joinPlanGroup({ data: { id } }).then((result) => {
+      if (result && result.ok) {
+        startPlan(result.planId);
+        void navigate({ to: "/reading/$id", params: { id: result.planId } });
+      }
+    });
+  }, [onboarded, user, navigate, startPlan]);
 
   if (publicPage) {
     return (
