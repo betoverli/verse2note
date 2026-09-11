@@ -24,8 +24,8 @@ export function AppShell() {
   const publicPage = PUBLIC.has(pathname) || invitePage;
   const [hydrated, setHydrated] = useState(publicPage);
   const [minTime, setMinTime] = useState(publicPage);
-  const waitingCloud = Boolean(user && !cloudHydrated);
-  const showSplash = !publicPage && (!hydrated || !minTime || isPending || waitingCloud);
+  const waitingCloud = Boolean(!onboarded && user && !cloudHydrated && !isPending);
+  const showSplash = !publicPage && (!hydrated || !minTime || waitingCloud);
   const showOnboarding = !publicPage && !showSplash && !onboarded;
   const tabs = onboarded && !showSplash && !showOnboarding && showTabBar(pathname);
 

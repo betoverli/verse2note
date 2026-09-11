@@ -27,19 +27,28 @@ function snapshot(): CloudPrefs {
 
 export function AccountSync() {
   const { user, isPending } = useCurrentUserState();
+  const userId = user?.id ?? null;
   const ready = useRef(false);
   const last = useRef<string>("");
+  const syncedFor = useRef<string | null>(null);
 
   useEffect(() => {
     if (isPending) return;
-    if (!user) {
+    if (!userId) {
+      syncedFor.current = null;
       useAppStore.getState().clearAccount();
       useAppStore.getState().setCloudHydrated(true);
       ready.current = false;
       return;
     }
-    useAppStore.getState().setCloudHydrated(false);
+    if (syncedFor.current === userId) {
+      useAppStore.getState().setCloudHydrated(true);
+      return;
+    }
     let cancelled = false;
+    const timeout = window.setTimeout(() => {
+      if (!cancelled) useAppStore.getState().setCloudHydrated(true);
+    }, 4000);
     void (async () => {
       try {
         const [cloud, collections] = await Promise.all([getPrefs(), listMyCollections()]);
@@ -53,17 +62,20 @@ export function AccountSync() {
         } else {
           last.current = JSON.stringify(snapshot());
         }
+        syncedFor.current = userId;
         ready.current = true;
       } catch {
         ready.current = true;
       } finally {
+        window.clearTimeout(timeout);
         if (!cancelled) useAppStore.getState().setCloudHydrated(true);
       }
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(timeout);
     };
-  }, [user, isPending]);
+  }, [userId, isPending]);
 
   useEffect(() => {
     if (!user) return;
@@ -99,7 +111,7 @@ export function AccountSync() {
       unsub();
       window.clearTimeout(timer);
     };
-  }, [user]);
+  }, [userId]);
 
   return null;
 }
