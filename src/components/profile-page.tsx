@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, CircleHelp, Globe, Sun, BarChart3, Award } from "lucide-react";
+import { Award, BarChart3, BookOpen, CircleHelp, Globe, Pencil, Share2, Sun } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -180,23 +180,6 @@ export function ProfileView() {
             <p className="text-sm text-muted">{t(locale, "handleMissing")}</p>
           )}
           {name ? <p className="text-sm text-muted">{name}</p> : null}
-          <Button variant="secondary" className="w-full" asChild>
-            <Link to="/profile/edit">{t(locale, "editProfile")}</Link>
-          </Button>
-          {handle ? (
-            <Button
-              variant="ghost"
-              className="w-full text-muted"
-              onClick={() => {
-                void navigator.clipboard.writeText(`${window.location.origin}/u/${handle}`).then(() => {
-                  const id = toast.success(t(locale, "profileCopied"));
-                  window.setTimeout(() => toast.dismiss(id), 2000);
-                });
-              }}
-            >
-              {t(locale, "copyProfile")}
-            </Button>
-          ) : null}
         </section>
       ) : (
         <section className="flex flex-col gap-3">
@@ -372,6 +355,51 @@ export function ProfileEdit() {
           {saving ? t(locale, "accountWait") : t(locale, "saveProfile")}
         </Button>
       </section>
+    </div>
+  );
+}
+
+export function ProfileHeaderActions() {
+  const locale = useAppStore((s) => s.locale);
+  const handle = useAppStore((s) => s.handle);
+  const { user, isPending } = useCurrentUserState();
+  if (isPending || !user) return null;
+
+  async function onShare() {
+    if (!handle) {
+      const id = toast.error(t(locale, "handleMissing"));
+      window.setTimeout(() => toast.dismiss(id), 2000);
+      return;
+    }
+    const url = `${window.location.origin}/u/${handle}`;
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: `@${handle}`, url });
+        return;
+      }
+    } catch {
+      /* copy */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      const id = toast.success(t(locale, "profileCopied"));
+      window.setTimeout(() => toast.dismiss(id), 2000);
+    } catch {
+      const id = toast.error(t(locale, "copyProfile"));
+      window.setTimeout(() => toast.dismiss(id), 2000);
+    }
+  }
+
+  return (
+    <div className="flex items-center">
+      <Button variant="ghost" size="icon" aria-label={t(locale, "copyProfile")} onClick={() => void onShare()}>
+        <Share2 className="size-5" />
+      </Button>
+      <Button variant="ghost" size="icon" aria-label={t(locale, "editProfile")} asChild>
+        <Link to="/profile/edit">
+          <Pencil className="size-5" />
+        </Link>
+      </Button>
     </div>
   );
 }
