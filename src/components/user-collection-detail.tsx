@@ -89,27 +89,43 @@ export function CollectionPassageCards({
         if (!item) return null;
         const key = passageKey(passage);
         return (
-          <li key={key} className="rounded-lg bg-surface px-3 py-3 shadow-[var(--shadow-border)]">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                {passage.title && !editable ? (
-                  <p className="font-display text-lg italic text-fg">{passage.title}</p>
-                ) : null}
-                {editable ? (
-                  <input
-                    value={passage.title ?? ""}
-                    maxLength={80}
-                    placeholder={t(locale, "passageTitle")}
-                    onChange={(event) => onTitle?.(passage, event.target.value)}
-                    onBlur={(event) => onTitleSave?.(passage, event.target.value)}
-                    className="mb-1 w-full bg-transparent font-display text-lg italic text-fg outline-none placeholder:text-subtle"
-                  />
-                ) : null}
-                <p className={passage.title || editable ? "text-sm text-muted" : "text-sm font-medium text-fg"}>
-                  {item.label}
-                </p>
-              </div>
-              <div className="flex shrink-0 gap-1">
+          <li key={key} className="rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
+            {passage.title && !editable ? (
+              <p className="text-pretty font-display text-lg leading-snug font-medium wrap-break-word italic text-fg">
+                {passage.title}
+              </p>
+            ) : null}
+            {editable ? (
+              <textarea
+                value={passage.title ?? ""}
+                maxLength={80}
+                rows={1}
+                placeholder={t(locale, "passageTitle")}
+                onChange={(event) => {
+                  event.currentTarget.style.height = "auto";
+                  event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
+                  onTitle?.(passage, event.target.value);
+                }}
+                onBlur={(event) => onTitleSave?.(passage, event.target.value)}
+                ref={(node) => {
+                  if (!node) return;
+                  node.style.height = "auto";
+                  node.style.height = `${node.scrollHeight}px`;
+                }}
+                className="mb-1 w-full resize-none overflow-hidden bg-transparent font-display text-lg leading-snug italic text-fg outline-none placeholder:text-subtle"
+              />
+            ) : null}
+            <div className="mt-1 flex items-center gap-1">
+              <p
+                className={
+                  passage.title || editable
+                    ? "min-w-0 flex-1 text-sm leading-snug wrap-break-word text-muted"
+                    : "min-w-0 flex-1 text-sm leading-snug font-medium wrap-break-word text-fg"
+                }
+              >
+                {item.label}
+              </p>
+              <div className="flex shrink-0">
                 <Button size="icon" variant="ghost" asChild className="size-9">
                   <a href={item.url} target="_blank" rel="noreferrer">
                     <ExternalLink className="size-4" />
