@@ -37,7 +37,7 @@ export function AppHeader({
   const BackIcon = apple ? ChevronLeft : ArrowLeft;
 
   return (
-    <header className="app-header sticky top-0 z-20 -mx-4 bg-bg/85 px-2 pb-2 backdrop-blur-xl sm:-mx-6 sm:px-3">
+    <header className="app-header sticky top-0 z-20 -mx-4 bg-bg px-2 pb-2 sm:-mx-6 sm:px-3">
       <div className="grid h-11 grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-1">
         <div className="justify-self-start">
           {backTo ? (
