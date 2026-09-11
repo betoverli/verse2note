@@ -17,13 +17,17 @@ export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const onboarded = useAppStore((s) => s.onboarded);
+  const cloudHydrated = useAppStore((s) => s.cloudHydrated);
   const startPlan = useAppStore((s) => s.startPlan);
-  const { user } = useCurrentUserState();
+  const { user, isPending } = useCurrentUserState();
   const invitePage = pathname.startsWith("/g/");
   const publicPage = PUBLIC.has(pathname) || invitePage;
   const [hydrated, setHydrated] = useState(publicPage);
   const [minTime, setMinTime] = useState(publicPage);
-  const tabs = onboarded && showTabBar(pathname);
+  const waitingCloud = Boolean(user && !cloudHydrated);
+  const showSplash = !publicPage && (!hydrated || !minTime || isPending || waitingCloud);
+  const showOnboarding = !publicPage && !showSplash && !onboarded;
+  const tabs = onboarded && !showSplash && !showOnboarding && showTabBar(pathname);
 
   useEffect(() => {
     const api = useAppStore.persist;
@@ -65,12 +69,27 @@ export function AppShell() {
     return (
       <>
         <Outlet />
+        <AccountSync />
         <UsagePing />
       </>
     );
   }
-  if (!hydrated || !minTime) return <SplashScreen />;
-  if (!onboarded) return <Onboarding onBack={() => void navigate({ to: "/" })} />;
+  if (showSplash) {
+    return (
+      <>
+        <SplashScreen />
+        <AccountSync />
+      </>
+    );
+  }
+  if (showOnboarding) {
+    return (
+      <>
+        <Onboarding onBack={() => void navigate({ to: "/" })} />
+        <AccountSync />
+      </>
+    );
+  }
   return (
     <>
       <Outlet />

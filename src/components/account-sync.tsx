@@ -34,25 +34,30 @@ export function AccountSync() {
     if (isPending) return;
     if (!user) {
       useAppStore.getState().clearAccount();
+      useAppStore.getState().setCloudHydrated(true);
       ready.current = false;
       return;
     }
+    useAppStore.getState().setCloudHydrated(false);
     let cancelled = false;
     void (async () => {
       try {
         const [cloud, collections] = await Promise.all([getPrefs(), listMyCollections()]);
         if (cancelled) return;
-        const merged = mergePrefs(snapshot(), cloud);
-        useAppStore.getState().applyCloud(merged);
         useAppStore.getState().setMyCollections(collections);
-        last.current = JSON.stringify(merged);
-        const saved = await savePrefs({ data: merged });
-        if (saved && "error" in saved && saved.error === "handle") {
-          /* keep local handle; profile page shows the conflict */
+        if (cloud) {
+          const merged = mergePrefs(snapshot(), cloud);
+          useAppStore.getState().applyCloud(merged);
+          last.current = JSON.stringify(merged);
+          await savePrefs({ data: merged });
+        } else {
+          last.current = JSON.stringify(snapshot());
         }
         ready.current = true;
       } catch {
         ready.current = true;
+      } finally {
+        if (!cancelled) useAppStore.getState().setCloudHydrated(true);
       }
     })();
     return () => {
