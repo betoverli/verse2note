@@ -29,6 +29,7 @@ import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
 import { Route as GIdRouteImport } from './routes/g.$id'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
+import { Route as ProfileBadgesRouteImport } from './routes/profile.badges'
 import { Route as ProfileBibleRouteImport } from './routes/profile.bible'
 import { Route as ProfileEditRouteImport } from './routes/profile.edit'
 import { Route as ProfileHelpRouteImport } from './routes/profile.help'
@@ -142,6 +143,11 @@ const ProfileIndexRoute = ProfileIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ProfileRoute,
 } as any)
+const ProfileBadgesRoute = ProfileBadgesRouteImport.update({
+  id: '/badges',
+  path: '/badges',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ProfileBibleRoute = ProfileBibleRouteImport.update({
   id: '/bible',
   path: '/bible',
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/g/$id': typeof GIdRoute
+  '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/g/$id': typeof GIdRoute
+  '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
@@ -290,6 +298,7 @@ export interface FileRoutesById {
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/g/$id': typeof GIdRoute
+  '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
@@ -326,6 +335,7 @@ export interface FileRouteTypes {
     | '/collections/$id'
     | '/collections/themes'
     | '/g/$id'
+    | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
     | '/profile/help'
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/collections/$id'
     | '/collections/themes'
     | '/g/$id'
+    | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
     | '/profile/help'
@@ -391,6 +402,7 @@ export interface FileRouteTypes {
     | '/collections/$id'
     | '/collections/themes'
     | '/g/$id'
+    | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
     | '/profile/help'
@@ -570,6 +582,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileIndexRouteImport
       parentRoute: typeof ProfileRoute
     }
+    '/profile/badges': {
+      id: '/profile/badges'
+      path: '/badges'
+      fullPath: '/profile/badges'
+      preLoaderRoute: typeof ProfileBadgesRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/profile/bible': {
       id: '/profile/bible'
       path: '/bible'
@@ -676,6 +695,7 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
 )
 
 interface ProfileRouteChildren {
+  ProfileBadgesRoute: typeof ProfileBadgesRoute
   ProfileBibleRoute: typeof ProfileBibleRoute
   ProfileEditRoute: typeof ProfileEditRoute
   ProfileHelpRoute: typeof ProfileHelpRoute
@@ -685,6 +705,7 @@ interface ProfileRouteChildren {
 }
 
 const ProfileRouteChildren: ProfileRouteChildren = {
+  ProfileBadgesRoute: ProfileBadgesRoute,
   ProfileBibleRoute: ProfileBibleRoute,
   ProfileEditRoute: ProfileEditRoute,
   ProfileHelpRoute: ProfileHelpRoute,

@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, CircleHelp, Globe, Sun, BarChart3 } from "lucide-react";
+import { BookOpen, CircleHelp, Globe, Sun, BarChart3, Award } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AVATARS, PHOTO_AVATAR, AvatarMark, ProfileAvatar } from "@/lib/avatars";
-import { BadgeGrid } from "@/components/badge-grid";
 import { getMyBadges } from "@/lib/badge-stats";
-import type { BadgeId } from "@/lib/badges";
+import { BADGE_IDS, type BadgeId } from "@/lib/badges";
 import { toast } from "sonner";
 import { appById } from "@/lib/bible/apps";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
@@ -69,12 +68,23 @@ function usePrefillProfile() {
   }, [user, profileEmail, avatarUrl, firstName, lastName, setProfile]);
 }
 
-function SettingCards() {
+function SettingCards({ earned }: { earned: number }) {
   const locale = useAppStore((s) => s.locale);
   const theme = useAppStore((s) => s.theme);
   const appId = useAppStore((s) => s.appId);
   const app = appById(appId);
+  const { user } = useCurrentUserState();
   const cards = [
+    ...(user
+      ? [
+          {
+            to: "/profile/badges" as const,
+            icon: Award,
+            title: t(locale, "badges"),
+            subtitle: `${earned} / ${BADGE_IDS.length}`,
+          },
+        ]
+      : []),
     {
       to: "/profile/theme" as const,
       icon: Sun,
@@ -204,14 +214,7 @@ export function ProfileView() {
         </section>
       )}
 
-      {user ? (
-        <section className="space-y-3">
-          <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "badges")}</h2>
-          <BadgeGrid earned={badges} locale={locale} locked />
-        </section>
-      ) : null}
-
-      <SettingCards />
+      <SettingCards earned={badges.length} />
 
       {admin ? (
         <Link
