@@ -3,6 +3,7 @@ Allow: /
 Disallow: /login
 Disallow: /profile
 Disallow: /c/
+Disallow: /g/
 Disallow: /api/auth
 Disallow: /admin
 

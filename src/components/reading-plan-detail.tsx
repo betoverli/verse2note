@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { Check, Copy, ExternalLink, UserPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
@@ -10,6 +10,7 @@ import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { createPlanInvite, listPlanGroups, type PlanGroup } from "@/lib/plan-groups";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,13 @@ function dayItems(
 }
 
 const EMPTY_DAYS: number[] = [];
+
+function memberLabel(member: PlanGroup["members"][number], you: string) {
+  if (member.me) return you;
+  if (member.handle) return `@${member.handle}`;
+  if (member.firstName) return member.firstName;
+  return "•";
+}
 
 export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   const locale = useAppStore((s) => s.locale);
@@ -92,15 +100,28 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
   const resetPlanProgress = useAppStore((s) => s.resetPlanProgress);
   const stopPlan = useAppStore((s) => s.stopPlan);
   const [copied, setCopied] = useState<string | null>(null);
+  const [groups, setGroups] = useState<PlanGroup[]>([]);
   const firstOpen = useRef<HTMLLIElement | null>(null);
 
   const done = doneDays.length;
   const total = plan.days.length;
   const nextDay = plan.days.find((day) => !doneDays.includes(day.day))?.day ?? null;
+  const group = groups[0];
+  const others = group?.members.filter((item) => !item.me) ?? [];
 
   useEffect(() => {
     firstOpen.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [plan.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void listPlanGroups({ data: { planId: plan.id } }).then((rows) => {
+      if (!cancelled) setGroups(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [plan.id, doneDays.length]);
 
   function flash(key: string) {
     setCopied(key);
@@ -124,24 +145,56 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
     }
   }
 
+  async function onInvite() {
+    const result = await createPlanInvite({ data: { planId: plan.id } });
+    if (!result || !("ok" in result) || !result.ok) return;
+    const rows = await listPlanGroups({ data: { planId: plan.id } });
+    setGroups(rows);
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/g/${result.id}`);
+      notify(t(locale, "inviteCopied"));
+    } catch {
+      notify(t(locale, "invitePlan"), "error");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6 pb-8">
-      <div className="space-y-2">
-        <p className="text-sm text-muted">
-          {done} / {total} {t(locale, "days")}
-        </p>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-muted">
+            {done} / {total} {t(locale, "days")}
+          </p>
+          <Button size="sm" variant="outline" onClick={() => void onInvite()}>
+            <UserPlus className="size-4" />
+            {t(locale, "invitePlan")}
+          </Button>
+        </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-elevated">
           <div
             className="h-full rounded-full bg-accent"
             style={{ width: `${total ? Math.round((done / total) * 100) : 0}%` }}
           />
         </div>
+        {others.length > 0 ? (
+          <ul className="flex flex-col gap-1.5">
+            {group?.members.map((member) => (
+              <li key={member.userId} className="flex items-center justify-between text-xs text-muted">
+                <span>{memberLabel(member, t(locale, "planYou"))}</span>
+                <span>
+                  {member.me ? done : member.days.length} / {total}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
       <ul className="flex flex-col gap-2">
         {plan.days.map((day) => {
           const complete = doneDays.includes(day.day);
           const passages = day.readings.map(readingToPassage);
           const items = dayItems(day, locale, appId, translationId, preferNative);
+          const who = others.filter((member) => member.days.includes(day.day));
           return (
             <li
               key={day.day}
@@ -189,6 +242,11 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
                     </span>
                   ))}
                 </div>
+                {who.length > 0 ? (
+                  <p className="mt-1.5 text-xs text-subtle">
+                    {who.map((member) => memberLabel(member, t(locale, "planYou"))).join(" · ")}
+                  </p>
+                ) : null}
               </div>
               <Button
                 size="icon"

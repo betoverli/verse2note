@@ -3,13 +3,14 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { bookById } from "@/lib/bible/books";
 import { samePassage, type Passage } from "@/lib/bible/passage";
 import { getSql } from "@/lib/db";
-import type { CollectionVisibility, UserCollection } from "@/lib/user-collection";
+import type { CollectionPassage, CollectionVisibility, UserCollection } from "@/lib/user-collection";
 
-export type { CollectionVisibility, UserCollection };
+export type { CollectionPassage, CollectionVisibility, UserCollection };
 
 const MAX_COLLECTIONS = 40;
 const MAX_PASSAGES = 80;
 const MAX_TITLE = 60;
+const MAX_NOTE = 80;
 
 type Row = {
   id: string;
@@ -17,6 +18,7 @@ type Row = {
   slug: string;
   visibility: string;
   passages: string;
+  source_id: string;
   updated_at: string;
 };
 
@@ -36,9 +38,13 @@ function cleanTitle(value: string) {
   return value.trim().replace(/\s+/g, " ").slice(0, MAX_TITLE);
 }
 
-function cleanPassages(input: unknown): Passage[] {
+function cleanNote(value: unknown) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ").slice(0, MAX_NOTE) : "";
+}
+
+export function cleanPassages(input: unknown): CollectionPassage[] {
   if (!Array.isArray(input)) return [];
-  const out: Passage[] = [];
+  const out: CollectionPassage[] = [];
   for (const item of input) {
     if (!item || typeof item !== "object") continue;
     const row = item as Record<string, unknown>;
@@ -51,7 +57,13 @@ function cleanPassages(input: unknown): Passage[] {
     const verseEnd = row.verseEnd == null || row.verseEnd === "" ? null : Number(row.verseEnd);
     const start = verseStart && Number.isInteger(verseStart) && verseStart > 0 ? verseStart : null;
     const end = verseEnd && Number.isInteger(verseEnd) && verseEnd > 0 ? verseEnd : null;
-    const passage: Passage = { bookId, chapter, verseStart: start, verseEnd: end };
+    const passage: CollectionPassage = {
+      bookId,
+      chapter,
+      verseStart: start,
+      verseEnd: end,
+      title: cleanNote(row.title),
+    };
     if (out.some((existing) => samePassage(existing, passage))) continue;
     out.push(passage);
     if (out.length >= MAX_PASSAGES) break;
@@ -65,7 +77,10 @@ function fromRow(row: Row): UserCollection {
     title: row.title,
     slug: row.slug ?? "",
     visibility: asVisibility(row.visibility),
-    passages: cleanPassages(parseJson(typeof row.passages === "string" ? row.passages : JSON.stringify(row.passages ?? []), [])),
+    sourceId: row.source_id ?? "",
+    passages: cleanPassages(
+      parseJson(typeof row.passages === "string" ? row.passages : JSON.stringify(row.passages ?? []), []),
+    ),
     updatedAt: String(row.updated_at ?? ""),
   };
 }
@@ -79,7 +94,7 @@ export const listMyCollections = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     const rows = await sql<Row>`
-      select id, title, slug, visibility, passages, updated_at
+      select id, title, slug, visibility, passages, coalesce(source_id, '') as source_id, updated_at
       from user_collections
       where user_id = ${context.userId}
       order by updated_at desc
@@ -93,16 +108,32 @@ export const getMyCollection = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<Row>`
-      select id, title, slug, visibility, passages, updated_at
+      select id, title, slug, visibility, passages, coalesce(source_id, '') as source_id, updated_at
       from user_collections
       where id = ${data.id} and user_id = ${context.userId}
     `;
     return rows[0] ? fromRow(rows[0]) : null;
   });
 
+export const getSharedCollection = createServerFn({ method: "GET" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const sql = await getSql();
+    const rows = await sql<Row>`
+      select id, title, slug, visibility, passages, coalesce(source_id, '') as source_id, updated_at
+      from user_collections
+      where id = ${data.id}
+    `;
+    const row = rows[0];
+    if (!row) return null;
+    const vis = asVisibility(row.visibility);
+    if (vis === "private") return null;
+    return fromRow(row);
+  });
+
 export const createMyCollection = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { title: string; passages?: Passage[] }) => data)
+  .validator((data: { title: string; passages?: Passage[]; sourceId?: string }) => data)
   .handler(async ({ context, data }) => {
     const title = cleanTitle(data.title) || "Coleção";
     const passages = cleanPassages(data.passages ?? []);
@@ -114,20 +145,21 @@ export const createMyCollection = createServerFn({ method: "POST" })
       return { ok: false as const, error: "limit" as const };
     }
     const id = newId();
+    const sourceId = typeof data.sourceId === "string" ? data.sourceId.slice(0, 64) : "";
     await sql`
-      insert into user_collections (id, user_id, title, visibility, passages, updated_at)
-      values (${id}, ${context.userId}, ${title}, ${"private"}, ${JSON.stringify(passages)}, now())
+      insert into user_collections (id, user_id, title, visibility, passages, source_id, updated_at)
+      values (${id}, ${context.userId}, ${title}, ${"private"}, ${JSON.stringify(passages)}, ${sourceId}, now())
     `;
     return { ok: true as const, id };
   });
 
 export const updateMyCollection = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { id: string; title?: string; passages?: Passage[] }) => data)
+  .validator((data: { id: string; title?: string; passages?: Passage[]; visibility?: CollectionVisibility }) => data)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<Row>`
-      select id, title, slug, visibility, passages, updated_at
+      select id, title, slug, visibility, passages, coalesce(source_id, '') as source_id, updated_at
       from user_collections
       where id = ${data.id} and user_id = ${context.userId}
     `;
@@ -135,12 +167,44 @@ export const updateMyCollection = createServerFn({ method: "POST" })
     if (!current) return { ok: false as const, error: "missing" as const };
     const title = data.title != null ? cleanTitle(data.title) || current.title : current.title;
     const passages = data.passages ? cleanPassages(data.passages) : current.passages;
+    const visibility = data.visibility ? asVisibility(data.visibility) : current.visibility;
     await sql`
       update user_collections
-      set title = ${title}, passages = ${JSON.stringify(passages)}, updated_at = now()
+      set title = ${title}, passages = ${JSON.stringify(passages)}, visibility = ${visibility}, updated_at = now()
       where id = ${data.id} and user_id = ${context.userId}
     `;
     return { ok: true as const };
+  });
+
+export const remixCollection = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<Row & { user_id: string }>`
+      select id, user_id, title, slug, visibility, passages, coalesce(source_id, '') as source_id, updated_at
+      from user_collections
+      where id = ${data.id}
+    `;
+    const row = rows[0];
+    if (!row) return { ok: false as const, error: "missing" as const };
+    const vis = asVisibility(row.visibility);
+    if (vis === "private" && row.user_id !== context.userId) {
+      return { ok: false as const, error: "missing" as const };
+    }
+    const count = await sql<{ n: number }>`
+      select count(*)::int as n from user_collections where user_id = ${context.userId}
+    `;
+    if (Number(count[0]?.n ?? 0) >= MAX_COLLECTIONS) {
+      return { ok: false as const, error: "limit" as const };
+    }
+    const source = fromRow(row);
+    const id = newId();
+    await sql`
+      insert into user_collections (id, user_id, title, visibility, passages, source_id, updated_at)
+      values (${id}, ${context.userId}, ${source.title}, ${"private"}, ${JSON.stringify(source.passages)}, ${source.id}, now())
+    `;
+    return { ok: true as const, id };
   });
 
 export const deleteMyCollection = createServerFn({ method: "POST" })

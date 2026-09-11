@@ -27,6 +27,7 @@ import { Route as CIdRouteImport } from './routes/c.$id'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
+import { Route as GIdRouteImport } from './routes/g.$id'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ProfileBibleRouteImport } from './routes/profile.bible'
 import { Route as ProfileEditRouteImport } from './routes/profile.edit'
@@ -130,6 +131,11 @@ const CollectionsThemesRoute = CollectionsThemesRouteImport.update({
   path: '/themes',
   getParentRoute: () => CollectionsRoute,
 } as any)
+const GIdRoute = GIdRouteImport.update({
+  id: '/g/$id',
+  path: '/g/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileIndexRoute = ProfileIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/g/$id': typeof GIdRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/g/$id': typeof GIdRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
+  '/g/$id': typeof GIdRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
@@ -307,6 +316,7 @@ export interface FileRouteTypes {
     | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
+    | '/g/$id'
     | '/profile/bible'
     | '/profile/edit'
     | '/profile/help'
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
+    | '/g/$id'
     | '/profile/bible'
     | '/profile/edit'
     | '/profile/help'
@@ -368,6 +379,7 @@ export interface FileRouteTypes {
     | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
+    | '/g/$id'
     | '/profile/bible'
     | '/profile/edit'
     | '/profile/help'
@@ -399,6 +411,7 @@ export interface RootRouteChildren {
   ApiMcpRoute: typeof ApiMcpRoute
   ApiPlansRoute: typeof ApiPlansRoute
   CIdRoute: typeof CIdRoute
+  GIdRoute: typeof GIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -529,6 +542,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/collections/themes'
       preLoaderRoute: typeof CollectionsThemesRouteImport
       parentRoute: typeof CollectionsRoute
+    }
+    '/g/$id': {
+      id: '/g/$id'
+      path: '/g/$id'
+      fullPath: '/g/$id'
+      preLoaderRoute: typeof GIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/profile/': {
       id: '/profile/'
@@ -689,6 +709,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMcpRoute: ApiMcpRoute,
   ApiPlansRoute: ApiPlansRoute,
   CIdRoute: CIdRoute,
+  GIdRoute: GIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
