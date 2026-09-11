@@ -38,10 +38,10 @@ export function AppHeader({
 
   return (
     <header className="app-header sticky top-0 z-20 -mx-4 bg-bg px-2 pb-2 sm:-mx-6 sm:px-3">
-      <div className="grid h-11 grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-1">
-        <div className="justify-self-start">
+      <div className="grid min-h-11 grid-cols-[minmax(2.75rem,1fr)_minmax(0,auto)_minmax(2.75rem,1fr)] items-center gap-1 overflow-visible">
+        <div className="justify-self-start overflow-visible">
           {backTo ? (
-            <Button variant="ghost" size={backLabel ? "sm" : "icon"} asChild className="-ml-1 text-fg">
+            <Button variant="ghost" size={backLabel ? "sm" : "icon"} asChild className="-ml-1 overflow-visible text-fg">
               {(backTo === "/collections/category/$categoryId" || backTo === "/reading/category/$categoryId") &&
               backParams ? (
                 <Link to={backTo} params={backParams} aria-label={t(locale, "back")}>
@@ -57,10 +57,10 @@ export function AppHeader({
             </Button>
           ) : null}
         </div>
-        <h1 className="truncate px-1 text-center text-[17px] font-semibold tracking-tight text-fg">
+        <h1 className="px-1 text-center text-[17px] leading-snug font-semibold text-fg">
           {title}
         </h1>
-        <div className="justify-self-end">{trailing}</div>
+        <div className="justify-self-end overflow-visible">{trailing}</div>
       </div>
     </header>
   );

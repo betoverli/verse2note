@@ -45,8 +45,28 @@ html.light {
 @layer components {
   .app-header {
     padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-    padding-top: calc(constant(safe-area-inset-top, 0px) + 0.5rem);
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+    background-color: var(--color-bg);
+    background-image: none;
+    isolation: isolate;
+    overflow: visible;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-font-smoothing: auto;
+  }
+
+  .app-header::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--color-bg);
+    pointer-events: none;
+  }
+
+  .app-header h1 {
+    overflow: visible;
+    line-height: 1.35;
+    -webkit-font-smoothing: auto;
   }
 
   .tab-bar {
