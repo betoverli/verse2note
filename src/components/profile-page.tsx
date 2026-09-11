@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, CircleHelp, Globe, Sun } from "lucide-react";
+import { BookOpen, CircleHelp, Globe, Sun, BarChart3 } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -10,6 +10,7 @@ import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
 import { localeLabel, themeLabel } from "@/components/settings-panel";
 import { useAppStore } from "@/lib/store";
+import { getIsAdmin } from "@/lib/usage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -130,9 +131,20 @@ export function ProfileView() {
   const lastName = useAppStore((s) => s.lastName);
   const { user, isPending } = useCurrentUserState();
   const [signingOut, setSigningOut] = useState(false);
+  const [admin, setAdmin] = useState(false);
   const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
   usePrefillProfile();
   const name = [firstName, lastName].filter(Boolean).join(" ");
+
+  useEffect(() => {
+    if (!user) {
+      setAdmin(false);
+      return;
+    }
+    void getIsAdmin()
+      .then(setAdmin)
+      .catch(() => setAdmin(false));
+  }, [user]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -168,6 +180,21 @@ export function ProfileView() {
       )}
 
       <SettingCards />
+
+      {admin ? (
+        <Link
+          to="/admin"
+          className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
+        >
+          <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+            <BarChart3 className="size-5" />
+          </span>
+          <span>
+            <span className="block text-sm font-medium">{t(locale, "adminTitle")}</span>
+            <span className="mt-1 block text-xs text-muted">{t(locale, "adminHint")}</span>
+          </span>
+        </Link>
+      ) : null}
 
       {user && authEnabled && !gateSession ? (
         <Button

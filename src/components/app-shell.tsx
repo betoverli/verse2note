@@ -5,6 +5,7 @@ import { Coachmarks } from "@/components/coachmarks";
 import { Onboarding } from "@/components/onboarding";
 import { SplashScreen } from "@/components/splash-screen";
 import { showTabBar, TabBar } from "@/components/tab-bar";
+import { UsagePing } from "@/components/usage-ping";
 import { useAppStore } from "@/lib/store";
 
 const PUBLIC = new Set(["/", "/about", "/for-ai", "/login"]);
@@ -42,7 +43,14 @@ export function AppShell() {
     return () => document.documentElement.classList.remove("has-tab-bar");
   }, [tabs]);
 
-  if (publicPage) return <Outlet />;
+  if (publicPage) {
+    return (
+      <>
+        <Outlet />
+        <UsagePing />
+      </>
+    );
+  }
   if (!hydrated || !minTime) return <SplashScreen />;
   if (!onboarded) return <Onboarding onBack={() => void navigate({ to: "/" })} />;
   return (
@@ -51,6 +59,7 @@ export function AppShell() {
       {tabs ? <TabBar /> : null}
       <Coachmarks />
       <AccountSync />
+      <UsagePing />
     </>
   );
 }

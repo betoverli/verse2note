@@ -4,6 +4,7 @@ Disallow: /login
 Disallow: /profile
 Disallow: /c/
 Disallow: /api/auth
+Disallow: /admin
 
 User-agent: GPTBot
 Allow: /
