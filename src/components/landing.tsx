@@ -97,9 +97,23 @@ export function Landing() {
       </div>
 
       <div className="mt-6 shrink-0 space-y-3 border-t border-border/60 pt-4">
-        <Button className="w-full" size="lg" asChild>
-          <Link to="/app">{t(locale, "landCta")}</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1" size="lg" asChild>
+            <Link to="/login" search={{ create: false }}>
+              {t(locale, "signIn")}
+            </Link>
+          </Button>
+          <Button className="flex-[1.4]" size="lg" asChild>
+            <Link to="/login" search={{ create: true }}>
+              {t(locale, "createAccount")}
+            </Link>
+          </Button>
+        </div>
+        <p className="text-center text-xs text-subtle">
+          <Link to="/app" className="underline-offset-2 hover:text-fg hover:underline">
+            {t(locale, "landCta")}
+          </Link>
+        </p>
         <p className="text-center text-xs text-subtle">
           <Link to="/about" className="underline-offset-2 hover:text-fg hover:underline">
             {t(locale, "aboutTitle")}

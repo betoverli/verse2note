@@ -214,7 +214,7 @@ const strings = {
     landHeadline: "A passagem já vai com o link.",
     landLead:
       "Escolha o livro, o capítulo e os versos — ou uma coleção por tema, ou um plano de leitura. O Verse2Note gera um texto rico que abre no seu app de Bíblia. No iPhone, cola no Notes. No Android, no Google Docs ou no Word.",
-    landCta: "Acessar o app",
+    landCta: "Continuar sem conta",
     landDemoLabel: "Reunião",
     landSample: "João 3:16",
     landSampleTwo: "Romanos 8:28",
@@ -454,7 +454,7 @@ const strings = {
     landHeadline: "The passage name is already the link.",
     landLead:
       "Pick the book, chapter, and verses — or a themed collection, or a reading plan. Verse2Note makes rich text that opens in your Bible app. On iPhone, paste into Notes. On Android, into Google Docs or Word.",
-    landCta: "Open the app",
+    landCta: "Continue without an account",
     landDemoLabel: "Meeting",
     landSample: "John 3:16",
     landSampleTwo: "Romans 8:28",
@@ -694,7 +694,7 @@ const strings = {
     landHeadline: "El pasaje ya lleva el enlace.",
     landLead:
       "Elige el libro, el capítulo y los versículos — o una colección por tema, o un plan de lectura. Verse2Note genera un texto enriquecido que abre en tu app de Biblia. En el iPhone, pega en Notes. En Android, en Google Docs o Word.",
-    landCta: "Abrir la app",
+    landCta: "Continuar sin cuenta",
     landDemoLabel: "Reunión",
     landSample: "Juan 3:16",
     landSampleTwo: "Romanos 8:28",
