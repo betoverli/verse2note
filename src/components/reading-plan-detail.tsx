@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n";
 import { ProfileAvatar } from "@/lib/avatars";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { createPlanInvite, listPlanGroups, type GroupMember, type PlanGroup } from "@/lib/plan-groups";
+import { markPlanDay, resetPlanMarks } from "@/lib/plan-marks";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -189,6 +190,23 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
     }
   }
 
+  async function onToggleDay(day: number) {
+    const complete = doneDays.includes(day);
+    if (user) {
+      const result = await markPlanDay({ data: { planId: plan.id, day, on: !complete } });
+      if (!result || !result.ok) {
+        notify(t(locale, "readingPace"), "error");
+        return;
+      }
+    }
+    togglePlanDay(plan.id, day);
+  }
+
+  async function onReset() {
+    if (user) await resetPlanMarks({ data: { planId: plan.id } });
+    resetPlanProgress(plan.id);
+  }
+
   return (
     <div className="flex flex-col gap-6 pb-8">
       <div className="space-y-3">
@@ -270,7 +288,7 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
             >
               <button
                 type="button"
-                onClick={() => togglePlanDay(plan.id, day.day)}
+                onClick={() => void onToggleDay(day.day)}
                 aria-pressed={complete}
                 aria-label={t(locale, complete ? "readingUnmark" : "readingMark")}
                 className={cn(
@@ -335,7 +353,7 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
       </ul>
       <div className="flex flex-col gap-2">
         {done > 0 ? (
-          <Button variant="secondary" className="w-full" onClick={() => resetPlanProgress(plan.id)}>
+          <Button variant="secondary" className="w-full" onClick={() => void onReset()}>
             {t(locale, "readingReset")}
           </Button>
         ) : null}
