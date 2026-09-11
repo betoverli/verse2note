@@ -196,12 +196,9 @@ const grokOAuthPlugin = authConfigured
         tokenUrl: grokTokenUrl,
         userInfoUrl: grokUserInfoUrl,
         scopes: ["openid", "profile", "email"],
-        // `prompt: "login"` forces the broker to re-authenticate against the
-        // upstream on every sign-in instead of silently reusing an existing
-        // broker session. Combined with the broker sending Google
-        // `prompt=select_account`, the user always gets the account chooser
-        // and can pick (or switch) which account to sign in with.
-        authorizationUrlParams: { idp, prompt: "login" },
+        // Only `idp` — do not send prompt=login. That forced Google to treat
+        // every visit as a first-time consent and mailed a new-app email.
+        authorizationUrlParams: { idp },
         overrideUserInfo: true,
         getUserInfo: async (tokens) => {
           const fromJwt = decodeJwtPayload(tokens.idToken) ?? {};
