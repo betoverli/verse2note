@@ -37,6 +37,7 @@ import { Route as ProfileThemeRouteImport } from './routes/profile.theme'
 import { Route as ReadingIndexRouteImport } from './routes/reading.index'
 import { Route as ReadingIdRouteImport } from './routes/reading.$id'
 import { Route as ReadingAllRouteImport } from './routes/reading.all'
+import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as CollectionsCategoryCategoryIdRouteImport } from './routes/collections.category.$categoryId'
 import { Route as ReadingCategoryCategoryIdRouteImport } from './routes/reading.category.$categoryId'
@@ -181,6 +182,11 @@ const ReadingAllRoute = ReadingAllRouteImport.update({
   path: '/all',
   getParentRoute: () => ReadingRoute,
 } as any)
+const UHandleRoute = UHandleRouteImport.update({
+  id: '/u/$handle',
+  path: '/u/$handle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -225,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
+  '/u/$handle': typeof UHandleRoute
   '/collections/': typeof CollectionsIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/reading/': typeof ReadingIndexRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
+  '/u/$handle': typeof UHandleRoute
   '/collections': typeof CollectionsIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/reading': typeof ReadingIndexRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
+  '/u/$handle': typeof UHandleRoute
   '/collections/': typeof CollectionsIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/reading/': typeof ReadingIndexRoute
@@ -324,6 +333,7 @@ export interface FileRouteTypes {
     | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
+    | '/u/$handle'
     | '/collections/'
     | '/profile/'
     | '/reading/'
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
     | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
+    | '/u/$handle'
     | '/collections'
     | '/profile'
     | '/reading'
@@ -387,6 +398,7 @@ export interface FileRouteTypes {
     | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
+    | '/u/$handle'
     | '/collections/'
     | '/profile/'
     | '/reading/'
@@ -412,6 +424,7 @@ export interface RootRouteChildren {
   ApiPlansRoute: typeof ApiPlansRoute
   CIdRoute: typeof CIdRoute
   GIdRoute: typeof GIdRoute
+  UHandleRoute: typeof UHandleRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -613,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReadingAllRouteImport
       parentRoute: typeof ReadingRoute
     }
+    '/u/$handle': {
+      id: '/u/$handle'
+      path: '/u/$handle'
+      fullPath: '/u/$handle'
+      preLoaderRoute: typeof UHandleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -710,6 +730,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPlansRoute: ApiPlansRoute,
   CIdRoute: CIdRoute,
   GIdRoute: GIdRoute,
+  UHandleRoute: UHandleRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport

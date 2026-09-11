@@ -21,7 +21,7 @@ export function AppShell() {
   const startPlan = useAppStore((s) => s.startPlan);
   const { user, isPending } = useCurrentUserState();
   const invitePage = pathname.startsWith("/g/");
-  const publicPage = PUBLIC.has(pathname) || invitePage;
+  const publicPage = PUBLIC.has(pathname) || invitePage || pathname.startsWith("/u/");
   const [hydrated, setHydrated] = useState(publicPage);
   const [minTime, setMinTime] = useState(publicPage);
   const waitingCloud = Boolean(!onboarded && user && !cloudHydrated && !isPending);

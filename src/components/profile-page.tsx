@@ -5,6 +5,10 @@ import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AVATARS, PHOTO_AVATAR, AvatarMark, ProfileAvatar } from "@/lib/avatars";
+import { BadgeGrid } from "@/components/badge-grid";
+import { getMyBadges } from "@/lib/badge-stats";
+import type { BadgeId } from "@/lib/badges";
+import { toast } from "sonner";
 import { appById } from "@/lib/bible/apps";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
@@ -132,6 +136,7 @@ export function ProfileView() {
   const { user, isPending } = useCurrentUserState();
   const [signingOut, setSigningOut] = useState(false);
   const [admin, setAdmin] = useState(false);
+  const [badges, setBadges] = useState<BadgeId[]>([]);
   const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
   usePrefillProfile();
   const name = [firstName, lastName].filter(Boolean).join(" ");
@@ -139,11 +144,15 @@ export function ProfileView() {
   useEffect(() => {
     if (!user) {
       setAdmin(false);
+      setBadges([]);
       return;
     }
     void getIsAdmin()
       .then(setAdmin)
       .catch(() => setAdmin(false));
+    void getMyBadges()
+      .then(setBadges)
+      .catch(() => setBadges([]));
   }, [user]);
 
   return (
@@ -154,7 +163,9 @@ export function ProfileView() {
         <section className="flex flex-col items-center gap-3 pt-2">
           <ProfileAvatar id={avatarId} url={avatarUrl} className="size-20 bg-elevated" iconClassName="size-8" />
           {handle ? (
-            <p className="font-display text-xl italic text-fg">@{handle}</p>
+            <Link to="/u/$handle" params={{ handle }} className="font-display text-xl italic text-fg">
+              @{handle}
+            </Link>
           ) : (
             <p className="text-sm text-muted">{t(locale, "handleMissing")}</p>
           )}
@@ -162,6 +173,20 @@ export function ProfileView() {
           <Button variant="secondary" className="w-full" asChild>
             <Link to="/profile/edit">{t(locale, "editProfile")}</Link>
           </Button>
+          {handle ? (
+            <Button
+              variant="ghost"
+              className="w-full text-muted"
+              onClick={() => {
+                void navigator.clipboard.writeText(`${window.location.origin}/u/${handle}`).then(() => {
+                  const id = toast.success(t(locale, "profileCopied"));
+                  window.setTimeout(() => toast.dismiss(id), 2000);
+                });
+              }}
+            >
+              {t(locale, "copyProfile")}
+            </Button>
+          ) : null}
         </section>
       ) : (
         <section className="flex flex-col gap-3">
@@ -178,6 +203,13 @@ export function ProfileView() {
           </Button>
         </section>
       )}
+
+      {user ? (
+        <section className="space-y-3">
+          <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "badges")}</h2>
+          <BadgeGrid earned={badges} locale={locale} locked />
+        </section>
+      ) : null}
 
       <SettingCards />
 
