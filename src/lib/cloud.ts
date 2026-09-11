@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { isAvatarId } from "@/lib/avatars";
+import { appById } from "@/lib/bible/apps";
 import type { Locale } from "@/lib/bible/books";
+import { planById } from "@/lib/bible/reading-plans";
 import type { CopyFormat } from "@/lib/copy-rich";
 import type { Theme } from "@/lib/theme";
 import { getSql } from "@/lib/db";
+import { progressFromMarks } from "@/lib/plan-marks";
 import { pictureFromJwt } from "@/lib/oauth-photo";
 
 export type CloudPrefs = {
@@ -88,14 +91,10 @@ function fromRow(row: PrefsRow): CloudPrefs {
 }
 
 export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPrefs {
-  if (!cloud) return local;
-  const ids = [...new Set([...cloud.activePlans, ...local.activePlans])];
-  const planProgress: Record<string, number[]> = {};
-  for (const id of ids) {
-    planProgress[id] = [
-      ...new Set([...(cloud.planProgress[id] ?? []), ...(local.planProgress[id] ?? [])]),
-    ].sort((a, b) => a - b);
+  if (!cloud) {
+    return { ...local, planProgress: {} };
   }
+  const ids = [...new Set([...cloud.activePlans, ...local.activePlans])].filter((id) => planById(id));
   const cloudHasProfile = Boolean(cloud.handle || cloud.firstName || cloud.profileEmail || cloud.avatarUrl);
   return {
     locale: cloud.locale,
@@ -106,7 +105,7 @@ export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPr
     booksCompact: cloud.booksCompact,
     theme: cloud.theme,
     activePlans: ids,
-    planProgress,
+    planProgress: cloud.planProgress,
     avatarId: cloudHasProfile ? cloud.avatarId : local.avatarId,
     avatarUrl: cloudHasProfile ? cloud.avatarUrl : local.avatarUrl,
     handle: cloudHasProfile ? cloud.handle : local.handle,
@@ -126,8 +125,29 @@ export const getPrefs = createServerFn({ method: "GET" })
       from user_prefs
       where user_id = ${context.userId}
     `;
-    return rows[0] ? fromRow(rows[0]) : null;
+    return rows[0] ? { ...fromRow(rows[0]), planProgress: await progressFromMarks(sql, context.userId) } : null;
   });
+
+function cleanName(value: string) {
+  return value.trim().replace(/\s+/g, " ").slice(0, 40);
+}
+
+function cleanAvatarUrl(value: string) {
+  const raw = value.trim().slice(0, 500);
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (url.protocol === "https:") return url.href;
+  } catch {
+    /* ignore */
+  }
+  return "";
+}
+
+function cleanEmail(value: string) {
+  const email = value.trim().slice(0, 120);
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
 
 export const savePrefs = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
@@ -141,17 +161,27 @@ export const savePrefs = createServerFn({ method: "POST" })
       `;
       if (taken[0]) return { ok: false as const, error: "handle" as const };
     }
-    const active = JSON.stringify(data.activePlans);
-    const progress = JSON.stringify(data.planProgress);
+    const existing = await sql<{ plan_progress: string }>`
+      select plan_progress from user_prefs where user_id = ${context.userId}
+    `;
+    const progress = existing[0]?.plan_progress ?? "{}";
+    const active = JSON.stringify(
+      [...new Set(data.activePlans)].filter((id) => planById(id)).slice(0, 20),
+    );
     const avatarId = isAvatarId(data.avatarId) ? data.avatarId : "book";
-    await sql`
+    const locale = asLocale(data.locale);
+    const appId = appById(data.appId) ? data.appId : "youversion";
+    const copyFormat = asFormat(data.copyFormat);
+    const theme = asTheme(data.theme);
+    try {
+      await sql`
       insert into user_prefs (
         user_id, locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
         active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email, updated_at
       ) values (
-        ${context.userId}, ${data.locale}, ${data.appId}, ${data.translationId}, ${data.preferNative},
-        ${data.copyFormat}, ${data.booksCompact}, ${data.theme}, ${active}, ${progress},
-        ${avatarId}, ${data.avatarUrl.trim()}, ${handle}, ${data.firstName.trim()}, ${data.lastName.trim()}, ${data.profileEmail.trim()}, now()
+        ${context.userId}, ${locale}, ${appId}, ${data.translationId.slice(0, 40)}, ${Boolean(data.preferNative)},
+        ${copyFormat}, ${Boolean(data.booksCompact)}, ${theme}, ${active}, ${progress},
+        ${avatarId}, ${cleanAvatarUrl(data.avatarUrl)}, ${handle}, ${cleanName(data.firstName)}, ${cleanName(data.lastName)}, ${cleanEmail(data.profileEmail) || data.profileEmail.trim().slice(0, 120)}, now()
       )
       on conflict (user_id) do update set
         locale = excluded.locale,
@@ -162,7 +192,6 @@ export const savePrefs = createServerFn({ method: "POST" })
         books_compact = excluded.books_compact,
         theme = excluded.theme,
         active_plans = excluded.active_plans,
-        plan_progress = excluded.plan_progress,
         avatar_id = excluded.avatar_id,
         avatar_url = excluded.avatar_url,
         handle = excluded.handle,
@@ -171,6 +200,9 @@ export const savePrefs = createServerFn({ method: "POST" })
         email = excluded.email,
         updated_at = now()
     `;
+    } catch {
+      return { ok: false as const, error: "handle" as const };
+    }
     return { ok: true as const };
   });
 

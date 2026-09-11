@@ -11,6 +11,5 @@ export function adminEmails() {
 }
 
 export function adminHandles() {
-  const extra = splitEnv("ADMIN_HANDLES");
-  return [...new Set(["betoverli", ...extra])];
+  return splitEnv("ADMIN_HANDLES");
 }

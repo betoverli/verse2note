@@ -33,6 +33,7 @@ function JoinPlanRoute() {
   );
   const [busy, setBusy] = useState(false);
   const joining = useRef(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     rememberInvite(id);
@@ -54,6 +55,7 @@ function JoinPlanRoute() {
     if (busy || joining.current) return;
     joining.current = true;
     setBusy(true);
+    setFailed(false);
     const result = await joinPlanGroup({ data: { id } });
     if (result && result.ok) {
       rememberInvite("");
@@ -68,22 +70,29 @@ function JoinPlanRoute() {
     }
     joining.current = false;
     setBusy(false);
+    setFailed(true);
   }
-
-  useEffect(() => {
-    if (!user || !preview || !plan) return;
-    void onJoin();
-  }, [user, preview, plan, id]);
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader title={plan?.names[locale] ?? t(locale, "planTogether")} backTo="/reading" />
-      {preview === undefined || isPending || (user && busy) ? (
+      {preview === undefined || isPending ? (
         <div className="h-32 rounded-lg bg-surface" aria-hidden="true" />
       ) : !preview || !plan ? (
         <p className="text-sm text-muted">{t(locale, "plansEmpty")}</p>
       ) : user ? (
-        <p className="text-sm text-muted">{t(locale, "planJoin")}</p>
+        <div className="flex flex-col gap-6">
+          <p className="text-sm leading-relaxed text-muted">{t(locale, "planJoinHint")}</p>
+          {preview.host ? (
+            <p className="text-sm text-fg">
+              @{preview.host} · {preview.members} {t(locale, "planMembers")}
+            </p>
+          ) : null}
+          <Button disabled={busy} onClick={() => void onJoin()}>
+            {t(locale, "planJoin")}
+          </Button>
+          {failed ? <p className="text-sm text-muted">{t(locale, "accountError")}</p> : null}
+        </div>
       ) : (
         <div className="flex flex-col gap-6">
           <p className="text-sm leading-relaxed text-muted">{t(locale, "planJoinHint")}</p>
@@ -97,7 +106,7 @@ function JoinPlanRoute() {
             </p>
           )}
           <Button asChild>
-            <Link to="/login" search={{ create: true, next: `/g/${id}` }}>
+            <Link to="/login" search={{ create: false, next: `/g/${id}` }}>
               {t(locale, "planJoinLogin")}
             </Link>
           </Button>

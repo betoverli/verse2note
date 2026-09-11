@@ -42,7 +42,7 @@ export function SaveToCollectionButton({
   if (!user) {
     return (
       <Button size={iconOnly ? "icon" : "sm"} variant={iconOnly ? "ghost" : "outline"} className={iconOnly ? "size-8 text-muted" : undefined} asChild>
-        <Link to="/login" search={{ create: false }} aria-label={label}>
+        <Link to="/login" search={{ create: false, next: "/app" }} aria-label={label}>
           <BookmarkPlus />
           {iconOnly ? null : label}
         </Link>

@@ -377,7 +377,8 @@ export function ProfileHeaderActions() {
         await navigator.share({ title: `@${handle}`, url });
         return;
       }
-    } catch {
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
       /* copy */
     }
     try {

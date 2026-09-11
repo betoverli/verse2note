@@ -350,7 +350,7 @@ export function SharedCollectionView({ collection }: { collection: UserCollectio
           </Button>
         ) : (
           <Button variant="secondary" className="w-full" asChild>
-            <Link to="/login" search={{ create: false }}>
+            <Link to="/login" search={{ create: false, next: `/c/${collection.id}` }}>
               {t(locale, "collectionRemix")}
             </Link>
           </Button>

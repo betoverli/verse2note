@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BIBLE_APPS } from "@/lib/bible/apps";
 import { resolveCollections } from "@/lib/bible/collections-api";
 import { resolvePlans } from "@/lib/bible/plans-api";
-import { collectRefs, corsJson, corsPreflight, resolveLinks } from "@/lib/bible/link-api";
+import { collectRefs, corsJson, corsPreflight, rateLimited, resolveLinks } from "@/lib/bible/link-api";
 
 type Rpc = {
   jsonrpc?: string;
@@ -199,15 +199,20 @@ export const Route = createFileRoute("/api/mcp")({
   server: {
     handlers: {
       OPTIONS: async () => corsPreflight(),
-      GET: async () =>
-        corsJson({
+      GET: async ({ request }) => {
+        const limited = rateLimited(request);
+        if (limited) return limited;
+        return corsJson({
           name: "verse2note",
           transport: "json-rpc",
           protocolVersion: "2024-11-05",
           endpoint: "/api/mcp",
           tools: TOOLS.map((tool) => tool.name),
-        }),
+        });
+      },
       POST: async ({ request }) => {
+        const limited = rateLimited(request);
+        if (limited) return limited;
         let body: Rpc;
         try {
           body = (await request.json()) as Rpc;

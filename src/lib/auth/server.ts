@@ -149,7 +149,15 @@ const baseURL = {
 // Origins Better Auth accepts on credentialed POSTs (sign-up/sign-in, etc.).
 // Missing entries here surface as FORBIDDEN "Invalid origin".
 const trustedOrigins: string[] = explicitBaseURL
-  ? [...new Set([explicitBaseURL, ...extraTrustedOrigins(), ...LOCAL_DEV_ORIGINS])]
+  ? [
+      ...new Set([
+        explicitBaseURL,
+        ...extraTrustedOrigins(),
+        ...(explicitBaseURL.startsWith("https://") && !explicitBaseURL.includes("localhost")
+          ? []
+          : LOCAL_DEV_ORIGINS),
+      ]),
+    ]
   : [
       // Host wildcards (matched against Origin's host)
       ...previewAllowedHosts,
@@ -266,9 +274,11 @@ export const auth = betterAuth({
         ...GROK_PROVIDERS.map((p) => p.providerId),
         GATE_PROVIDER_ID,
       ],
-      // X's synthetic email is never "verified", so don't gate linking on the
-      // local user's email-verified state.
-      requireLocalEmailVerified: false,
+      // Password accounts are never email-verified (no mailer). Require the
+      // local email to be verified before linking, so an attacker cannot
+      // register victim@gmail.com then ride the victim's later Google login.
+      // Google/X still create their own users; X does not share Google emails.
+      requireLocalEmailVerified: true,
     },
   },
 

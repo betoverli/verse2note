@@ -24,16 +24,6 @@ function newId() {
   return crypto.randomUUID().replaceAll("-", "");
 }
 
-function parseDays(raw: string, planId: string): number[] {
-  try {
-    const all = JSON.parse(raw || "{}") as Record<string, unknown>;
-    const days = all[planId];
-    return Array.isArray(days) ? days.map(Number).filter((n) => Number.isInteger(n) && n > 0) : [];
-  } catch {
-    return [];
-  }
-}
-
 async function loadGroup(sql: Awaited<ReturnType<typeof getSql>>, groupId: string, me: string): Promise<PlanGroup | null> {
   const groups = await sql<{ id: string; plan_id: string; host_id: string }>`
     select id, plan_id, host_id from plan_groups where id = ${groupId}
@@ -50,18 +40,20 @@ async function loadGroup(sql: Awaited<ReturnType<typeof getSql>>, groupId: strin
       first_name: string;
       avatar_id: string;
       avatar_url: string;
-      plan_progress: string;
     }>`
-      select handle, first_name, avatar_id, avatar_url, plan_progress from user_prefs where user_id = ${row.user_id}
+      select handle, first_name, avatar_id, avatar_url from user_prefs where user_id = ${row.user_id}
     `;
     const pref = prefs[0];
+    const marks = await sql<{ day: number }>`
+      select day from plan_marks where user_id = ${row.user_id} and plan_id = ${group.plan_id}
+    `;
     members.push({
       userId: row.user_id,
       handle: pref?.handle ?? "",
       firstName: pref?.first_name ?? "",
       avatarId: pref?.avatar_id || "book",
       avatarUrl: pref?.avatar_url ?? "",
-      days: parseDays(pref?.plan_progress ?? "{}", group.plan_id),
+      days: marks.map((item) => Number(item.day)).filter((n) => Number.isInteger(n) && n > 0),
       me: row.user_id === me,
     });
   }

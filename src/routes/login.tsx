@@ -83,6 +83,16 @@ export function Login() {
       if (afterAuth.startsWith("/g/")) {
         const id = afterAuth.slice(3).split("/")[0];
         await navigate({ to: "/g/$id", params: { id } });
+      } else if (afterAuth.startsWith("/c/")) {
+        const id = afterAuth.slice(3).split("/")[0];
+        await navigate({ to: "/c/$id", params: { id } });
+      } else if (afterAuth.startsWith("/reading/")) {
+        const id = afterAuth.slice("/reading/".length).split("/")[0];
+        await navigate({ to: "/reading/$id", params: { id } });
+      } else if (afterAuth.startsWith("/collections")) {
+        await navigate({ to: "/collections" });
+      } else if (afterAuth === "/app") {
+        await navigate({ to: "/app" });
       } else {
         await navigate({ to: "/profile" });
       }
@@ -170,7 +180,7 @@ export function Login() {
       ) : null}
 
       <p className="mt-6 text-xs leading-relaxed text-subtle">{t(locale, "accountHint")}</p>
-      <Link to="/profile" className="mt-auto pt-8 text-center text-sm text-muted hover:text-fg">
+      <Link to="/" className="mt-auto pt-8 text-center text-sm text-muted hover:text-fg">
         {t(locale, "back")}
       </Link>
     </main>

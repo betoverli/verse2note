@@ -5,6 +5,29 @@ import { getSql } from "@/lib/db";
 
 const MAX_PER_DAY = 2;
 
+export async function progressFromMarks(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const rows = await sql<{ plan_id: string; day: number }>`
+    select plan_id, day from plan_marks where user_id = ${userId}
+  `;
+  const progress: Record<string, number[]> = {};
+  for (const row of rows) {
+    const list = progress[row.plan_id] ?? [];
+    list.push(Number(row.day));
+    progress[row.plan_id] = list;
+  }
+  for (const id of Object.keys(progress)) {
+    progress[id] = [...new Set(progress[id])].sort((a, b) => a - b);
+  }
+  return progress;
+}
+
+async function persistProgress(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+  const progress = JSON.stringify(await progressFromMarks(sql, userId));
+  await sql`
+    update user_prefs set plan_progress = ${progress}, updated_at = now() where user_id = ${userId}
+  `;
+}
+
 export const markPlanDay = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((data: { planId: string; day: number; on: boolean }) => data)
@@ -19,6 +42,7 @@ export const markPlanDay = createServerFn({ method: "POST" })
         delete from plan_marks
         where user_id = ${context.userId} and plan_id = ${data.planId} and day = ${data.day}
       `;
+      await persistProgress(sql, context.userId);
       return { ok: true as const, error: null };
     }
     const existing = await sql<{ day: number }>`
@@ -37,6 +61,7 @@ export const markPlanDay = createServerFn({ method: "POST" })
       insert into plan_marks (user_id, plan_id, day, marked_on)
       values (${context.userId}, ${data.planId}, ${data.day}, current_date)
     `;
+    await persistProgress(sql, context.userId);
     return { ok: true as const, error: null };
   });
 
@@ -46,5 +71,6 @@ export const resetPlanMarks = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await sql`delete from plan_marks where user_id = ${context.userId} and plan_id = ${data.planId}`;
+    await persistProgress(sql, context.userId);
     return { ok: true as const };
   });

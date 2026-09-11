@@ -193,12 +193,12 @@ const strings = {
     helpCollections:
       "Coleções são listas prontas por tema (com busca). Abra uma, copie uma referência ou a lista inteira. O trecho é só o começo do versículo, em versão livre. Com conta, você também cria as suas listas.",
     helpPlans:
-      "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Escolha um plano; ele aparece em Meus planos. Marque o dia que já leu. Com conta, o progresso acompanha você.",
+      "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Entre para escolher um plano; ele aparece em Meus planos. No máximo 2 dias marcados por dia.",
     helpAccount:
-      "Conta é opcional (Google, X ou e-mail). Sem ela o app fica neste aparelho. Com ela, Meus planos e o perfil acompanham você. A API para IA não usa conta.",
+      "Conta é opcional (Google, X ou e-mail) para Meus planos, listas próprias e o perfil. Sem ela o seletor e as coleções prontas ficam neste aparelho. A API para IA não usa conta.",
     adminTitle: "Uso",
     adminHint: "Cadastros, visitas e listas",
-    adminDenied: "Esta página é só para o dono. No perfil, use o @ betoverli — ou defina ADMIN_EMAILS no servidor.",
+    adminDenied: "Esta página é só para o dono. Defina ADMIN_EMAILS no servidor.",
     adminUsers: "Contas",
     adminUsers7: "Novas (7 dias)",
     adminUsers30: "Novas (30 dias)",
@@ -439,12 +439,12 @@ const strings = {
     helpCollections:
       "Collections are ready-made lists by theme (with search). Open one, copy a reference or the whole list. The snippet is only the start of the verse, from a free translation. With an account you can also make your own lists.",
     helpPlans:
-      "Plans are whole-chapter readings (a year, the Gospels…). Choose a plan; it shows up under My plans. Check off the day you have read. With an account, progress follows you.",
+      "Plans are whole-chapter readings (a year, the Gospels…). Sign in to start a plan; it shows up under My plans. At most 2 days checked per real day.",
     helpAccount:
-      "An account is optional (Google, X, or email). Without it the app stays on this device. With it, My plans and your profile follow you. The AI API does not use an account.",
+      "An account is optional (Google, X, or email) for My plans, your lists, and your profile. Without it the picker and ready-made collections stay on this device. The AI API does not use an account.",
     adminTitle: "Usage",
     adminHint: "Sign-ups, visits, and lists",
-    adminDenied: "This page is for the owner. Set your @ to betoverli — or set ADMIN_EMAILS on the server.",
+    adminDenied: "This page is for the owner. Set ADMIN_EMAILS on the server.",
     adminUsers: "Accounts",
     adminUsers7: "New (7 days)",
     adminUsers30: "New (30 days)",
@@ -661,7 +661,7 @@ const strings = {
     tourFinish: "Entendido",
     tourBooks: "Toca el libro, el capítulo y los versículos. El enlace aparece abajo para copiar.",
     tourRecents: "Aquí quedan los pasajes que ya usaste.",
-    tourCollections: "Listas listas por tema — copia una o la lista entera.",
+    tourCollections: "Listas por tema — copia una o la lista entera.",
     tourReading: "Planes de lectura. Marca los capítulos que ya leíste.",
     tourSettings: "Perfil: cuenta, idioma, Biblia y apariencia.",
     appearance: "Apariencia",
@@ -685,12 +685,12 @@ const strings = {
     helpCollections:
       "Las colecciones son listas por tema (con búsqueda). Abre una, copia una referencia o la lista entera. El fragmento es solo el comienzo del versículo, en una versión libre. Con una cuenta también puedes crear las tuyas.",
     helpPlans:
-      "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Elige un plan; aparece en Mis planes. Marca el día que ya leíste. Con una cuenta, el progreso te sigue.",
+      "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Entra para elegir un plan; aparece en Mis planes. Como máximo 2 días marcados por día.",
     helpAccount:
-      "La cuenta es opcional (Google, X o correo). Sin ella la app queda en este dispositivo. Con ella, Mis planes y el perfil te siguen. La API para IA no usa cuenta.",
+      "La cuenta es opcional (Google, X o correo) para Mis planes, tus listas y el perfil. Sin ella el selector y las colecciones listas quedan en este dispositivo. La API para IA no usa cuenta.",
     adminTitle: "Uso",
     adminHint: "Cuentas, visitas y listas",
-    adminDenied: "Esta página es solo para el dueño. En el perfil usa el @ betoverli — o define ADMIN_EMAILS en el servidor.",
+    adminDenied: "Esta página es solo para el dueño. Define ADMIN_EMAILS en el servidor.",
     adminUsers: "Cuentas",
     adminUsers7: "Nuevas (7 días)",
     adminUsers30: "Nuevas (30 días)",

@@ -78,7 +78,7 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
           </Button>
         ) : (
           <Button className="w-full" asChild>
-            <Link to="/login" search={{ create: false }}>
+            <Link to="/login" search={{ create: false, next: `/reading/${plan.id}` }}>
               {t(locale, "startPlanLogin")}
             </Link>
           </Button>
@@ -179,8 +179,8 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
         await navigator.share({ title: plan.names[locale], url });
         return;
       }
-    } catch {
-      /* fall through to copy */
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
     }
     try {
       await navigator.clipboard.writeText(url);

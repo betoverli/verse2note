@@ -38,7 +38,7 @@ export function MyCollections() {
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "myCollections")}</h2>
         <Link
           to="/login"
-          search={{ create: false }}
+          search={{ create: false, next: "/collections" }}
           className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
         >
           <span className="flex items-center gap-3">

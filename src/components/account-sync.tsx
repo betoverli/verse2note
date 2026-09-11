@@ -60,12 +60,15 @@ export function AccountSync() {
           last.current = JSON.stringify(merged);
           await savePrefs({ data: merged });
         } else {
-          last.current = JSON.stringify(snapshot());
+          const first = mergePrefs(snapshot(), null);
+          useAppStore.getState().applyCloud(first);
+          last.current = JSON.stringify(first);
+          await savePrefs({ data: first });
         }
         syncedFor.current = userId;
         ready.current = true;
       } catch {
-        ready.current = true;
+        ready.current = false;
       } finally {
         window.clearTimeout(timeout);
         if (!cancelled) useAppStore.getState().setCloudHydrated(true);

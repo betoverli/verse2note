@@ -4,6 +4,7 @@ import { parseReference } from "@/lib/bible/parse";
 import { formatPassageById, type Passage } from "@/lib/bible/passage";
 import { DEFAULT_TRANSLATION, TRANSLATIONS, translationById } from "@/lib/bible/translations";
 import { buildCopyPayload, buildListPayload } from "@/lib/copy-rich";
+import { allowRequest, clientKey } from "@/lib/rate-limit";
 
 const LOCALES: Locale[] = ["pt", "en", "es"];
 const MAX_REFS = 30;
@@ -151,6 +152,13 @@ export function resolveLinks(query: LinkQuery): LinkResult {
     html: list.html,
     plain: items.map((item) => item.plain).join("\n\n"),
   };
+}
+
+export function rateLimited(request: Request) {
+  if (!allowRequest(`api:${clientKey(request)}`, 90, 60_000)) {
+    return corsJson({ ok: false, error: "Too many requests." }, 429);
+  }
+  return null;
 }
 
 export function corsJson(data: unknown, status = 200): Response {

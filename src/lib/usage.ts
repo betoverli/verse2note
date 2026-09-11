@@ -49,13 +49,28 @@ async function assertAdmin(userId: string) {
 }
 
 export const pingVisit = createServerFn({ method: "POST" })
-  .validator((data: { signedIn?: boolean; first?: boolean }) => data)
+  .validator((data: { first?: boolean }) => data)
   .handler(async ({ data }) => {
     const { assertSameSiteRequest } = await import("@/lib/auth/isolation.server");
     assertSameSiteRequest();
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const { allowRequest, clientKey } = await import("@/lib/rate-limit");
+    const request = getRequest();
+    if (request && !allowRequest(`visit:${clientKey(request)}`, 40, 60_000)) {
+      return { ok: true as const };
+    }
+    let signed = 0;
+    if (data.first) {
+      try {
+        const { auth } = await import("@/lib/auth/server");
+        const session = request ? await auth.api.getSession({ headers: request.headers }) : null;
+        if (session?.user) signed = 1;
+      } catch {
+        signed = 0;
+      }
+    }
     const sql = await getSql();
     const visit = data.first ? 1 : 0;
-    const signed = data.first && data.signedIn ? 1 : 0;
     await sql`
       insert into usage_daily (day, visits, pageviews, signed_in)
       values (current_date, ${visit}, 1, ${signed})

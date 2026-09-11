@@ -1,15 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { collectRefs, corsJson, corsPreflight, queryFromSearch, resolveLinks } from "@/lib/bible/link-api";
+import { collectRefs, corsJson, corsPreflight, queryFromSearch, rateLimited, resolveLinks } from "@/lib/bible/link-api";
 
 export const Route = createFileRoute("/api/link")({
   server: {
     handlers: {
       OPTIONS: async () => corsPreflight(),
       GET: async ({ request }) => {
+        const limited = rateLimited(request);
+        if (limited) return limited;
         const result = resolveLinks(queryFromSearch(new URL(request.url).searchParams));
         return corsJson(result, result.ok ? 200 : 400);
       },
       POST: async ({ request }) => {
+        const limited = rateLimited(request);
+        if (limited) return limited;
         let body: Record<string, unknown> = {};
         const text = await request.text();
         if (text) {

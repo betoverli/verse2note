@@ -67,7 +67,7 @@ function UserCollectionRoute() {
           <AppHeader title={t(locale, "myCollections")} backTo="/collections" />
           <p className="text-sm text-muted">{t(locale, "collectionLogin")}</p>
           <Button asChild>
-            <Link to="/login" search={{ create: false }}>
+            <Link to="/login" search={{ create: false, next: `/c/${id}` }}>
               {t(locale, "signIn")}
             </Link>
           </Button>

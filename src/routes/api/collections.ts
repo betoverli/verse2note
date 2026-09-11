@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { corsJson, corsPreflight } from "@/lib/bible/link-api";
+import { corsJson, corsPreflight, rateLimited } from "@/lib/bible/link-api";
 import { queryCollectionsFromSearch, resolveCollections } from "@/lib/bible/collections-api";
 
 export const Route = createFileRoute("/api/collections")({
@@ -7,10 +7,14 @@ export const Route = createFileRoute("/api/collections")({
     handlers: {
       OPTIONS: async () => corsPreflight(),
       GET: async ({ request }) => {
+        const limited = rateLimited(request);
+        if (limited) return limited;
         const result = resolveCollections(queryCollectionsFromSearch(new URL(request.url).searchParams));
         return corsJson(result, result.ok ? 200 : 400);
       },
       POST: async ({ request }) => {
+        const limited = rateLimited(request);
+        if (limited) return limited;
         let body: Record<string, unknown> = {};
         const text = await request.text();
         if (text) {

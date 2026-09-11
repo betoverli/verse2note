@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { planById } from "@/lib/bible/reading-plans";
-import { BADGE_IDS, type BadgeId } from "@/lib/badges";
+import { type BadgeId } from "@/lib/badges";
+import { progressFromMarks } from "@/lib/plan-marks";
 import { getSql } from "@/lib/db";
 
 export type PublicProfile = {
@@ -12,14 +13,6 @@ export type PublicProfile = {
   avatarUrl: string;
   badges: BadgeId[];
 };
-
-function parseJson<T>(raw: string, fallback: T): T {
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
 
 function completedPlans(progress: Record<string, number[]>): number {
   let count = 0;
@@ -61,10 +54,7 @@ function earnedFrom(stats: { plans: number; days: number; invites: number; lists
 }
 
 async function statsFor(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
-  const prefs = await sql<{ plan_progress: string }>`
-    select plan_progress from user_prefs where user_id = ${userId}
-  `;
-  const progress = parseJson<Record<string, number[]>>(prefs[0]?.plan_progress ?? "{}", {});
+  const progress = await progressFromMarks(sql, userId);
   const invites = await sql<{ n: number }>`
     select count(*)::int as n
     from plan_group_members m
@@ -128,5 +118,3 @@ export const getPublicProfile = createServerFn({ method: "GET" })
       badges: earnedFrom(await statsFor(sql, row.user_id)),
     };
   });
-
-export { BADGE_IDS };
