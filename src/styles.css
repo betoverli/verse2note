@@ -72,6 +72,26 @@ html.light {
   .tab-bar {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
+
+  .badge-seal {
+    display: grid;
+    width: 5.25rem;
+    height: 5.25rem;
+    place-items: center;
+    border-radius: 999px;
+  }
+
+  .badge-seal[data-earned="true"] {
+    box-shadow:
+      0 0 0 1px rgb(232 220 200 / 0.28),
+      0 10px 24px rgb(26 23 20 / 0.22);
+  }
+
+  html.light .badge-seal[data-earned="true"] {
+    box-shadow:
+      0 0 0 1px rgb(28 24 20 / 0.12),
+      0 10px 22px rgb(28 24 20 / 0.12);
+  }
 }
 
 :root {
