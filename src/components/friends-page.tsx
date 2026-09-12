@@ -13,7 +13,6 @@ import {
 } from "@/lib/links";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 function label(person: LinkPerson) {
   const name = [person.firstName, person.lastName].filter(Boolean).join(" ");
@@ -41,9 +40,8 @@ function PersonRow({
   );
 }
 
-export function FriendsPage() {
+export function FriendsPage({ query, onQuery }: { query: string; onQuery: (value: string) => void }) {
   const locale = useAppStore((s) => s.locale);
-  const [query, setQuery] = useState("");
   const [hits, setHits] = useState<LinkPerson[]>([]);
   const [friends, setFriends] = useState<LinkPerson[]>([]);
   const [incoming, setIncoming] = useState<LinkPerson[]>([]);
@@ -86,7 +84,7 @@ export function FriendsPage() {
     const result = await requestLink({ data: { handle } });
     setBusy(null);
     flash(Boolean(result?.ok));
-    setQuery("");
+    onQuery("");
     setHits([]);
     await refresh();
   }
@@ -105,19 +103,12 @@ export function FriendsPage() {
     await refresh();
   }
 
+  const searching = query.trim().length >= 2;
+
   return (
     <div className="flex flex-col gap-8">
-      <section className="space-y-3">
-        <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "linkSearch")}</h2>
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t(locale, "linkSearchHint")}
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-        />
-        {hits.length > 0 ? (
+      {searching ? (
+        hits.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {hits.map((person) => (
               <PersonRow key={person.userId} person={person}>
@@ -127,11 +118,11 @@ export function FriendsPage() {
               </PersonRow>
             ))}
           </ul>
-        ) : query.trim().length >= 2 ? (
+        ) : (
           <p className="text-sm text-muted">{t(locale, "linkNoResults")}</p>
-        ) : null}
-      </section>
-
+        )
+      ) : (
+        <>
       {incoming.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "linkIncoming")}</h2>
@@ -199,6 +190,8 @@ export function FriendsPage() {
           </ul>
         )}
       </section>
+        </>
+      )}
     </div>
   );
 }
