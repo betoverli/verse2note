@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { appById } from "@/lib/bible/apps";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
+import { cleanHandle, profileIsComplete } from "@/lib/profile";
 import { localeLabel, themeLabel } from "@/components/settings-panel";
 import { useAppStore } from "@/lib/store";
 import { getIsAdmin } from "@/lib/usage";
@@ -284,6 +285,10 @@ export function ProfileEdit() {
 
   async function onSave() {
     setError(null);
+    if (!profileIsComplete({ handle, firstName, profileEmail })) {
+      setError(t(locale, "completeProfileLead"));
+      return;
+    }
     setSaving(true);
     try {
       const result = await savePrefs({ data: snapshot() });
@@ -353,22 +358,25 @@ export function ProfileEdit() {
             <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted">@</span>
             <Input
               value={handle}
-              onChange={(event) =>
-                setProfile({ handle: event.target.value.replace(/^@+/, "").toLowerCase().replace(/[^a-z0-9_]/g, "") })
-              }
+              onChange={(event) => setProfile({ handle: cleanHandle(event.target.value) })}
               className="pl-8"
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck={false}
               maxLength={20}
               placeholder="joao"
+              required
             />
           </div>
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block space-y-1.5">
             <span className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "firstName")}</span>
-            <Input value={firstName} onChange={(event) => setProfile({ firstName: event.target.value })} />
+            <Input
+              value={firstName}
+              onChange={(event) => setProfile({ firstName: event.target.value })}
+              required
+            />
           </label>
           <label className="block space-y-1.5">
             <span className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "lastName")}</span>
@@ -382,10 +390,11 @@ export function ProfileEdit() {
             value={profileEmail}
             onChange={(event) => setProfile({ profileEmail: event.target.value })}
             autoComplete="email"
+            required
           />
         </label>
         {error ? <p className="text-sm text-accent">{error}</p> : null}
-        <Button className="w-full" disabled={saving} onClick={() => void onSave()}>
+        <Button className="w-full" disabled={saving || !profileIsComplete({ handle, firstName, profileEmail })} onClick={() => void onSave()}>
           {saving ? t(locale, "accountWait") : t(locale, "saveProfile")}
         </Button>
       </section>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
+import { profileIsComplete } from "@/lib/profile";
 import { listMyCollections } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
 
@@ -45,6 +46,7 @@ export function AccountSync() {
       useAppStore.getState().setCloudHydrated(true);
       return;
     }
+    useAppStore.getState().setCloudProfileOk(false);
     let cancelled = false;
     const timeout = window.setTimeout(() => {
       if (!cancelled) useAppStore.getState().setCloudHydrated(true);
@@ -59,11 +61,15 @@ export function AccountSync() {
           useAppStore.getState().applyCloud(merged);
           last.current = JSON.stringify(merged);
           await savePrefs({ data: merged });
+          useAppStore.getState().setCloudProfileOk(profileIsComplete(cloud));
         } else {
           const first = mergePrefs(snapshot(), null);
           useAppStore.getState().applyCloud(first);
           last.current = JSON.stringify(first);
-          await savePrefs({ data: first });
+          const saved = await savePrefs({ data: first });
+          useAppStore.getState().setCloudProfileOk(
+            !(saved && "error" in saved) && profileIsComplete(first),
+          );
         }
         syncedFor.current = userId;
         ready.current = true;

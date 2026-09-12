@@ -9,6 +9,7 @@ import type { Theme } from "@/lib/theme";
 import { getSql } from "@/lib/db";
 import { progressFromMarks } from "@/lib/plan-marks";
 import { pictureFromJwt } from "@/lib/oauth-photo";
+import { cleanEmail, cleanHandle, cleanName } from "@/lib/profile";
 
 export type CloudPrefs = {
   locale: Locale;
@@ -64,10 +65,6 @@ function parseJson<T>(raw: string, fallback: T): T {
   } catch {
     return fallback;
   }
-}
-
-function cleanHandle(value: string) {
-  return value.trim().replace(/^@+/, "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20);
 }
 
 function fromRow(row: PrefsRow): CloudPrefs {
@@ -128,10 +125,6 @@ export const getPrefs = createServerFn({ method: "GET" })
     return rows[0] ? { ...fromRow(rows[0]), planProgress: await progressFromMarks(sql, context.userId) } : null;
   });
 
-function cleanName(value: string) {
-  return value.trim().replace(/\s+/g, " ").slice(0, 40);
-}
-
 function cleanAvatarUrl(value: string) {
   const raw = value.trim().slice(0, 500);
   if (!raw) return "";
@@ -142,11 +135,6 @@ function cleanAvatarUrl(value: string) {
     /* ignore */
   }
   return "";
-}
-
-function cleanEmail(value: string) {
-  const email = value.trim().slice(0, 120);
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
 }
 
 export const savePrefs = createServerFn({ method: "POST" })

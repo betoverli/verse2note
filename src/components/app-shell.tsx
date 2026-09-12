@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { AccountSync } from "@/components/account-sync";
 import { Coachmarks } from "@/components/coachmarks";
+import { CompleteProfile } from "@/components/complete-profile";
 import { Onboarding } from "@/components/onboarding";
 import { SplashScreen } from "@/components/splash-screen";
 import { showTabBar, TabBar } from "@/components/tab-bar";
@@ -18,6 +19,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const onboarded = useAppStore((s) => s.onboarded);
   const cloudHydrated = useAppStore((s) => s.cloudHydrated);
+  const cloudProfileOk = useAppStore((s) => s.cloudProfileOk);
   const startPlan = useAppStore((s) => s.startPlan);
   const { user, isPending } = useCurrentUserState();
   const invitePage = pathname.startsWith("/g/");
@@ -28,7 +30,9 @@ export function AppShell() {
   const waitingCloud = Boolean(!onboarded && user && !cloudHydrated && !isPending);
   const showSplash = !publicPage && (!hydrated || !minTime || waitingCloud);
   const showOnboarding = !publicPage && !showSplash && !onboarded;
-  const tabs = onboarded && !showSplash && !showOnboarding && showTabBar(pathname);
+  const needsProfile = Boolean(user && !user.isDevFallback && cloudHydrated && !isPending && !cloudProfileOk);
+  const showProfile = !publicPage && !showSplash && !showOnboarding && needsProfile;
+  const tabs = onboarded && !showSplash && !showOnboarding && !showProfile && showTabBar(pathname);
 
   useEffect(() => {
     const api = useAppStore.persist;
@@ -87,6 +91,14 @@ export function AppShell() {
     return (
       <>
         <Onboarding onBack={() => void navigate({ to: "/" })} />
+        <AccountSync />
+      </>
+    );
+  }
+  if (showProfile) {
+    return (
+      <>
+        <CompleteProfile />
         <AccountSync />
       </>
     );

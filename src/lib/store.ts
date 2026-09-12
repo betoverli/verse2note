@@ -40,6 +40,7 @@ type AppState = {
   profileEmail: string;
   myCollections: UserCollection[];
   cloudHydrated: boolean;
+  cloudProfileOk: boolean;
   setLocale: (locale: Locale) => void;
   setAppId: (id: string) => void;
   setTranslationId: (id: string) => void;
@@ -75,6 +76,7 @@ type AppState = {
   }) => void;
   setMyCollections: (items: UserCollection[]) => void;
   setCloudHydrated: (value: boolean) => void;
+  setCloudProfileOk: (value: boolean) => void;
   clearAccount: () => void;
   resetSelection: () => void;
   passage: () => Passage | null;
@@ -109,6 +111,7 @@ export const useAppStore = create<AppState>()(
       profileEmail: "",
       myCollections: [],
       cloudHydrated: false,
+      cloudProfileOk: false,
       setLocale: (locale) => {
         const available = translationsFor(locale);
         const current = get().translationId;
@@ -236,6 +239,7 @@ export const useAppStore = create<AppState>()(
       setProfile: (profile) => set(profile),
       setMyCollections: (myCollections) => set({ myCollections }),
       setCloudHydrated: (cloudHydrated) => set({ cloudHydrated }),
+      setCloudProfileOk: (cloudProfileOk) => set({ cloudProfileOk }),
       clearAccount: () =>
         set({
           activePlans: [],
@@ -247,6 +251,7 @@ export const useAppStore = create<AppState>()(
           lastName: "",
           profileEmail: "",
           myCollections: [],
+          cloudProfileOk: false,
         }),
       resetSelection: () =>
         set({

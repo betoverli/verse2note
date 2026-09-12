@@ -3,6 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { t } from "@/lib/i18n";
 import { safeNext } from "@/lib/invite";
+import { cleanEmail, cleanHandle, cleanName, profileIsComplete } from "@/lib/profile";
+import { savePrefs } from "@/lib/cloud";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -35,10 +37,12 @@ export function Login() {
   const afterAuth = next ?? "/profile";
   const [mode, setMode] = useState<"in" | "up">(create ? "up" : "in");
   const [name, setName] = useState("");
+  const [handle, setHandle] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const setProfile = useAppStore((s) => s.setProfile);
 
   async function onSocial(providerId: string) {
     setError(null);
@@ -57,28 +61,72 @@ export function Login() {
     setError(null);
     setBusy(true);
     try {
-      const result =
-        mode === "up"
-          ? await authClient.signUp.email({
-              name: name.trim() || email.split("@")[0] || "Verse2Note",
-              email: email.trim(),
-              password,
-              callbackURL: afterAuth,
-            })
-          : await authClient.signIn.email({
-              email: email.trim(),
-              password,
-              callbackURL: afterAuth,
-            });
-      if (result.error) {
-        setError(result.error.message || t(locale, "accountError"));
-        setBusy(false);
-        return;
-      }
-      try {
-        await authClient.getSession();
-      } catch {
-        /* cookie session will land on the next page */
+      if (mode === "up") {
+        const firstName = cleanName(name);
+        const userHandle = cleanHandle(handle);
+        const mail = cleanEmail(email);
+        if (!profileIsComplete({ handle: userHandle, firstName, profileEmail: mail })) {
+          setError(t(locale, "completeProfileLead"));
+          setBusy(false);
+          return;
+        }
+        const result = await authClient.signUp.email({
+          name: firstName,
+          email: mail,
+          password,
+          callbackURL: afterAuth,
+        });
+        if (result.error) {
+          setError(result.error.message || t(locale, "accountError"));
+          setBusy(false);
+          return;
+        }
+        setProfile({ handle: userHandle, firstName, profileEmail: mail });
+        try {
+          await authClient.getSession();
+          const saved = await savePrefs({
+            data: {
+              locale: useAppStore.getState().locale,
+              appId: useAppStore.getState().appId,
+              translationId: useAppStore.getState().translationId,
+              preferNative: useAppStore.getState().preferNative,
+              copyFormat: useAppStore.getState().copyFormat,
+              booksCompact: useAppStore.getState().booksCompact,
+              theme: useAppStore.getState().theme,
+              activePlans: useAppStore.getState().activePlans,
+              planProgress: useAppStore.getState().planProgress,
+              avatarId: useAppStore.getState().avatarId,
+              avatarUrl: useAppStore.getState().avatarUrl,
+              handle: userHandle,
+              firstName,
+              lastName: useAppStore.getState().lastName,
+              profileEmail: mail,
+            },
+          });
+          if (saved && "error" in saved && saved.error === "handle") {
+            setProfile({ handle: "" });
+          } else {
+            useAppStore.getState().setCloudProfileOk(true);
+          }
+        } catch {
+          /* gate will ask again */
+        }
+      } else {
+        const result = await authClient.signIn.email({
+          email: email.trim(),
+          password,
+          callbackURL: afterAuth,
+        });
+        if (result.error) {
+          setError(result.error.message || t(locale, "accountError"));
+          setBusy(false);
+          return;
+        }
+        try {
+          await authClient.getSession();
+        } catch {
+          /* cookie session will land on the next page */
+        }
       }
       if (afterAuth.startsWith("/g/")) {
         const id = afterAuth.slice(3).split("/")[0];
@@ -135,13 +183,33 @@ export function Login() {
           <p className="mt-6 text-center text-xs tracking-wide text-subtle uppercase">{t(locale, "orEmail")}</p>
           <form className="mt-4 flex flex-col gap-3" onSubmit={(event) => void onSubmit(event)}>
             {mode === "up" ? (
-              <Input
-                name="name"
-                autoComplete="name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder={t(locale, "accountName")}
-              />
+              <>
+                <Input
+                  name="name"
+                  autoComplete="given-name"
+                  required
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder={t(locale, "accountName")}
+                />
+                <div className="relative">
+                  <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted">@</span>
+                  <Input
+                    name="username"
+                    autoComplete="username"
+                    required
+                    minLength={3}
+                    maxLength={20}
+                    value={handle}
+                    onChange={(event) => setHandle(cleanHandle(event.target.value))}
+                    className="pl-8"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    placeholder={t(locale, "handle")}
+                  />
+                </div>
+              </>
             ) : null}
             <Input
               type="email"
