@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { readSessionUser } from "@/lib/auth/session-cache";
 import { mergeCollections } from "@/lib/collections-local";
+import { mergeNotes, mergeSpeakers } from "@/lib/notebook-local";
+import { listMyNotes, listMySpeakers } from "@/lib/notebook-cloud";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { enqueue, flushOutbox, startOutbox, clearOutbox } from "@/lib/outbox";
 import { profileIsComplete } from "@/lib/profile";
@@ -68,10 +70,17 @@ export function AccountSync() {
     void (async () => {
       try {
         await flushOutbox();
-        const [cloud, collections] = await Promise.all([getPrefs(), listMyCollections()]);
+        const [cloud, collections, notes, speakers] = await Promise.all([
+          getPrefs(),
+          listMyCollections(),
+          listMyNotes(),
+          listMySpeakers(),
+        ]);
         if (cancelled) return;
         const localCollections = useAppStore.getState().myCollections;
         useAppStore.getState().setMyCollections(mergeCollections(localCollections, collections));
+        useAppStore.getState().setNotes(mergeNotes(useAppStore.getState().notes, notes));
+        useAppStore.getState().setSpeakers(mergeSpeakers(useAppStore.getState().speakers, speakers));
         if (cloud) {
           const merged = mergePrefs(snapshot(), cloud);
           useAppStore.getState().applyCloud(merged);

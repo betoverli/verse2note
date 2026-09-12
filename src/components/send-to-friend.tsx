@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ProfileAvatar } from "@/lib/avatars";
 import { t } from "@/lib/i18n";
 import { listLinks, sendCollectionToFriend, sendPlanToFriend, type LinkPerson } from "@/lib/links";
+import { sendNoteToFriend } from "@/lib/notebook-cloud";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 
@@ -12,7 +13,7 @@ export function SendToFriendButton({
   kind,
   targetId,
 }: {
-  kind: "plan" | "collection";
+  kind: "plan" | "collection" | "note";
   targetId: string;
 }) {
   const locale = useAppStore((s) => s.locale);
@@ -33,7 +34,9 @@ export function SendToFriendButton({
     const result =
       kind === "plan"
         ? await sendPlanToFriend({ data: { handle: person.handle, planId: targetId } })
-        : await sendCollectionToFriend({ data: { handle: person.handle, collectionId: targetId } });
+        : kind === "note"
+          ? await sendNoteToFriend({ data: { handle: person.handle, noteId: targetId } })
+          : await sendCollectionToFriend({ data: { handle: person.handle, collectionId: targetId } });
     setBusy(null);
     if (!result?.ok) {
       const id = toast.error(t(locale, "linkSendFail"));

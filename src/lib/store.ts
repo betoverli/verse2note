@@ -10,6 +10,8 @@ import type { CopyFormat } from "@/lib/copy-rich";
 import { detectLocale } from "@/lib/i18n";
 import type { CloudPrefs } from "@/lib/cloud";
 import type { UserCollection } from "@/lib/user-collection";
+import type { Note, Speaker } from "@/lib/notebook";
+import { asNote, asSpeaker } from "@/lib/notebook";
 import { applyTheme, type Theme } from "@/lib/theme";
 
 export type Step = "book" | "chapter" | "verse";
@@ -43,6 +45,9 @@ type AppState = {
   lastName: string;
   profileEmail: string;
   myCollections: UserCollection[];
+  notes: Note[];
+  speakers: Speaker[];
+  notebookActiveSpeakerId: string | null;
   cloudHydrated: boolean;
   cloudProfileOk: boolean;
   setLocale: (locale: Locale) => void;
@@ -82,6 +87,9 @@ type AppState = {
     profileEmail?: string;
   }) => void;
   setMyCollections: (items: UserCollection[]) => void;
+  setNotes: (items: Note[]) => void;
+  setSpeakers: (items: Speaker[]) => void;
+  setNotebookActiveSpeakerId: (id: string | null) => void;
   setCloudHydrated: (value: boolean) => void;
   setCloudProfileOk: (value: boolean) => void;
   clearAccount: () => void;
@@ -120,6 +128,9 @@ export const useAppStore = create<AppState>()(
       lastName: "",
       profileEmail: "",
       myCollections: [],
+      notes: [],
+      speakers: [],
+      notebookActiveSpeakerId: null,
       cloudHydrated: false,
       cloudProfileOk: false,
       setLocale: (locale) => {
@@ -256,6 +267,9 @@ export const useAppStore = create<AppState>()(
       },
       setProfile: (profile) => set(profile),
       setMyCollections: (myCollections) => set({ myCollections }),
+      setNotes: (notes) => set({ notes }),
+      setSpeakers: (speakers) => set({ speakers }),
+      setNotebookActiveSpeakerId: (notebookActiveSpeakerId) => set({ notebookActiveSpeakerId }),
       setCloudHydrated: (cloudHydrated) => set({ cloudHydrated }),
       setCloudProfileOk: (cloudProfileOk) => set({ cloudProfileOk }),
       clearAccount: () =>
@@ -311,6 +325,8 @@ export const useAppStore = create<AppState>()(
         lastName: state.lastName,
         profileEmail: state.profileEmail,
         myCollections: state.myCollections,
+        notes: state.notes,
+        speakers: state.speakers,
         cloudProfileOk: state.cloudProfileOk,
       }),
       merge: (persisted, current) => {
@@ -330,6 +346,12 @@ export const useAppStore = create<AppState>()(
           lastName: saved.lastName ?? "",
           profileEmail: saved.profileEmail ?? "",
           myCollections: Array.isArray(saved.myCollections) ? saved.myCollections : [],
+          notes: Array.isArray(saved.notes)
+            ? saved.notes.map(asNote).filter((item): item is Note => Boolean(item)).slice(0, 200)
+            : [],
+          speakers: Array.isArray(saved.speakers)
+            ? saved.speakers.map(asSpeaker).filter((item): item is Speaker => Boolean(item)).slice(0, 80)
+            : [],
           cloudProfileOk: saved.cloudProfileOk === true,
           theme: saved.theme ?? "system",
           copyLocale: saved.copyLocale === "en" || saved.copyLocale === "es" || saved.copyLocale === "pt"

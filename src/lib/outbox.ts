@@ -1,5 +1,7 @@
 import { savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { markPlanDay, resetPlanMarks } from "@/lib/plan-marks";
+import type { Note, Speaker } from "@/lib/notebook";
+import { deleteMyNote, upsertMyNote, upsertMySpeaker } from "@/lib/notebook-cloud";
 import type { UserCollection } from "@/lib/user-collection";
 import { createMyCollection, deleteMyCollection, updateMyCollection } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
@@ -11,7 +13,10 @@ type JobBody =
   | { type: "collection.upsert"; collection: UserCollection }
   | { type: "collection.delete"; collectionId: string }
   | { type: "plan.mark"; planId: string; day: number; on: boolean }
-  | { type: "plan.reset"; planId: string };
+  | { type: "plan.reset"; planId: string }
+  | { type: "note.upsert"; note: Note }
+  | { type: "note.delete"; noteId: string }
+  | { type: "speaker.upsert"; speaker: Speaker };
 
 type Job = JobBody & { id: string };
 
@@ -74,6 +79,25 @@ export function enqueue(job: JobBody) {
     write([...rest, { id, type: "plan.mark", planId: job.planId, day: job.day, on: job.on }]);
     return;
   }
+  if (job.type === "note.delete") {
+    const rest = current.filter(
+      (item) =>
+        !(item.type === "note.upsert" && item.note.id === job.noteId) &&
+        !(item.type === "note.delete" && item.noteId === job.noteId),
+    );
+    write([...rest, { id, type: "note.delete", noteId: job.noteId }]);
+    return;
+  }
+  if (job.type === "note.upsert") {
+    const rest = current.filter((item) => !(item.type === "note.upsert" && item.note.id === job.note.id));
+    write([...rest, { id, type: "note.upsert", note: job.note }]);
+    return;
+  }
+  if (job.type === "speaker.upsert") {
+    const rest = current.filter((item) => !(item.type === "speaker.upsert" && item.speaker.id === job.speaker.id));
+    write([...rest, { id, type: "speaker.upsert", speaker: job.speaker }]);
+    return;
+  }
   const rest = current.filter(
     (item) => !(item.type === "collection.upsert" && item.collection.id === job.collection.id),
   );
@@ -131,6 +155,18 @@ export async function flushOutbox() {
         }
         if (job.type === "plan.mark") {
           await markPlanDay({ data: { planId: job.planId, day: job.day, on: job.on } });
+          continue;
+        }
+        if (job.type === "note.delete") {
+          await deleteMyNote({ data: { id: job.noteId } });
+          continue;
+        }
+        if (job.type === "note.upsert") {
+          await upsertMyNote({ data: job.note });
+          continue;
+        }
+        if (job.type === "speaker.upsert") {
+          await upsertMySpeaker({ data: job.speaker });
           continue;
         }
         const item = job.collection;

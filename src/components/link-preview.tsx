@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink, Plus, Share2, X } from "lucide-react";
+import { Check, Copy, ExternalLink, Notebook, Plus, Share2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { appById, appIcon, buildDeepLink, buildHttpLink } from "@/lib/bible/apps";
@@ -15,6 +15,7 @@ import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { SaveToCollectionButton } from "@/components/save-to-collection";
+import { appendToToday } from "@/lib/notebook-local";
 
 function toCopyItem(
   passage: Passage,
@@ -218,6 +219,20 @@ export function LinkPreview() {
                 </p>
                 <div className="-mr-1 flex shrink-0 items-center">
                   {passage ? <SaveToCollectionButton passages={[passage]} iconOnly /> : null}
+                  {passage ? (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-8 text-muted"
+                      onClick={() => {
+                        appendToToday(passage);
+                        notify(t(locale, "notebookSentToday"));
+                      }}
+                      aria-label={t(locale, "notebookSendToday")}
+                    >
+                      <Notebook />
+                    </Button>
+                  ) : null}
                   <Button
                     size="icon"
                     variant="ghost"

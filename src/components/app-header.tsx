@@ -17,7 +17,8 @@ type BackTo =
   | "/collections/category/$categoryId"
   | "/reading"
   | "/reading/all"
-  | "/reading/category/$categoryId";
+  | "/reading/category/$categoryId"
+  | "/notebook";
 
 export type HeaderSearch = {
   value: string;

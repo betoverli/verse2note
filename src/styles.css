@@ -191,6 +191,48 @@ html.light {
       animation: none;
     }
   }
+
+  .ref-pill {
+    display: inline-flex;
+    margin: 0 0.12em;
+    padding: 0.05em 0.5em;
+    border-radius: 999px;
+    font-size: 0.85em;
+    font-weight: 600;
+    line-height: 1.6;
+    vertical-align: baseline;
+    white-space: nowrap;
+  }
+
+  .ref-pill[data-kind="gospel"] {
+    background: var(--color-accent);
+    color: var(--color-accent-fg);
+  }
+
+  .ref-pill[data-kind="nt"] {
+    background: #3d4a5c;
+    color: #e8eef6;
+  }
+
+  .ref-pill[data-kind="ot"] {
+    background: #4a3d32;
+    color: #f3eee6;
+  }
+
+  html.light .ref-pill[data-kind="nt"] {
+    background: #d7e0ec;
+    color: #1d2a3a;
+  }
+
+  html.light .ref-pill[data-kind="ot"] {
+    background: #ead9c6;
+    color: #3a2a1c;
+  }
+
+  .note-line-empty:empty::before {
+    content: attr(data-placeholder);
+    color: var(--color-subtle);
+  }
 }
 
 :root {
