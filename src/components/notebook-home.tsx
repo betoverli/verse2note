@@ -9,6 +9,7 @@ import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { SendToFriendButton } from "@/components/send-to-friend";
+import { ViewportSheet } from "@/components/viewport-sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ function NoteCard({ note }: { note: Note }) {
     .slice(0, 3);
   const preview = notePreview(note);
   const [share, setShare] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
   const [gone, setGone] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
@@ -61,11 +63,8 @@ function NoteCard({ note }: { note: Note }) {
   function finish(dir: "share" | "delete" | "reset") {
     const max = width.current;
     if (dir === "delete") {
-      paint(-max, true);
-      window.setTimeout(() => {
-        setGone(true);
-        deleteLocalNote(note.id);
-      }, 240);
+      paint(0, true);
+      setAskDelete(true);
       return;
     }
     if (dir === "share") {
@@ -208,6 +207,31 @@ function NoteCard({ note }: { note: Note }) {
         </div>
       </div>
       <SendToFriendButton kind="note" targetId={note.id} hideTrigger open={share} onOpenChange={setShare} />
+      {askDelete ? (
+        <ViewportSheet onClose={() => setAskDelete(false)}>
+          <div
+            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-sm font-medium text-fg">{t(locale, "notebookDeleteAsk")}</p>
+            <div className="mt-4 flex gap-2">
+              <Button className="flex-1" variant="ghost" onClick={() => setAskDelete(false)}>
+                {t(locale, "linkCancel")}
+              </Button>
+              <Button
+                className="flex-1 bg-[#8b3a32] text-[#f3eee6] hover:bg-[#8b3a32]/90"
+                onClick={() => {
+                  setAskDelete(false);
+                  setGone(true);
+                  deleteLocalNote(note.id);
+                }}
+              >
+                {t(locale, "notebookDelete")}
+              </Button>
+            </div>
+          </div>
+        </ViewportSheet>
+      ) : null}
     </div>
   );
 }
