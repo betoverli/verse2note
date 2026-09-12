@@ -105,11 +105,19 @@ function removeLine(blocks: NoteBlock[], id: string): NoteBlock[] {
   return out.length ? out : [emptyLine()];
 }
 
-function parentSpeaker(blocks: NoteBlock[], lineId: string) {
-  for (const block of blocks) {
-    if (block.type === "speaker" && block.children.some((child) => child.id === lineId)) return block.speakerId;
-  }
-  return null;
+function speakerBlockOf(blocks: NoteBlock[], lineId: string): SpeakerBlock | undefined {
+  return blocks.find((block): block is SpeakerBlock => block.type === "speaker" && block.children.some((child) => child.id === lineId));
+}
+
+function ensureLineAfter(blocks: NoteBlock[], speakerId: string) {
+  const idx = blocks.findIndex((block) => block.id === speakerId);
+  if (idx < 0) return { blocks, lineId: null as string | null };
+  const next = blocks[idx + 1];
+  if (next && next.type !== "speaker") return { blocks, lineId: next.id };
+  const line = emptyLine();
+  const out = [...blocks];
+  out.splice(idx + 1, 0, line);
+  return { blocks: out, lineId: line.id };
 }
 
 function useVisualViewport() {
@@ -283,9 +291,34 @@ export function NotebookEditor({
   }
 
   function onEnter(block: LineBlock) {
-    const next = emptyLine(block.type === "h" ? "p" : block.type);
-    updateBlocks((blocks) => insertAfter(blocks, block.id, next));
-    setFocusId(next.id);
+    const current = latest();
+    const speaker = speakerBlockOf(current.blocks, block.id);
+    const lastChild = speaker?.children[speaker.children.length - 1];
+    if (speaker && lastChild?.id === block.id && block.inlines.length === 0) {
+      const next = ensureLineAfter(current.blocks, speaker.id);
+      updateBlocks(() => next.blocks);
+      if (next.lineId) setFocusId(next.lineId);
+      setActive(null);
+      return;
+    }
+    const line = emptyLine(block.type === "h" ? "p" : block.type);
+    updateBlocks((blocks) => insertAfter(blocks, block.id, line));
+    setFocusId(line.id);
+  }
+
+  function exitSpeaker() {
+    const current = latest();
+    const speaker =
+      speakerBlockOf(current.blocks, focusId ?? "") ??
+      current.blocks.find((block) => block.type === "speaker" && block.speakerId === useAppStore.getState().notebookActiveSpeakerId);
+    if (!speaker || speaker.type !== "speaker") {
+      setActive(null);
+      return;
+    }
+    const next = ensureLineAfter(current.blocks, speaker.id);
+    updateBlocks(() => next.blocks);
+    if (next.lineId) setFocusId(next.lineId);
+    setActive(null);
   }
 
   function onMergeBack(id: string) {
@@ -328,7 +361,12 @@ export function NotebookEditor({
       title: "",
       children: [child],
     };
-    updateBlocks((blocks) => insertAfterAnchor(blocks, focusId, block));
+    updateBlocks((blocks) => {
+      const withSpeaker = insertAfterAnchor(blocks, focusId, block);
+      const last = withSpeaker[withSpeaker.length - 1];
+      if (last?.id === block.id) return [...withSpeaker, emptyLine()];
+      return withSpeaker;
+    });
     setFocusId(child.id);
     setActive(speaker.id);
   }
@@ -407,7 +445,7 @@ export function NotebookEditor({
           <UserRound />
         </Button>
         {useAppStore.getState().notebookActiveSpeakerId ? (
-          <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onClick={() => setActive(null)}>
+          <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onClick={exitSpeaker}>
             <X />
           </Button>
         ) : null}
@@ -619,7 +657,7 @@ export function NotebookEditor({
                 onEmptyBackspace={() => onMergeBack(block.id)}
                 onFocus={() => {
                   setFocusId(block.id);
-                  setActive(parentSpeaker(draft.blocks, block.id));
+                  setActive(speakerBlockOf(draft.blocks, block.id)?.speakerId ?? null);
                 }}
                 onDetect={setPending}
               />
