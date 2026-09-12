@@ -430,12 +430,12 @@ export function ProfileHeaderActions() {
 
   return (
     <div className="flex items-center">
-      <Button variant="ghost" size="icon" aria-label={t(locale, "copyProfile")} onClick={() => void onShare()}>
-        <Share2 className="size-5" />
+      <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "copyProfile")} onClick={() => void onShare()}>
+        <Share2 />
       </Button>
-      <Button variant="ghost" size="icon" aria-label={t(locale, "editProfile")} asChild>
+      <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "editProfile")} asChild>
         <Link to="/profile/edit">
-          <Pencil className="size-5" />
+          <Pencil />
         </Link>
       </Button>
     </div>

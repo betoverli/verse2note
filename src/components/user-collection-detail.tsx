@@ -295,7 +295,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
           <Button
             variant="ghost"
             size="icon"
-            className="size-12 text-fg [&_svg]:size-5"
+            className="size-12 text-fg [&_svg]:size-6"
             aria-label={t(locale, editing ? "collectionDone" : "collectionEdit")}
             onClick={() => void toggleEdit()}
           >

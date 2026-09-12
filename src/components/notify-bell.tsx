@@ -36,7 +36,7 @@ export function NotifyBell() {
   if (!user) return null;
 
   return (
-    <Button variant="ghost" size="icon" asChild className="relative text-fg">
+    <Button variant="ghost" size="icon" asChild className="relative size-12 text-fg [&_svg]:size-6">
       <Link to="/inbox" aria-label={t(locale, "notifications")}>
         <Bell />
         {count > 0 ? (
