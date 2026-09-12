@@ -48,7 +48,7 @@ Category ids: `doctrine`, `jesus`, `personal`, `church-life`, `home`, `seasons`,
 
 ## Call the API — reading plans (whole chapters)
 
-14 plans (Bible in a year, Gospels in 30 days, Psalms, Paul…). Links are always **complete chapters**. The API does not store progress. In the web app, “My plans” lives on an optional user account.
+34 plans (canonical year, chronological OT/NT/whole Bible, theme mixes, Four paths). Links are always **complete chapters**. The API does not store progress. In the web app, “My plans” lives on an optional user account.
 
 ## Human accounts vs agents
 
@@ -64,9 +64,9 @@ GET {origin}/api/plans?id=gospels-30&day=1&app=youversion&locale=pt
 
 `id` without `day` returns the outline (labels per day). With `day`, returns `markdown` for that day's chapters.
 
-Plan ids: `bible-year`, `bible-90`, `nt-90`, `nt-30`, `gospels-30`, `john-21`, `matthew-28`, `luke-24`, `acts-28`, `romans-16`, `proverbs-31`, `psalms-30`, `pentateuch-90`, `paul-letters`.
+Plan ids: `bible-year`, `bible-90`, `nt-90`, `nt-30`, `gospels-30`, `john-21`, `matthew-28`, `luke-24`, `acts-28`, `romans-16`, `proverbs-31`, `psalms-30`, `pentateuch-90`, `paul-letters`, `chrono-bible`, `chrono-ot`, `chrono-nt`, `four-paths`, `ot-year`, `isaiah-66`, `story-40`, `hope-21`, `prayer-21`, `women-21`, `justice-14`, `wilderness-14`, `covenant-14`, `holy-week`, `advent-24`, `who-is-jesus`, `lament-14`, `wisdom-21`, `apocalyptic`, `early-church`.
 
-Plan category ids: `duration`, `gospels`, `new-testament`, `books`.
+Plan category ids: `duration`, `chronological`, `themes`, `gospels`, `new-testament`, `old-testament`, `books`.
 
 ## Parameters
 

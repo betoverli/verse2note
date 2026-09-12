@@ -19,7 +19,7 @@ const JSON_LD = {
   browserRequirements: "Requires JavaScript",
   offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
   description:
-    "Rich-text Bible reference deep links, 160 themed collections, and 14 reading plans of whole chapters for YouVersion, Logos, and other Bible apps. Portuguese, English, Spanish. Offline PWA. API and MCP for agents.",
+    "Rich-text Bible reference deep links, 160 themed collections, and 34 reading plans of whole chapters for YouVersion, Logos, and other Bible apps. Portuguese, English, Spanish. Offline PWA. API and MCP for agents.",
   inLanguage: ["pt", "en", "es"],
   sameAs: ["https://github.com/betoverli/verse2note"],
   featureList: [
@@ -27,7 +27,7 @@ const JSON_LD = {
     "Rich-text copy with a deep link",
     "Multiple Bible apps",
     "160 themed collections in 14 categories",
-    "14 reading plans of whole chapters",
+    "34 reading plans of whole chapters",
     "Optional Google / X / email account for My plans",
     "API, skill and MCP for AI agents (no login)",
     "Works offline after first open",

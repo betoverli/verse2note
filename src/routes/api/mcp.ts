@@ -67,12 +67,12 @@ const PLAN_TOOL = {
       id: {
         type: "string",
         description:
-          "Plan id, e.g. bible-year, gospels-30, john-21, psalms-30. Without day, returns the day outline.",
+          "Plan id, e.g. chrono-bible, hope-21, gospels-30. Without day, returns the day outline.",
       },
       day: { type: "number", description: "Day number in the plan. Returns markdown links for that day's chapters." },
       category: {
         type: "string",
-        description: "Category id: duration, gospels, new-testament, books.",
+        description: "Category id: duration, chronological, themes, gospels, new-testament, old-testament, books.",
       },
       app: { type: "string", description: `Bible app id when fetching a day. One of: ${APPS}.` },
       translation: { type: "string" },
