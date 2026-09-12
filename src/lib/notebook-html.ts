@@ -31,7 +31,7 @@ export function inlinesToHtml(inlines: NoteInline[], locale: Locale, style?: Par
         const kind = refKind(part.bookId);
         const start = part.verseStart ?? "";
         const end = part.verseEnd ?? "";
-        return `<span class="ref-pill" data-kind="${kind}" data-ref="${part.bookId}|${part.chapter}|${start}|${end}" contenteditable="false">${escapeHtml(label)}</span>\u200B`;
+        return `\u200B<span class="ref-pill" data-kind="${kind}" data-ref="${part.bookId}|${part.chapter}|${start}|${end}" contenteditable="false">${escapeHtml(label)}</span>\u200B`;
       }
       let html = escapeHtml(part.text).replaceAll("\n", "<br>");
       if (part.bold) html = `<b>${html}</b>`;

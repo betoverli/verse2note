@@ -35,6 +35,15 @@ function selectedLines(root: HTMLElement) {
   return one ? [one] : [];
 }
 
+function tidyLine(line: HTMLElement) {
+  const hasPill = Boolean(line.querySelector(".ref-pill"));
+  const text = (line.textContent ?? "").replace(/\u200B/g, "").trim();
+  if (hasPill || text) {
+    for (const br of [...line.querySelectorAll("br")]) br.remove();
+  }
+  if (!line.childNodes.length) line.append(document.createElement("br"));
+}
+
 function placeAfterContent(el: HTMLElement) {
   let node = el.lastChild;
   if (!node || node.nodeType !== Node.TEXT_NODE) {
@@ -51,7 +60,7 @@ function placeAfterContent(el: HTMLElement) {
 
 export type NotebookDocHandle = {
   flush: () => void;
-  insertPassage: (passage: Passage) => void;
+  insertPassage: (passage: Passage, lineId?: string | null) => void;
   toggleKind: (type: LineType) => void;
 };
 
@@ -90,6 +99,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   const timer = useRef(0);
   const enterLock = useRef(false);
   const selectedIds = useRef<string[]>([]);
+  const lastLineId = useRef<string | null>(null);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const sig = `${blocksSignature(blocks)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
@@ -116,8 +126,26 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
 
   useImperativeHandle(handle, () => ({
     flush: () => parse(),
-    insertPassage: (passage: Passage) => {
-      document.execCommand("insertHTML", false, inlinesToHtml([passageToRef(passage)], locale, style));
+    insertPassage: (passage: Passage, lineId?: string | null) => {
+      const root = ref.current;
+      if (!root) return;
+      const html = inlinesToHtml([passageToRef(passage)], locale, style);
+      const id = lineId || lastLineId.current;
+      const line =
+        (id ? root.querySelector<HTMLElement>(`[data-line-id="${id}"]`) : null) ??
+        lineElFromSel() ??
+        root.querySelector<HTMLElement>(".note-line");
+      if (!line) return;
+      lastLineId.current = line.dataset.lineId ?? lastLineId.current;
+      if (isLineHtmlEmpty(line)) line.innerHTML = html;
+      else {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount && sel.anchorNode && line.contains(sel.anchorNode)) {
+          document.execCommand("insertHTML", false, html);
+        } else line.insertAdjacentHTML("beforeend", html);
+      }
+      tidyLine(line);
+      placeAfterContent(line);
       parse();
     },
     toggleKind: (type: LineType) => {
@@ -151,6 +179,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     sigRef.current = `${blocksSignature(next)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
     const line = lineElFromSel();
     const id = line?.dataset.lineId ?? null;
+    if (id) lastLineId.current = id;
     onFocusLine(id);
     if (!line) {
       onDetect(null);

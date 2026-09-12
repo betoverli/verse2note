@@ -281,7 +281,7 @@ export function NotebookEditor({
 
   function onPickRef(passage: Passage) {
     if (docApi.current) {
-      docApi.current.insertPassage(passage);
+      docApi.current.insertPassage(passage, focusIdRef.current);
       return;
     }
     if (!focusId) {
