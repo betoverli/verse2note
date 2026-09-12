@@ -91,7 +91,7 @@ function SharedNoteRoute() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-[calc(var(--tab-bar-height)+2rem)] sm:px-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-8 sm:px-6">
       <NotebookEditor note={note} readOnly speakerList={payload?.speakers ?? []} />
       <Button
         onClick={() => {
