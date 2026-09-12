@@ -72,7 +72,12 @@ export function AppShell() {
 
   let body: ReactNode;
   if (publicPage) {
-    body = <Outlet />;
+    body = (
+      <>
+        <Outlet />
+        {tabs ? <TabBar /> : null}
+      </>
+    );
   } else if (showSplash) {
     body = <SplashScreen />;
   } else if (showOnboarding) {
