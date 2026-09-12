@@ -14,13 +14,24 @@ export function SendToFriendButton({
   kind,
   targetId,
   iconOnly,
+  hideTrigger,
+  open: openProp,
+  onOpenChange,
 }: {
   kind: "plan" | "collection" | "note";
   targetId: string;
   iconOnly?: boolean;
+  hideTrigger?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const locale = useAppStore((s) => s.locale);
-  const [open, setOpen] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = openProp ?? innerOpen;
+  function setOpen(value: boolean) {
+    if (openProp === undefined) setInnerOpen(value);
+    onOpenChange?.(value);
+  }
   const [friends, setFriends] = useState<LinkPerson[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -112,7 +123,7 @@ export function SendToFriendButton({
 
   return (
     <>
-      {iconOnly ? (
+      {hideTrigger ? null : iconOnly ? (
         <Button
           size="icon"
           variant="ghost"

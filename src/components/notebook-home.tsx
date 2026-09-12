@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Plus, Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds, todayKey } from "@/lib/notebook";
 import { createLocalNote, deleteLocalNote, ensureTodayNote } from "@/lib/notebook-local";
@@ -8,6 +8,7 @@ import { listGrantedNotes } from "@/lib/notebook-cloud";
 import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
+import { SendToFriendButton } from "@/components/send-to-friend";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -30,44 +31,146 @@ function NoteCard({ note }: { note: Note }) {
     .filter(Boolean)
     .slice(0, 3);
   const preview = notePreview(note);
+  const [share, setShare] = useState(false);
+  const [gone, setGone] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  const layer = useRef<HTMLDivElement>(null);
+  const shareBg = useRef<HTMLDivElement>(null);
+  const deleteBg = useRef<HTMLDivElement>(null);
+  const shareIcon = useRef<HTMLSpanElement>(null);
+  const deleteIcon = useRef<HTMLSpanElement>(null);
+  const x = useRef(0);
+  const start = useRef({ x: 0, y: 0, lock: "" as "" | "h" | "v" });
+  const width = useRef(1);
+
+  function paint(value: number, animate = false) {
+    x.current = value;
+    const el = layer.current;
+    if (el) {
+      el.style.transition = animate ? "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" : "none";
+      el.style.transform = `translate3d(${value}px,0,0)`;
+    }
+    const p = Math.min(1.15, Math.abs(value) / Math.max(1, width.current * 0.42));
+    if (shareBg.current) shareBg.current.style.opacity = value > 8 ? "1" : "0";
+    if (deleteBg.current) deleteBg.current.style.opacity = value < -8 ? "1" : "0";
+    if (shareIcon.current) shareIcon.current.style.transform = `scale(${0.82 + p * 0.28})`;
+    if (deleteIcon.current) deleteIcon.current.style.transform = `scale(${0.82 + p * 0.28})`;
+  }
+
+  function onPointerDown(event: ReactPointerEvent) {
+    if (event.button) return;
+    width.current = wrap.current?.getBoundingClientRect().width || 1;
+    start.current = { x: event.clientX, y: event.clientY, lock: "" };
+  }
+
+  function onPointerMove(event: ReactPointerEvent) {
+    const dx = event.clientX - start.current.x;
+    const dy = event.clientY - start.current.y;
+    if (!start.current.lock) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      start.current.lock = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+      if (start.current.lock === "h") wrap.current?.setPointerCapture(event.pointerId);
+    }
+    if (start.current.lock !== "h") return;
+    event.preventDefault();
+    const max = width.current;
+    paint(Math.max(-max, Math.min(max, dx)));
+  }
+
+  function finish(dir: "share" | "delete" | "reset") {
+    const max = width.current;
+    if (dir === "delete") {
+      paint(-max, true);
+      window.setTimeout(() => {
+        setGone(true);
+        deleteLocalNote(note.id);
+      }, 240);
+      return;
+    }
+    if (dir === "share") {
+      paint(max, true);
+      window.setTimeout(() => {
+        paint(0, true);
+        setShare(true);
+      }, 220);
+      return;
+    }
+    paint(0, true);
+  }
+
+  function onPointerUp() {
+    const lock = start.current.lock;
+    start.current.lock = "";
+    if (lock !== "h") return;
+    const threshold = width.current * 0.42;
+    if (x.current <= -threshold) finish("delete");
+    else if (x.current >= threshold) finish("share");
+    else finish("reset");
+  }
+
+  if (gone) return null;
+
   return (
-    <div className="flex items-center overflow-hidden rounded-lg bg-surface shadow-[var(--shadow-border)]">
-      <Link
-        to="/notebook/$id"
-        params={{ id: note.id }}
-        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-4 py-3 text-fg transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+    <div ref={wrap} className="relative overflow-hidden rounded-lg shadow-[var(--shadow-border)]">
+      <div
+        ref={shareBg}
+        className="absolute inset-0 flex items-center justify-start bg-accent px-5 text-accent-fg opacity-0"
+        aria-hidden
       >
-        <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
-          {formatDay(note.happenedAt, locale)}
+        <span ref={shareIcon} className="inline-flex">
+          <UserPlus className="size-6" />
         </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
-          {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
+      </div>
+      <div
+        ref={deleteBg}
+        className="absolute inset-0 flex items-center justify-end bg-[#8b3a32] px-5 text-[#f3eee6] opacity-0"
+        aria-hidden
+      >
+        <span ref={deleteIcon} className="inline-flex">
+          <Trash2 className="size-6" />
         </span>
-        {people.length ? (
-          <span className="flex">
-            {people.map((speaker, index) =>
-              speaker ? (
-                <span
-                  key={speaker.id}
-                  className={cn("size-6 rounded-full ring-2 ring-bg", index ? "-ml-1.5" : "")}
-                  style={{ background: speaker.color }}
-                />
-              ) : null,
-            )}
+      </div>
+      <div
+        ref={layer}
+        className="relative bg-surface will-change-transform"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        style={{ touchAction: "pan-y" }}
+      >
+        <Link
+          to="/notebook/$id"
+          params={{ id: note.id }}
+          draggable={false}
+          onClick={(event) => {
+            if (Math.abs(x.current) > 12) event.preventDefault();
+          }}
+          className="flex min-h-16 items-center gap-3 px-4 py-3 text-fg"
+        >
+          <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
+            {formatDay(note.happenedAt, locale)}
           </span>
-        ) : null}
-      </Link>
-      <button
-        type="button"
-        className="flex size-12 shrink-0 items-center justify-center text-muted hover:text-fg"
-        aria-label={t(locale, "notebookDelete")}
-        onClick={() => {
-          if (confirm(t(locale, "notebookDelete"))) deleteLocalNote(note.id);
-        }}
-      >
-        <Trash2 className="size-5" />
-      </button>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
+            {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
+          </span>
+          {people.length ? (
+            <span className="flex">
+              {people.map((speaker, index) =>
+                speaker ? (
+                  <span
+                    key={speaker.id}
+                    className={cn("size-6 rounded-full ring-2 ring-bg", index ? "-ml-1.5" : "")}
+                    style={{ background: speaker.color }}
+                  />
+                ) : null,
+              )}
+            </span>
+          ) : null}
+        </Link>
+      </div>
+      <SendToFriendButton kind="note" targetId={note.id} hideTrigger open={share} onOpenChange={setShare} />
     </div>
   );
 }
