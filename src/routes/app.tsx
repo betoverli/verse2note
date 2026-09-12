@@ -21,6 +21,7 @@ export const Route = createFileRoute("/app")({
 
 function AppPage() {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const bookId = useAppStore((s) => s.bookId);
   const chapter = useAppStore((s) => s.chapter);
   const listCount = useAppStore((s) => s.list.length);
@@ -35,7 +36,7 @@ function AppPage() {
       )}
     >
       <AppHeader
-        title={book ? book.names[locale] : t(locale, "navBooks")}
+        title={book ? book.names[copyLocale] : t(locale, "navBooks")}
         trailing={<NotifyBell />}
       />
       <Picker />

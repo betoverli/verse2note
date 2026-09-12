@@ -20,6 +20,7 @@ const LOCALE_LABEL: Record<Locale, I18nKey> = {
 export function Onboarding({ onBack }: { onBack?: () => void }) {
   const locale = useAppStore((s) => s.locale);
   const setLocale = useAppStore((s) => s.setLocale);
+  const setCopyLocale = useAppStore((s) => s.setCopyLocale);
   const appId = useAppStore((s) => s.appId);
   const setAppId = useAppStore((s) => s.setAppId);
   const completeOnboarding = useAppStore((s) => s.completeOnboarding);
@@ -73,7 +74,10 @@ export function Onboarding({ onBack }: { onBack?: () => void }) {
                 <button
                   key={item}
                   type="button"
-                  onClick={() => setLocale(item)}
+                  onClick={() => {
+                    setLocale(item);
+                    setCopyLocale(item);
+                  }}
                   aria-pressed={active}
                   className={cn(
                     "flex min-h-14 w-full items-center justify-between gap-3 rounded-md px-4 py-3 text-left transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.99]",

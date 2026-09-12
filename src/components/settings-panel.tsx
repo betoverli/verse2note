@@ -69,21 +69,38 @@ function appSummary(
 
 export function LanguageSettings() {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const setLocale = useAppStore((s) => s.setLocale);
+  const setCopyLocale = useAppStore((s) => s.setCopyLocale);
   return (
-    <Section title={t(locale, "language")}>
-      <div className="grid grid-cols-3 gap-2">
-        {LOCALES.map((item) => (
-          <Choice
-            key={item}
-            active={locale === item}
-            title={item.toUpperCase()}
-            subtitle={t(locale, LOCALE_LABEL[item])}
-            onClick={() => setLocale(item)}
-          />
-        ))}
-      </div>
-    </Section>
+    <div className="flex flex-col gap-6">
+      <Section title={t(locale, "uiLanguage")} lead={t(locale, "uiLanguageLead")}>
+        <div className="grid grid-cols-3 gap-2">
+          {LOCALES.map((item) => (
+            <Choice
+              key={item}
+              active={locale === item}
+              title={item.toUpperCase()}
+              subtitle={t(locale, LOCALE_LABEL[item])}
+              onClick={() => setLocale(item)}
+            />
+          ))}
+        </div>
+      </Section>
+      <Section title={t(locale, "copyLanguage")} lead={t(locale, "copyLanguageLead")}>
+        <div className="grid grid-cols-3 gap-2">
+          {LOCALES.map((item) => (
+            <Choice
+              key={item}
+              active={copyLocale === item}
+              title={item.toUpperCase()}
+              subtitle={t(locale, LOCALE_LABEL[item])}
+              onClick={() => setCopyLocale(item)}
+            />
+          ))}
+        </div>
+      </Section>
+    </div>
   );
 }
 
@@ -206,4 +223,9 @@ export function themeLabel(locale: Locale, theme: Theme) {
 
 export function localeLabel(locale: Locale) {
   return t(locale, LOCALE_LABEL[locale]);
+}
+
+export function languagesLabel(locale: Locale, copyLocale: Locale) {
+  if (locale === copyLocale) return localeLabel(locale);
+  return `${locale.toUpperCase()} · ${copyLocale.toUpperCase()}`;
 }

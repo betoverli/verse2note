@@ -98,6 +98,7 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
 
 function PlanTracker({ plan }: { plan: ReadingPlan }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -312,7 +313,7 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
         {plan.days.map((day) => {
           const complete = doneDays.includes(day.day);
           const passages = day.readings.map(readingToPassage);
-          const items = dayItems(day, locale, appId, translationId, preferNative);
+          const items = dayItems(day, copyLocale, appId, translationId, preferNative);
           const who = others.filter((member) => member.days.includes(day.day));
           return (
             <li

@@ -14,7 +14,7 @@ import type { Locale } from "@/lib/bible/books";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
 import { cleanHandle, profileIsComplete } from "@/lib/profile";
-import { localeLabel, themeLabel } from "@/components/settings-panel";
+import { languagesLabel, themeLabel } from "@/components/settings-panel";
 import { LinkedMethods } from "@/components/linked-methods";
 import { useAppStore } from "@/lib/store";
 import { getIsAdmin } from "@/lib/usage";
@@ -26,6 +26,7 @@ function snapshot() {
   const s = useAppStore.getState();
   return {
     locale: s.locale,
+    copyLocale: s.copyLocale,
     appId: s.appId,
     translationId: s.translationId,
     preferNative: s.preferNative,
@@ -74,6 +75,7 @@ function usePrefillProfile() {
 
 function SettingCards({ earned }: { earned: number }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const theme = useAppStore((s) => s.theme);
   const appId = useAppStore((s) => s.appId);
   const app = appById(appId);
@@ -132,7 +134,7 @@ function SettingCards({ earned }: { earned: number }) {
       to: "/profile/language" as const,
       icon: Globe,
       title: t(locale, "language"),
-      subtitle: localeLabel(locale),
+      subtitle: languagesLabel(locale, copyLocale),
     },
     {
       to: "/profile/help" as const,

@@ -28,6 +28,7 @@ function toCopyItem(
 
 export function CollectionDetail({ collection }: { collection: Collection }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -36,7 +37,7 @@ export function CollectionDetail({ collection }: { collection: Collection }) {
   const [copied, setCopied] = useState<"all" | string | null>(null);
 
   const items = collection.passages
-    .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
+    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative))
     .filter((item): item is CopyItem => item != null);
 
   function flash(key: "all" | string) {
@@ -85,8 +86,8 @@ export function CollectionDetail({ collection }: { collection: Collection }) {
             >
               <div className="min-w-0 flex-1 px-4 py-3">
                 <p className="font-display text-lg italic text-fg">{item.label}</p>
-                {passage.snippet[locale] ? (
-                  <p className="mt-1 text-xs leading-relaxed text-muted">{passage.snippet[locale]}</p>
+                {passage.snippet[copyLocale] ? (
+                  <p className="mt-1 text-xs leading-relaxed text-muted">{passage.snippet[copyLocale]}</p>
                 ) : null}
               </div>
               <Button

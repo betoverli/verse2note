@@ -15,6 +15,7 @@ export type Step = "book" | "chapter" | "verse";
 
 type AppState = {
   locale: Locale;
+  copyLocale: Locale;
   appId: string;
   translationId: string;
   preferNative: boolean;
@@ -42,6 +43,7 @@ type AppState = {
   cloudHydrated: boolean;
   cloudProfileOk: boolean;
   setLocale: (locale: Locale) => void;
+  setCopyLocale: (locale: Locale) => void;
   setAppId: (id: string) => void;
   setTranslationId: (id: string) => void;
   setPreferNative: (value: boolean) => void;
@@ -86,6 +88,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       locale: detectLocale(),
+      copyLocale: detectLocale(),
       appId: "youversion",
       translationId: DEFAULT_TRANSLATION[detectLocale()],
       preferNative: false,
@@ -113,12 +116,15 @@ export const useAppStore = create<AppState>()(
       cloudHydrated: false,
       cloudProfileOk: false,
       setLocale: (locale) => {
-        const available = translationsFor(locale);
+        set({ locale });
+        if (typeof document !== "undefined") document.documentElement.lang = locale;
+      },
+      setCopyLocale: (copyLocale) => {
+        const available = translationsFor(copyLocale);
         const current = get().translationId;
         const next =
-          available.some((item) => item.id === current) ? current : DEFAULT_TRANSLATION[locale];
-        set({ locale, translationId: next });
-        if (typeof document !== "undefined") document.documentElement.lang = locale;
+          available.some((item) => item.id === current) ? current : DEFAULT_TRANSLATION[copyLocale];
+        set({ copyLocale, translationId: next });
       },
       setAppId: (appId) => set({ appId }),
       setTranslationId: (translationId) => set({ translationId }),
@@ -214,6 +220,7 @@ export const useAppStore = create<AppState>()(
       applyCloud: (prefs) => {
         set({
           locale: prefs.locale,
+          copyLocale: prefs.copyLocale,
           appId: prefs.appId,
           translationId: prefs.translationId,
           preferNative: prefs.preferNative,
@@ -271,6 +278,7 @@ export const useAppStore = create<AppState>()(
       name: "cita-settings",
       partialize: (state) => ({
         locale: state.locale,
+        copyLocale: state.copyLocale,
         appId: state.appId,
         translationId: state.translationId,
         preferNative: state.preferNative,
@@ -311,6 +319,9 @@ export const useAppStore = create<AppState>()(
           myCollections: Array.isArray(saved.myCollections) ? saved.myCollections : [],
           cloudProfileOk: saved.cloudProfileOk === true,
           theme: saved.theme ?? "system",
+          copyLocale: saved.copyLocale === "en" || saved.copyLocale === "es" || saved.copyLocale === "pt"
+            ? saved.copyLocale
+            : saved.locale ?? current.locale,
         };
       },
       onRehydrateStorage: () => (state) => {

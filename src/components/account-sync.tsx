@@ -12,6 +12,7 @@ function snapshot(): CloudPrefs {
   const s = useAppStore.getState();
   return {
     locale: s.locale,
+    copyLocale: s.copyLocale,
     appId: s.appId,
     translationId: s.translationId,
     preferNative: s.preferNative,
@@ -108,6 +109,7 @@ export function AccountSync() {
       if (!ready.current) return;
       const next = JSON.stringify({
         locale: state.locale,
+        copyLocale: state.copyLocale,
         appId: state.appId,
         translationId: state.translationId,
         preferNative: state.preferNative,

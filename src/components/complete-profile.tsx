@@ -13,6 +13,7 @@ function snapshot() {
   const s = useAppStore.getState();
   return {
     locale: s.locale,
+    copyLocale: s.copyLocale,
     appId: s.appId,
     translationId: s.translationId,
     preferNative: s.preferNative,

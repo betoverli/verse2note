@@ -36,6 +36,7 @@ function toCopyItem(
 
 export function LinkPreview() {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -63,10 +64,10 @@ export function LinkPreview() {
   const translation = translationById(translationId);
   const app = appById(appId);
   const current = passage
-    ? toCopyItem(passage, locale, appId, translationId, preferNative, false)
+    ? toCopyItem(passage, copyLocale, appId, translationId, preferNative, false)
     : null;
   const currentShare = passage
-    ? toCopyItem(passage, locale, appId, translationId, preferNative, true)
+    ? toCopyItem(passage, copyLocale, appId, translationId, preferNative, true)
     : current;
   const inList = Boolean(passage && list.some((item) => samePassage(item, passage)));
 
@@ -119,7 +120,7 @@ export function LinkPreview() {
 
   function listItems(httpOnly: boolean) {
     return list
-      .map((item) => toCopyItem(item, locale, appId, translationId, preferNative, httpOnly))
+      .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative, httpOnly))
       .filter((item): item is CopyItem => item != null);
   }
 
@@ -188,7 +189,7 @@ export function LinkPreview() {
                     onClick={() => applyPassage(item)}
                     className="min-h-11 px-3 text-sm text-fg hover:bg-elevated"
                   >
-                    {formatPassageById(item, locale)}
+                    {formatPassageById(item, copyLocale)}
                   </button>
                   <button
                     type="button"

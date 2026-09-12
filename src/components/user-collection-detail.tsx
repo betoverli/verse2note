@@ -53,6 +53,7 @@ export function CollectionPassageCards({
   onRemove?: (passage: CollectionPassage) => void;
 }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -84,7 +85,7 @@ export function CollectionPassageCards({
   return (
     <ul className="flex flex-col gap-2">
       {passages.map((passage) => {
-        const item = toCopyItem(passage, locale, appId, translationId, preferNative);
+        const item = toCopyItem(passage, copyLocale, appId, translationId, preferNative);
         if (!item) return null;
         const key = passageKey(passage);
         return (
@@ -155,6 +156,7 @@ export function CollectionPassageCards({
 
 export function UserCollectionDetail({ collection }: { collection: UserCollection }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -168,7 +170,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   const [editing, setEditing] = useState(false);
 
   const items = passages
-    .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
+    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative))
     .filter((item): item is CopyItem => item != null);
 
   function persist(next: {
@@ -343,6 +345,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
 
 export function SharedCollectionView({ collection }: { collection: UserCollection }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -350,7 +353,7 @@ export function SharedCollectionView({ collection }: { collection: UserCollectio
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
   const items = collection.passages
-    .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
+    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative))
     .filter((item): item is CopyItem => item != null);
 
   async function onCopyAll() {

@@ -14,7 +14,7 @@ function BookButton({
   active: boolean;
   compact: boolean;
 }) {
-  const locale = useAppStore((s) => s.locale);
+  const locale = useAppStore((s) => s.copyLocale);
   const selectBook = useAppStore((s) => s.selectBook);
   const name = book.names[locale];
   const abbr = book.abbr[locale];
@@ -77,6 +77,7 @@ function BookGroup({
 
 export function Picker() {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const step = useAppStore((s) => s.step);
   const setStep = useAppStore((s) => s.setStep);
   const bookId = useAppStore((s) => s.bookId);
@@ -119,7 +120,7 @@ export function Picker() {
                   step === "chapter" ? "text-fg" : "hover:text-fg",
                 )}
               >
-                {book.names[locale]}
+                {book.names[copyLocale]}
               </button>
             </>
           ) : null}

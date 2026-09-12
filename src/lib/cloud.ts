@@ -13,6 +13,7 @@ import { cleanEmail, cleanHandle, cleanName } from "@/lib/profile";
 
 export type CloudPrefs = {
   locale: Locale;
+  copyLocale: Locale;
   appId: string;
   translationId: string;
   preferNative: boolean;
@@ -31,6 +32,7 @@ export type CloudPrefs = {
 
 type PrefsRow = {
   locale: string;
+  copy_locale: string;
   app_id: string;
   translation_id: string;
   prefer_native: boolean;
@@ -70,6 +72,7 @@ function parseJson<T>(raw: string, fallback: T): T {
 function fromRow(row: PrefsRow): CloudPrefs {
   return {
     locale: asLocale(row.locale),
+    copyLocale: asLocale(row.copy_locale || row.locale),
     appId: row.app_id,
     translationId: row.translation_id,
     preferNative: Boolean(row.prefer_native),
@@ -101,6 +104,7 @@ export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPr
   const useLocalProfile = localHasProfile && !cloudHasProfile;
   return {
     locale: cloud.locale,
+    copyLocale: cloud.copyLocale || local.copyLocale || cloud.locale,
     appId: cloud.appId,
     translationId: cloud.translationId,
     preferNative: cloud.preferNative,
@@ -123,7 +127,7 @@ export const getPrefs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     const rows = await sql<PrefsRow>`
-      select locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
+      select locale, copy_locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
              active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email
       from user_prefs
       where user_id = ${context.userId}
@@ -164,21 +168,23 @@ export const savePrefs = createServerFn({ method: "POST" })
     );
     const avatarId = isAvatarId(data.avatarId) ? data.avatarId : "book";
     const locale = asLocale(data.locale);
+    const copyLocale = asLocale(data.copyLocale || data.locale);
     const appId = appById(data.appId) ? data.appId : "youversion";
     const copyFormat = asFormat(data.copyFormat);
     const theme = asTheme(data.theme);
     try {
       await sql`
       insert into user_prefs (
-        user_id, locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
+        user_id, locale, copy_locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
         active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email, updated_at
       ) values (
-        ${context.userId}, ${locale}, ${appId}, ${data.translationId.slice(0, 40)}, ${Boolean(data.preferNative)},
+        ${context.userId}, ${locale}, ${copyLocale}, ${appId}, ${data.translationId.slice(0, 40)}, ${Boolean(data.preferNative)},
         ${copyFormat}, ${Boolean(data.booksCompact)}, ${theme}, ${active}, ${progress},
         ${avatarId}, ${cleanAvatarUrl(data.avatarUrl)}, ${handle}, ${cleanName(data.firstName)}, ${cleanName(data.lastName)}, ${cleanEmail(data.profileEmail) || data.profileEmail.trim().slice(0, 120)}, now()
       )
       on conflict (user_id) do update set
         locale = excluded.locale,
+        copy_locale = excluded.copy_locale,
         app_id = excluded.app_id,
         translation_id = excluded.translation_id,
         prefer_native = excluded.prefer_native,

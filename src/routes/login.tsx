@@ -87,6 +87,7 @@ export function Login() {
           const saved = await savePrefs({
             data: {
               locale: useAppStore.getState().locale,
+              copyLocale: useAppStore.getState().copyLocale,
               appId: useAppStore.getState().appId,
               translationId: useAppStore.getState().translationId,
               preferNative: useAppStore.getState().preferNative,
