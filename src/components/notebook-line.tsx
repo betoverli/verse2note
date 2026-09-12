@@ -15,6 +15,7 @@ export function NotebookLine({
   placeholder,
   active,
   editable = true,
+  hosted = false,
   onChange,
   onEnter,
   onEmptyBackspace,
@@ -28,6 +29,7 @@ export function NotebookLine({
   placeholder?: string;
   active?: boolean;
   editable?: boolean;
+  hosted?: boolean;
   onChange: (inlines: NoteInline[]) => void;
   onEnter: () => void;
   onEmptyBackspace: () => void;
@@ -47,6 +49,11 @@ export function NotebookLine({
     const html = inlinesToHtml(block.inlines, locale, style);
     const formatChanged = formatRef.current !== formatKey;
     formatRef.current = formatKey;
+    if (hosted && !formatChanged) {
+      if (JSON.stringify(htmlToInlines(el)) === JSON.stringify(block.inlines)) return;
+      el.innerHTML = html;
+      return;
+    }
     if (skip.current && !formatChanged) {
       skip.current = false;
       return;
@@ -58,10 +65,10 @@ export function NotebookLine({
       if (block.inlines.length === 0) placeCaret(el, true);
       else placeAfterContent(el);
     }
-  }, [block.inlines, locale, formatKey, style?.book, style?.sep]);
+  }, [block.inlines, locale, formatKey, style?.book, style?.sep, hosted]);
 
   useEffect(() => {
-    if (!active) return;
+    if (hosted || !active) return;
     const el = ref.current;
     if (!el) return;
     if (document.activeElement === el) return;
@@ -69,7 +76,7 @@ export function NotebookLine({
     focused.current = true;
     if (block.inlines.length === 0) placeCaret(el, true);
     else placeAfterContent(el);
-  }, [active, block.id]);
+  }, [active, block.id, hosted]);
 
   function emit() {
     const el = ref.current;
@@ -93,8 +100,9 @@ export function NotebookLine({
   return (
     <div
       ref={ref}
-      contentEditable={editable}
-      tabIndex={editable ? 0 : -1}
+      data-line-id={block.id}
+      contentEditable={hosted ? undefined : Boolean(editable)}
+      tabIndex={hosted || !editable ? -1 : 0}
       role="textbox"
       aria-multiline="true"
       data-placeholder={empty ? placeholder : undefined}
@@ -105,11 +113,11 @@ export function NotebookLine({
         empty && placeholder && "note-line-empty",
       )}
       onMouseDown={(event) => {
-        if (active) return;
+        if (hosted || active) return;
         event.preventDefault();
         onFocus();
       }}
-      onInput={emit}
+      onInput={hosted ? undefined : emit}
       onBlur={() => {
         focused.current = false;
         emit();
@@ -132,39 +140,47 @@ export function NotebookLine({
       }}
       onFocus={() => {
         focused.current = true;
-        const el = ref.current;
-        if (!el) {
-          onFocus();
-          return;
+        if (!hosted) {
+          const el = ref.current;
+          if (el) {
+            if (block.inlines.length === 0) placeCaret(el, true);
+            else if (block.inlines.some((part) => part.type === "ref")) placeAfterContent(el);
+          }
         }
-        if (block.inlines.length === 0) placeCaret(el, true);
-        else if (block.inlines.some((part) => part.type === "ref")) placeAfterContent(el);
         onFocus();
       }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
-          event.preventDefault();
-          emit();
-          onEnter();
-        }
-        if ((event.key === "Backspace" || event.key === "Delete") && ref.current && isLineHtmlEmpty(ref.current)) {
-          event.preventDefault();
-          onEmptyBackspace();
-        }
-      }}
-      onBeforeInput={(event) => {
-        const inputType = (event.nativeEvent as InputEvent).inputType;
-        if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
-          event.preventDefault();
-          emit();
-          onEnter();
-          return;
-        }
-        if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
-        if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
-        event.preventDefault();
-        onEmptyBackspace();
-      }}
+      onKeyDown={
+        hosted
+          ? undefined
+          : (event) => {
+              if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
+                event.preventDefault();
+                emit();
+                onEnter();
+              }
+              if ((event.key === "Backspace" || event.key === "Delete") && ref.current && isLineHtmlEmpty(ref.current)) {
+                event.preventDefault();
+                onEmptyBackspace();
+              }
+            }
+      }
+      onBeforeInput={
+        hosted
+          ? undefined
+          : (event) => {
+              const inputType = (event.nativeEvent as InputEvent).inputType;
+              if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+                event.preventDefault();
+                emit();
+                onEnter();
+                return;
+              }
+              if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
+              if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
+              event.preventDefault();
+              onEmptyBackspace();
+            }
+      }
     />
   );
 }
@@ -173,7 +189,7 @@ export function formatSelection(command: "bold" | "italic") {
   document.execCommand(command);
 }
 
-function placeCaret(el: HTMLElement, atStart: boolean) {
+export function placeCaret(el: HTMLElement, atStart: boolean) {
   if (!el.childNodes.length) el.appendChild(document.createElement("br"));
   const sel = window.getSelection();
   const range = document.createRange();
@@ -198,13 +214,13 @@ function placeAfterContent(el: HTMLElement) {
   sel?.addRange(range);
 }
 
-function isLineHtmlEmpty(el: HTMLElement) {
+export function isLineHtmlEmpty(el: HTMLElement) {
   if (el.querySelector(".ref-pill")) return false;
   const text = (el.innerText ?? "").replace(/\u200B/g, "").replace(/\s/g, "");
   return text.length === 0;
 }
 
-function consumeTrigger(inlines: NoteInline[]): { inlines: NoteInline[]; kind: "at" | "slash" } | null {
+export function consumeTrigger(inlines: NoteInline[]): { inlines: NoteInline[]; kind: "at" | "slash" } | null {
   if (!inlines.length) return null;
   const last = inlines[inlines.length - 1];
   if (last.type !== "text") return null;

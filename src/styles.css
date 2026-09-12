@@ -230,6 +230,12 @@ html.light {
     color: #3a2a1c;
   }
 
+  .note-doc {
+    -webkit-user-select: text;
+    user-select: text;
+    caret-color: var(--color-fg);
+  }
+
   .note-line {
     text-align: left;
     caret-color: var(--color-fg);

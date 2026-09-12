@@ -2,21 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bold, BookOpen, CalendarDays, Hash, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
-import {
-  detectTrailingRef,
-  emptyLine,
-  newNoteId,
-  passageToRef,
-  replaceTrailingWithRef,
-  type LineBlock,
-  type Note,
-  type NoteBlock,
-  type Speaker,
-  type SpeakerBlock,
-} from "@/lib/notebook";
+import { detectTrailingRef, emptyLine, newNoteId, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type NoteInline, type Speaker, type SpeakerBlock } from "@/lib/notebook";
+import { htmlToInlines } from "@/lib/notebook-html";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
-import { formatSelection, NotebookLine } from "@/components/notebook-line";
+import { consumeTrigger, formatSelection, isLineHtmlEmpty, NotebookLine, placeCaret } from "@/components/notebook-line";
 import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { AppHeader } from "@/components/app-header";
@@ -104,6 +94,23 @@ function removeLine(blocks: NoteBlock[], id: string): NoteBlock[] {
     if (block.id !== id) out.push(block);
   }
   return out.length ? out : [emptyLine()];
+}
+
+function applyInlines(blocks: NoteBlock[], next: Map<string, LineBlock["inlines"]>): NoteBlock[] {
+  return blocks.map((block) => {
+    if (block.type === "speaker") {
+      return { ...block, children: block.children.map((child) => (next.has(child.id) ? { ...child, inlines: next.get(child.id)! } : child)) };
+    }
+    return next.has(block.id) ? { ...block, inlines: next.get(block.id)! } : block;
+  });
+}
+
+function lineIdFromSelection() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const node = sel.anchorNode;
+  const el = node instanceof Element ? node : node?.parentElement;
+  return el?.closest<HTMLElement>("[data-line-id]")?.dataset.lineId ?? null;
 }
 
 function findLine(blocks: NoteBlock[], id: string): LineBlock | null {
@@ -224,10 +231,16 @@ function LineRow({
   onTrigger?: (kind: "at" | "slash") => void;
 }) {
   return (
-    <div className="flex gap-2" onPointerDown={onFocus}>
-      {block.type === "ul" ? <span className="mt-0.5 w-5 shrink-0 text-[17px] leading-relaxed text-muted">•</span> : null}
+    <div className="flex gap-2">
+      {block.type === "ul" ? (
+        <span contentEditable={false} className="mt-0.5 w-5 shrink-0 text-[17px] leading-relaxed text-muted">
+          •
+        </span>
+      ) : null}
       {block.type === "ol" && index ? (
-        <span className="mt-0.5 w-6 shrink-0 text-[17px] leading-relaxed tabular-nums text-muted">{index}.</span>
+        <span contentEditable={false} className="mt-0.5 w-6 shrink-0 text-[17px] leading-relaxed tabular-nums text-muted">
+          {index}.
+        </span>
       ) : null}
       <NotebookLine
         block={block}
@@ -236,6 +249,7 @@ function LineRow({
         placeholder={placeholder}
         active={active}
         editable={editable}
+        hosted
         onChange={onChange}
         onEnter={onEnter}
         onEmptyBackspace={onEmptyBackspace}
@@ -266,6 +280,7 @@ export function NotebookEditor({
   const vv = useVisualViewport();
   const compact = useHideOnScroll(!vv.keyboard);
   const chromeRef = useRef<HTMLDivElement>(null);
+  const docRef = useRef<HTMLDivElement>(null);
   const [chromeH, setChromeH] = useState(108);
   const [draft, setDraft] = useState(note);
   const [picker, setPicker] = useState(false);
@@ -325,6 +340,50 @@ export function NotebookEditor({
     patch((current) => ({ ...current, blocks: updater(current.blocks) }));
   }
 
+  function focusLine(id: string, atStart = true) {
+    setFocusId(id);
+    requestAnimationFrame(() => {
+      const el = docRef.current?.querySelector<HTMLElement>(`[data-line-id="${id}"]`);
+      if (el) placeCaret(el, atStart);
+    });
+  }
+
+  function emitDoc() {
+    const root = docRef.current;
+    if (!root) return;
+    const next = new Map<string, NoteInline[]>();
+    root.querySelectorAll<HTMLElement>("[data-line-id]").forEach((el) => {
+      const id = el.dataset.lineId;
+      if (!id) return;
+      let inlines = htmlToInlines(el);
+      if (inlines.length === 1 && inlines[0]?.type === "text" && inlines[0].text === "\n") inlines = [];
+      next.set(id, inlines);
+    });
+    const id = lineIdFromSelection() ?? focusIdRef.current;
+    if (id) {
+      const inlines = next.get(id);
+      if (inlines) {
+        const trigger = consumeTrigger(inlines);
+        if (trigger) {
+          next.set(id, trigger.inlines);
+          updateBlocks((blocks) => applyInlines(blocks, next));
+          if (trigger.kind === "at") setPeople(true);
+          else setPicker(true);
+          onDetectFromLine(id, trigger.inlines);
+          return;
+        }
+        onDetectFromLine(id, inlines);
+      }
+    }
+    updateBlocks((blocks) => applyInlines(blocks, next));
+  }
+
+  function onDetectFromLine(id: string, inlines: NoteInline[]) {
+    setPending(detectTrailingRef(inlines, copyLocale));
+    setFocusId(id);
+    setActive(speakerBlockOf(latest().blocks, id)?.speakerId ?? null);
+  }
+
   function onEnter(id: string) {
     const current = latest();
     const line = findLine(current.blocks, id);
@@ -338,13 +397,13 @@ export function NotebookEditor({
     if (speaker && lastChild?.id === id && line.inlines.length === 0) {
       const next = ensureLineAfter(current.blocks, speaker.id);
       updateBlocks(() => next.blocks);
-      if (next.lineId) setFocusId(next.lineId);
+      if (next.lineId) focusLine(next.lineId);
       setActive(null);
       return;
     }
     const next = emptyLine(line.type === "h" ? "p" : line.type);
     updateBlocks((blocks) => insertAfter(blocks, id, next));
-    setFocusId(next.id);
+    focusLine(next.id);
   }
 
   function exitSpeaker() {
@@ -358,14 +417,14 @@ export function NotebookEditor({
     }
     const next = ensureLineAfter(current.blocks, speaker.id);
     updateBlocks(() => next.blocks);
-    if (next.lineId) setFocusId(next.lineId);
+    if (next.lineId) focusLine(next.lineId);
     setActive(null);
   }
 
   function onMergeBack(id: string) {
     const prev = prevLineId(latest().blocks, id);
     updateBlocks((blocks) => removeLine(blocks, id));
-    if (prev) setFocusId(prev);
+    if (prev) focusLine(prev, false);
   }
 
   function onPickRef(passage: Passage) {
@@ -478,10 +537,10 @@ export function NotebookEditor({
         </button>
       ) : null}
       <div className="flex items-center justify-between gap-0.5">
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onPointerDown={toolPointer(() => formatSelection("bold"))}>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onPointerDown={toolPointer(() => { formatSelection("bold"); requestAnimationFrame(() => emitDoc()); })}>
           <Bold />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onPointerDown={toolPointer(() => formatSelection("italic"))}>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onPointerDown={toolPointer(() => { formatSelection("italic"); requestAnimationFrame(() => emitDoc()); })}>
           <Italic />
         </Button>
         <Button
@@ -584,7 +643,62 @@ export function NotebookEditor({
       </div>
       <div style={{ height: chromeH }} aria-hidden />
       <div className="flex flex-col gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex flex-col gap-1">
+        <div
+          ref={docRef}
+          contentEditable={!readOnly}
+          suppressContentEditableWarning
+          role="textbox"
+          aria-multiline="true"
+          className="note-doc flex flex-col gap-1 outline-none"
+          onInput={() => {
+            if (readOnly) return;
+            emitDoc();
+          }}
+          onKeyDown={(event) => {
+            if (readOnly) return;
+            const id = lineIdFromSelection() ?? focusIdRef.current;
+            if (!id) return;
+            if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
+              event.preventDefault();
+              emitDoc();
+              onEnter(id);
+              return;
+            }
+            const el = docRef.current?.querySelector<HTMLElement>(`[data-line-id="${id}"]`);
+            if ((event.key === "Backspace" || event.key === "Delete") && el && isLineHtmlEmpty(el)) {
+              event.preventDefault();
+              onMergeBack(id);
+            }
+          }}
+          onBeforeInput={(event) => {
+            if (readOnly) return;
+            const inputType = (event.nativeEvent as InputEvent).inputType;
+            const id = lineIdFromSelection() ?? focusIdRef.current;
+            if (!id) return;
+            if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+              event.preventDefault();
+              emitDoc();
+              onEnter(id);
+              return;
+            }
+            const el = docRef.current?.querySelector<HTMLElement>(`[data-line-id="${id}"]`);
+            if (
+              (inputType === "deleteContentBackward" || inputType === "deleteContentForward") &&
+              el &&
+              isLineHtmlEmpty(el)
+            ) {
+              event.preventDefault();
+              onMergeBack(id);
+            }
+          }}
+          onFocus={() => {
+            const id = lineIdFromSelection();
+            if (id) {
+              setFocusId(id);
+              setActive(speakerBlockOf(latest().blocks, id)?.speakerId ?? null);
+            }
+          }}
+        >
           {draft.blocks.map((block, blockIndex) => {
             if (block.type === "speaker") {
               const speaker = speakers.find((item) => item.id === block.speakerId);
@@ -602,7 +716,7 @@ export function NotebookEditor({
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" contentEditable={false}>
                     <p className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{speaker?.name ?? "—"}</p>
                     {readOnly ? null : (
                       <button
