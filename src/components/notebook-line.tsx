@@ -14,6 +14,7 @@ export function NotebookLine({
   style,
   placeholder,
   active,
+  editable = true,
   onChange,
   onEnter,
   onEmptyBackspace,
@@ -26,6 +27,7 @@ export function NotebookLine({
   style?: Partial<CiteStyle>;
   placeholder?: string;
   active?: boolean;
+  editable?: boolean;
   onChange: (inlines: NoteInline[]) => void;
   onEnter: () => void;
   onEmptyBackspace: () => void;
@@ -91,8 +93,8 @@ export function NotebookLine({
   return (
     <div
       ref={ref}
-      contentEditable={Boolean(active)}
-      tabIndex={active ? 0 : -1}
+      contentEditable={editable}
+      tabIndex={editable ? 0 : -1}
       role="textbox"
       aria-multiline="true"
       data-placeholder={empty ? placeholder : undefined}
@@ -140,7 +142,7 @@ export function NotebookLine({
         onFocus();
       }}
       onKeyDown={(event) => {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
           event.preventDefault();
           emit();
           onEnter();
@@ -152,6 +154,12 @@ export function NotebookLine({
       }}
       onBeforeInput={(event) => {
         const inputType = (event.nativeEvent as InputEvent).inputType;
+        if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+          event.preventDefault();
+          emit();
+          onEnter();
+          return;
+        }
         if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
         if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
         event.preventDefault();

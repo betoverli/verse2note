@@ -106,6 +106,16 @@ function removeLine(blocks: NoteBlock[], id: string): NoteBlock[] {
   return out.length ? out : [emptyLine()];
 }
 
+function findLine(blocks: NoteBlock[], id: string): LineBlock | null {
+  for (const block of blocks) {
+    if (block.type === "speaker") {
+      const child = block.children.find((row) => row.id === id);
+      if (child) return child;
+    } else if (block.id === id) return block;
+  }
+  return null;
+}
+
 function speakerBlockOf(blocks: NoteBlock[], lineId: string): SpeakerBlock | undefined {
   return blocks.find((block): block is SpeakerBlock => block.type === "speaker" && block.children.some((child) => child.id === lineId));
 }
@@ -189,6 +199,7 @@ function LineRow({
   style,
   placeholder,
   active,
+  editable,
   index,
   onChange,
   onEnter,
@@ -203,6 +214,7 @@ function LineRow({
   style: { book: "name" | "abbr"; sep: "colon" | "dot" | "comma" };
   placeholder?: string;
   active?: boolean;
+  editable?: boolean;
   index?: number;
   onChange: (inlines: LineBlock["inlines"]) => void;
   onEnter: () => void;
@@ -212,7 +224,7 @@ function LineRow({
   onTrigger?: (kind: "at" | "slash") => void;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2" onPointerDown={onFocus}>
       {block.type === "ul" ? <span className="mt-0.5 w-5 shrink-0 text-[17px] leading-relaxed text-muted">•</span> : null}
       {block.type === "ol" && index ? (
         <span className="mt-0.5 w-6 shrink-0 text-[17px] leading-relaxed tabular-nums text-muted">{index}.</span>
@@ -223,6 +235,7 @@ function LineRow({
         style={style}
         placeholder={placeholder}
         active={active}
+        editable={editable}
         onChange={onChange}
         onEnter={onEnter}
         onEmptyBackspace={onEmptyBackspace}
@@ -312,24 +325,26 @@ export function NotebookEditor({
     patch((current) => ({ ...current, blocks: updater(current.blocks) }));
   }
 
-  function onEnter(block: LineBlock) {
+  function onEnter(id: string) {
     const current = latest();
-    const speaker = speakerBlockOf(current.blocks, block.id);
-    if (block.inlines.length === 0 && (block.type === "ul" || block.type === "ol")) {
-      updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, type: "p" })));
+    const line = findLine(current.blocks, id);
+    if (!line) return;
+    const speaker = speakerBlockOf(current.blocks, id);
+    if (line.inlines.length === 0 && (line.type === "ul" || line.type === "ol")) {
+      updateBlocks((blocks) => mapLine(blocks, id, (row) => ({ ...row, type: "p" })));
       return;
     }
     const lastChild = speaker?.children[speaker.children.length - 1];
-    if (speaker && lastChild?.id === block.id && block.inlines.length === 0) {
+    if (speaker && lastChild?.id === id && line.inlines.length === 0) {
       const next = ensureLineAfter(current.blocks, speaker.id);
       updateBlocks(() => next.blocks);
       if (next.lineId) setFocusId(next.lineId);
       setActive(null);
       return;
     }
-    const line = emptyLine(block.type === "h" ? "p" : block.type);
-    updateBlocks((blocks) => insertAfter(blocks, block.id, line));
-    setFocusId(line.id);
+    const next = emptyLine(line.type === "h" ? "p" : line.type);
+    updateBlocks((blocks) => insertAfter(blocks, id, next));
+    setFocusId(next.id);
   }
 
   function exitSpeaker() {
@@ -633,9 +648,10 @@ export function NotebookEditor({
                         copyLocale={copyLocale}
                         style={cite}
                         active={!readOnly && focusId === child.id}
+                        editable={!readOnly}
                         index={olNumber(block.children, child.id)}
                         onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, child.id, (row) => ({ ...row, inlines })))}
-                        onEnter={() => onEnter(child)}
+                        onEnter={() => onEnter(child.id)}
                         onEmptyBackspace={() => onMergeBack(child.id)}
                         onFocus={() => {
                           setFocusId(child.id);
@@ -658,10 +674,11 @@ export function NotebookEditor({
                 copyLocale={copyLocale}
                 style={cite}
                 active={!readOnly && focusId === block.id}
+                editable={!readOnly}
                 index={rootOlNumber(draft.blocks, block.id)}
                 placeholder={block.id === first?.id && block.type === "p" ? t(locale, "notebookWrite") : undefined}
                 onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, inlines })))}
-                onEnter={() => onEnter(block)}
+                onEnter={() => onEnter(block.id)}
                 onEmptyBackspace={() => onMergeBack(block.id)}
                 onFocus={() => {
                   setFocusId(block.id);
