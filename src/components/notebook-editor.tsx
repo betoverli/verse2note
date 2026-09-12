@@ -240,7 +240,7 @@ export function NotebookEditor({
     ro.observe(el);
     setChromeH(el.getBoundingClientRect().height);
     return () => ro.disconnect();
-  }, [compact, pending, readOnly]);
+  }, [compact, pending, readOnly, picker]);
 
   function save(next: Note) {
     draftRef.current = next;
@@ -460,7 +460,13 @@ export function NotebookEditor({
           title={draft.title || t(locale, "notebookMeeting")}
           backTo="/notebook"
           compact={vv.keyboard ? false : compact}
-          extra={toolbar}
+          extra={
+            picker ? (
+              <NotebookPickerSheet open onClose={() => setPicker(false)} onPick={onPickRef} />
+            ) : (
+              toolbar
+            )
+          }
           titleField={
             readOnly ? undefined : (
               <input
@@ -586,7 +592,6 @@ export function NotebookEditor({
           )
         : null}
 
-      <NotebookPickerSheet open={picker} onClose={() => setPicker(false)} onPick={onPickRef} />
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />
     </>
   );
