@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { authClient, authEnabled } from "./client";
+import { clearSessionUser, readSessionUser, writeSessionUser } from "./session-cache";
 
 /** Normalized user shape used across the app, auth on or off. */
 export type AppUser = {
@@ -58,19 +60,40 @@ export function useCurrentUserState(): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
   // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
-  const user = data?.user;
-  return {
-    user: user
-      ? {
-          id: user.id,
-          displayName: user.name ?? null,
-          primaryEmail: user.email ?? null,
-          profileImageUrl: user.image ?? null,
-          isDevFallback: false,
-        }
-      : null,
-    isPending,
-  };
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [online, setOnline] = useState(
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  const user = data?.user
+    ? {
+        id: data.user.id,
+        displayName: data.user.name ?? null,
+        primaryEmail: data.user.email ?? null,
+        profileImageUrl: data.user.image ?? null,
+        isDevFallback: false,
+      }
+    : null;
+  if (user) {
+    writeSessionUser(user);
+    return { user, isPending: false };
+  }
+  const cached = readSessionUser();
+  if (cached && (isPending || !online)) {
+    return { user: cached, isPending: false };
+  }
+  if (!isPending && online) clearSessionUser();
+  return { user: null, isPending };
 }
 
 /**

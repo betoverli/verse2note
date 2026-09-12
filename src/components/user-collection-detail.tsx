@@ -9,12 +9,10 @@ import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
 import {
-  deleteMyCollection,
-  listMyCollections,
   remixCollection,
-  updateMyCollection,
   type UserCollection,
 } from "@/lib/user-collections";
+import { deleteLocalCollection, createLocalCollection, upsertLocalCollection } from "@/lib/collections-local";
 import type { CollectionPassage } from "@/lib/user-collection";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
@@ -161,7 +159,6 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
   const copyFormat = useAppStore((s) => s.copyFormat);
-  const setMyCollections = useAppStore((s) => s.setMyCollections);
   const navigate = useNavigate();
   const [title, setTitle] = useState(collection.title);
   const [passages, setPassages] = useState(collection.passages);
@@ -174,21 +171,17 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
     .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
     .filter((item): item is CopyItem => item != null);
 
-  async function persist(next: {
+  function persist(next: {
     title?: string;
     passages?: CollectionPassage[];
     visibility?: UserCollection["visibility"];
   }) {
-    await updateMyCollection({
-      data: {
-        id: collection.id,
-        title: next.title ?? title,
-        passages: next.passages ?? passages,
-        visibility: next.visibility ?? visibility,
-      },
+    upsertLocalCollection({
+      ...collection,
+      title: next.title ?? title,
+      passages: next.passages ?? passages,
+      visibility: next.visibility ?? visibility,
     });
-    const rows = await listMyCollections();
-    setMyCollections(rows);
   }
 
   async function onCopyAll() {
@@ -227,7 +220,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
     }
     if (next === collection.title) return;
     setTitle(next);
-    await persist({ title: next });
+    persist({ title: next });
   }
 
   async function toggleEdit() {
@@ -239,7 +232,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   async function onShare() {
     const next = visibility === "private" ? "unlisted" : "private";
     setVisibility(next);
-    await persist({ visibility: next });
+    persist({ visibility: next });
   }
 
   async function onCopyLink() {
@@ -261,9 +254,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
       setConfirmDelete(true);
       return;
     }
-    await deleteMyCollection({ data: { id: collection.id } });
-    const rows = await listMyCollections();
-    setMyCollections(rows);
+    deleteLocalCollection(collection.id);
     await navigate({ to: "/collections" });
   }
 
@@ -356,7 +347,6 @@ export function SharedCollectionView({ collection }: { collection: UserCollectio
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
   const copyFormat = useAppStore((s) => s.copyFormat);
-  const setMyCollections = useAppStore((s) => s.setMyCollections);
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
   const items = collection.passages
@@ -376,12 +366,26 @@ export function SharedCollectionView({ collection }: { collection: UserCollectio
   }
 
   async function onRemix() {
-    const result = await remixCollection({ data: { id: collection.id } });
-    if (result && "ok" in result && result.ok) {
-      const rows = await listMyCollections();
-      setMyCollections(rows);
-      await navigate({ to: "/c/$id", params: { id: result.id } });
+    try {
+      const result = await remixCollection({ data: { id: collection.id } });
+      if (result && "ok" in result && result.ok) {
+        upsertLocalCollection({
+          id: result.id,
+          title: collection.title,
+          slug: "",
+          visibility: "private",
+          sourceId: collection.id,
+          passages: collection.passages,
+          updatedAt: new Date().toISOString(),
+        });
+        await navigate({ to: "/c/$id", params: { id: result.id } });
+        return;
+      }
+    } catch {
+      /* offline */
     }
+    const copy = createLocalCollection(collection.title, collection.passages, collection.id);
+    await navigate({ to: "/c/$id", params: { id: copy.id } });
   }
 
   return (

@@ -290,6 +290,7 @@ export const useAppStore = create<AppState>()(
         lastName: state.lastName,
         profileEmail: state.profileEmail,
         myCollections: state.myCollections,
+        cloudProfileOk: state.cloudProfileOk,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<AppState>;
@@ -308,6 +309,7 @@ export const useAppStore = create<AppState>()(
           lastName: saved.lastName ?? "",
           profileEmail: saved.profileEmail ?? "",
           myCollections: Array.isArray(saved.myCollections) ? saved.myCollections : [],
+          cloudProfileOk: saved.cloudProfileOk === true,
           theme: saved.theme ?? "system",
         };
       },

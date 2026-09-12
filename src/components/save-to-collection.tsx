@@ -1,17 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { BookmarkPlus } from "lucide-react";
 import { toast } from "sonner";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { samePassage, type Passage } from "@/lib/bible/passage";
+import { createLocalCollection, upsertLocalCollection } from "@/lib/collections-local";
 import { t } from "@/lib/i18n";
-import {
-  createMyCollection,
-  listMyCollections,
-  updateMyCollection,
-  type UserCollection,
-} from "@/lib/user-collections";
+import type { UserCollection } from "@/lib/user-collection";
+import { samePassage, type Passage } from "@/lib/bible/passage";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,15 +21,10 @@ export function SaveToCollectionButton({
 }) {
   const locale = useAppStore((s) => s.locale);
   const { user } = useCurrentUserState();
+  const items = useAppStore((s) => s.myCollections);
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState<UserCollection[]>([]);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!open || !user) return;
-    void listMyCollections().then(setItems);
-  }, [open, user]);
 
   if (passages.length === 0) return null;
 
@@ -57,9 +48,7 @@ export function SaveToCollectionButton({
     for (const passage of passages) {
       if (!merged.some((item) => samePassage(item, passage))) merged.push(passage);
     }
-    await updateMyCollection({ data: { id: target.id, passages: merged } });
-    const rows = await listMyCollections();
-    useAppStore.getState().setMyCollections(rows);
+    upsertLocalCollection({ ...target, passages: merged });
     setBusy(false);
     setOpen(false);
     const id = toast.success(t(locale, "addedToCollection"));
@@ -70,16 +59,10 @@ export function SaveToCollectionButton({
     const name = title.trim();
     if (!name || busy) return;
     setBusy(true);
-    const result = await createMyCollection({ data: { title: name, passages } });
+    createLocalCollection(name, passages);
+    setTitle("");
+    setOpen(false);
     setBusy(false);
-    if (result && "ok" in result && result.ok) {
-      setTitle("");
-      setOpen(false);
-      const rows = await listMyCollections();
-      useAppStore.getState().setMyCollections(rows);
-      const id = toast.success(t(locale, "addedToCollection"));
-      window.setTimeout(() => toast.dismiss(id), 2000);
-    }
   }
 
   const sheet =

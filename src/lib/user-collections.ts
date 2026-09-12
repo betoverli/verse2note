@@ -165,7 +165,7 @@ export const getGrantedCollection = createServerFn({ method: "GET" })
 
 export const createMyCollection = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((data: { title: string; passages?: Passage[]; sourceId?: string }) => data)
+  .validator((data: { title: string; passages?: Passage[]; sourceId?: string; id?: string }) => data)
   .handler(async ({ context, data }) => {
     const title = cleanTitle(data.title) || "Coleção";
     const passages = cleanPassages(data.passages ?? []);
@@ -176,7 +176,8 @@ export const createMyCollection = createServerFn({ method: "POST" })
     if (Number(count[0]?.n ?? 0) >= MAX_COLLECTIONS) {
       return { ok: false as const, error: "limit" as const };
     }
-    const id = newId();
+    const requested = typeof data.id === "string" ? data.id.replace(/[^a-f0-9]/g, "").slice(0, 32) : "";
+    const id = requested.length >= 16 ? requested : newId();
     const sourceId = typeof data.sourceId === "string" ? data.sourceId.slice(0, 64) : "";
     await sql`
       insert into user_collections (id, user_id, title, visibility, passages, source_id, updated_at)

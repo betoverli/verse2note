@@ -1,6 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { readSessionUser } from "@/lib/auth/session-cache";
+import { mergeCollections } from "@/lib/collections-local";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
+import { enqueue, flushOutbox, startOutbox, clearOutbox } from "@/lib/outbox";
 import { profileIsComplete } from "@/lib/profile";
 import { listMyCollections } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
@@ -36,31 +39,42 @@ export function AccountSync() {
   useEffect(() => {
     if (isPending) return;
     if (!userId) {
+      if (readSessionUser()) {
+        useAppStore.getState().setCloudHydrated(true);
+        return;
+      }
       syncedFor.current = null;
       useAppStore.getState().clearAccount();
+      clearOutbox();
       useAppStore.getState().setCloudHydrated(true);
       ready.current = false;
       return;
     }
     if (syncedFor.current === userId) {
       useAppStore.getState().setCloudHydrated(true);
+      ready.current = true;
       return;
     }
     let cancelled = false;
     const timeout = window.setTimeout(() => {
-      if (!cancelled) useAppStore.getState().setCloudHydrated(true);
+      if (!cancelled) {
+        useAppStore.getState().setCloudHydrated(true);
+        ready.current = true;
+      }
     }, 4000);
     void (async () => {
       try {
+        await flushOutbox();
         const [cloud, collections] = await Promise.all([getPrefs(), listMyCollections()]);
         if (cancelled) return;
-        useAppStore.getState().setMyCollections(collections);
+        const localCollections = useAppStore.getState().myCollections;
+        useAppStore.getState().setMyCollections(mergeCollections(localCollections, collections));
         if (cloud) {
           const merged = mergePrefs(snapshot(), cloud);
           useAppStore.getState().applyCloud(merged);
           last.current = JSON.stringify(merged);
           await savePrefs({ data: merged });
-          useAppStore.getState().setCloudProfileOk(profileIsComplete(cloud));
+          useAppStore.getState().setCloudProfileOk(profileIsComplete(cloud) || profileIsComplete(merged));
         } else {
           const first = mergePrefs(snapshot(), null);
           useAppStore.getState().applyCloud(first);
@@ -73,7 +87,9 @@ export function AccountSync() {
         syncedFor.current = userId;
         ready.current = true;
       } catch {
-        ready.current = false;
+        last.current = JSON.stringify(snapshot());
+        ready.current = true;
+        useAppStore.getState().setCloudProfileOk(profileIsComplete(useAppStore.getState()));
       } finally {
         window.clearTimeout(timeout);
         if (!cancelled) useAppStore.getState().setCloudHydrated(true);
@@ -112,7 +128,9 @@ export function AccountSync() {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         const prefs = snapshot();
-        void savePrefs({ data: prefs }).catch(() => undefined);
+        void savePrefs({ data: prefs }).catch(() => {
+          enqueue({ type: "prefs" });
+        });
       }, 800);
     });
     return () => {
@@ -120,6 +138,8 @@ export function AccountSync() {
       window.clearTimeout(timer);
     };
   }, [userId]);
+
+  useEffect(() => startOutbox(), []);
 
   return null;
 }

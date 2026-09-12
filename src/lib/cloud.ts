@@ -89,10 +89,16 @@ function fromRow(row: PrefsRow): CloudPrefs {
 
 export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPrefs {
   if (!cloud) {
-    return { ...local, planProgress: {} };
+    return local;
   }
   const ids = [...new Set([...cloud.activePlans, ...local.activePlans])].filter((id) => planById(id));
   const cloudHasProfile = Boolean(cloud.handle || cloud.firstName || cloud.profileEmail || cloud.avatarUrl);
+  const localHasProfile = Boolean(local.handle || local.firstName || local.profileEmail || local.avatarUrl);
+  const progress: Record<string, number[]> = { ...cloud.planProgress };
+  for (const [planId, days] of Object.entries(local.planProgress)) {
+    progress[planId] = [...new Set([...(progress[planId] ?? []), ...days])].sort((a, b) => a - b);
+  }
+  const useLocalProfile = localHasProfile && !cloudHasProfile;
   return {
     locale: cloud.locale,
     appId: cloud.appId,
@@ -102,13 +108,13 @@ export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPr
     booksCompact: cloud.booksCompact,
     theme: cloud.theme,
     activePlans: ids,
-    planProgress: cloud.planProgress,
-    avatarId: cloudHasProfile ? cloud.avatarId : local.avatarId,
-    avatarUrl: cloudHasProfile ? cloud.avatarUrl : local.avatarUrl,
-    handle: cloudHasProfile ? cloud.handle : local.handle,
-    firstName: cloudHasProfile ? cloud.firstName : local.firstName,
-    lastName: cloudHasProfile ? cloud.lastName : local.lastName,
-    profileEmail: cloudHasProfile ? cloud.profileEmail : local.profileEmail,
+    planProgress: progress,
+    avatarId: useLocalProfile ? local.avatarId : cloudHasProfile ? cloud.avatarId : local.avatarId,
+    avatarUrl: useLocalProfile ? local.avatarUrl : cloudHasProfile ? cloud.avatarUrl : local.avatarUrl,
+    handle: useLocalProfile ? local.handle : cloudHasProfile ? cloud.handle : local.handle,
+    firstName: useLocalProfile ? local.firstName : cloudHasProfile ? cloud.firstName : local.firstName,
+    lastName: useLocalProfile ? local.lastName : cloudHasProfile ? cloud.lastName : local.lastName,
+    profileEmail: useLocalProfile ? local.profileEmail : cloudHasProfile ? cloud.profileEmail : local.profileEmail,
   };
 }
 

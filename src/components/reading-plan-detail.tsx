@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n";
 import { ProfileAvatar } from "@/lib/avatars";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { createPlanInvite, listPlanGroups, type GroupMember, type PlanGroup } from "@/lib/plan-groups";
+import { enqueue, flushOutbox } from "@/lib/outbox";
 import { markPlanDay, resetPlanMarks } from "@/lib/plan-marks";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -197,19 +198,30 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
 
   async function onToggleDay(day: number) {
     const complete = doneDays.includes(day);
-    if (user) {
-      const result = await markPlanDay({ data: { planId: plan.id, day, on: !complete } });
-      if (!result || !result.ok) {
-        notify(t(locale, "readingPace"), "error");
-        return;
-      }
-    }
+    const on = !complete;
     togglePlanDay(plan.id, day);
+    if (!user) return;
+    try {
+      const result = await markPlanDay({ data: { planId: plan.id, day, on } });
+      if (!result || !result.ok) {
+        togglePlanDay(plan.id, day);
+        notify(t(locale, "readingPace"), "error");
+      }
+    } catch {
+      enqueue({ type: "plan.mark", planId: plan.id, day, on });
+      void flushOutbox();
+    }
   }
 
   async function onReset() {
-    if (user) await resetPlanMarks({ data: { planId: plan.id } });
     resetPlanProgress(plan.id);
+    if (!user) return;
+    try {
+      await resetPlanMarks({ data: { planId: plan.id } });
+    } catch {
+      enqueue({ type: "plan.reset", planId: plan.id });
+      void flushOutbox();
+    }
   }
 
   return (

@@ -3,12 +3,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { BookmarkPlus, ListPlus } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { t } from "@/lib/i18n";
-import {
-  createMyCollection,
-  listGrantedCollections,
-  listMyCollections,
-  type UserCollection,
-} from "@/lib/user-collections";
+import { createLocalCollection, mergeCollections } from "@/lib/collections-local";
+import { listGrantedCollections, listMyCollections, type UserCollection } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +23,11 @@ export function MyCollections() {
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    void listMyCollections().then((rows) => {
-      if (!cancelled) setMyCollections(rows);
-    });
+    void listMyCollections()
+      .then((rows) => {
+        if (!cancelled) setMyCollections(mergeCollections(useAppStore.getState().myCollections, rows));
+      })
+      .catch(() => undefined);
     void listGrantedCollections()
       .then((rows) => {
         if (!cancelled) setGranted(rows);
@@ -64,15 +62,11 @@ export function MyCollections() {
     const name = title.trim();
     if (!name || busy) return;
     setBusy(true);
-    const result = await createMyCollection({ data: { title: name } });
+    const created = createLocalCollection(name);
+    setTitle("");
+    setCreating(false);
     setBusy(false);
-    if (result && "ok" in result && result.ok) {
-      setTitle("");
-      setCreating(false);
-      const rows = await listMyCollections();
-      setMyCollections(rows);
-      await navigate({ to: "/c/$id", params: { id: result.id } });
-    }
+    await navigate({ to: "/c/$id", params: { id: created.id } });
   }
 
   return (

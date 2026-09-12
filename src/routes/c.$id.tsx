@@ -24,6 +24,7 @@ export const Route = createFileRoute("/c/$id")({
 function UserCollectionRoute() {
   const { id } = Route.useParams();
   const locale = useAppStore((s) => s.locale);
+  const mineLocal = useAppStore((s) => s.myCollections.find((item) => item.id === id));
   const { user, isPending } = useCurrentUserState();
   const [collection, setCollection] = useState<UserCollection | null | undefined>(undefined);
   const [mine, setMine] = useState(false);
@@ -33,30 +34,54 @@ function UserCollectionRoute() {
     let cancelled = false;
     void (async () => {
       if (user) {
-        const own = await getMyCollection({ data: { id } });
-        if (cancelled) return;
-        if (own) {
-          setCollection(own);
-          setMine(true);
-          return;
+        try {
+          const own = await getMyCollection({ data: { id } });
+          if (cancelled) return;
+          if (own) {
+            setCollection(own);
+            setMine(true);
+            return;
+          }
+          const granted = await getGrantedCollection({ data: { id } });
+          if (cancelled) return;
+          if (granted) {
+            setCollection(granted);
+            setMine(false);
+            return;
+          }
+        } catch {
+          if (cancelled) return;
+          if (mineLocal) {
+            setCollection(mineLocal);
+            setMine(true);
+            return;
+          }
         }
-        const granted = await getGrantedCollection({ data: { id } });
+      }
+      try {
+        const shared = await getSharedCollection({ data: { id } });
         if (cancelled) return;
-        if (granted) {
-          setCollection(granted);
+        if (shared) {
+          setCollection(shared);
           setMine(false);
           return;
         }
+      } catch {
+        /* offline */
       }
-      const shared = await getSharedCollection({ data: { id } });
       if (cancelled) return;
-      setCollection(shared);
+      if (mineLocal) {
+        setCollection(mineLocal);
+        setMine(true);
+        return;
+      }
+      setCollection(null);
       setMine(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [id, user, isPending]);
+  }, [id, user, isPending, mineLocal]);
 
   if (isPending || collection === undefined) {
     return (

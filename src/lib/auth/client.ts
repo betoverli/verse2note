@@ -2,6 +2,8 @@ import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { runPreSignInSignOut, runSignOut } from "../../../scripts/sign-out-plan.mjs";
 import { GROK_PROVIDERS } from "./providers";
+import { clearSessionUser } from "./session-cache";
+import { clearOutbox } from "@/lib/outbox";
 
 /**
  * Better Auth client for this React SPA (browser-side).
@@ -223,6 +225,8 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
  * preview the local clear is sufficient, so it always resolves.
  */
 export async function signOut(redirectTo = "/"): Promise<void> {
+  clearSessionUser();
+  clearOutbox();
   await runSignOut({
     livePreview: inLivePreview(),
     hasBearer: Boolean(getBearerToken()),
