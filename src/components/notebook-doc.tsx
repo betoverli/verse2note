@@ -3,7 +3,7 @@ import { buildDeepLink } from "@/lib/bible/apps";
 import type { Locale } from "@/lib/bible/books";
 import type { CiteStyle, Passage } from "@/lib/bible/passage";
 import { translationById } from "@/lib/bible/translations";
-import { detectTrailingRef, newNoteId, passageToRef, type NoteBlock, type Speaker } from "@/lib/notebook";
+import { detectTrailingRef, newNoteId, passageToRef, type LineType, type NoteBlock, type Speaker } from "@/lib/notebook";
 import {
   blocksSignature,
   blocksToHtml,
@@ -24,6 +24,17 @@ function lineElFromSel() {
   return el?.closest<HTMLElement>(".note-line") ?? null;
 }
 
+function selectedLines(root: HTMLElement) {
+  const sel = window.getSelection();
+  const all = [...root.querySelectorAll<HTMLElement>(".note-line")];
+  if (sel && sel.rangeCount) {
+    const hit = all.filter((line) => sel.containsNode(line, true));
+    if (hit.length) return hit;
+  }
+  const one = lineElFromSel();
+  return one ? [one] : [];
+}
+
 function placeAfterContent(el: HTMLElement) {
   let node = el.lastChild;
   if (!node || node.nodeType !== Node.TEXT_NODE) {
@@ -41,6 +52,7 @@ function placeAfterContent(el: HTMLElement) {
 export type NotebookDocHandle = {
   flush: () => void;
   insertPassage: (passage: Passage) => void;
+  toggleKind: (type: LineType) => void;
 };
 
 type NotebookDocProps = {
@@ -77,6 +89,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   const focused = useRef(false);
   const timer = useRef(0);
   const enterLock = useRef(false);
+  const selectedIds = useRef<string[]>([]);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const sig = `${blocksSignature(blocks)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
@@ -105,6 +118,21 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     flush: () => parse(),
     insertPassage: (passage: Passage) => {
       document.execCommand("insertHTML", false, inlinesToHtml([passageToRef(passage)], locale, style));
+      parse();
+    },
+    toggleKind: (type: LineType) => {
+      const root = ref.current;
+      if (!root) return;
+      const all = [...root.querySelectorAll<HTMLElement>(".note-line")];
+      const live = selectedLines(root);
+      const remembered = all.filter((line) => line.dataset.lineId && selectedIds.current.includes(line.dataset.lineId));
+      const lines = live.length > 1 ? live : remembered.length ? remembered : live.length ? live : all.slice(0, 1);
+      if (!lines.length) return;
+      const next = lines.every((line) => line.dataset.kind === type) ? "p" : type;
+      for (const line of lines) {
+        line.dataset.kind = next;
+        line.classList.toggle("note-line-h", next === "h");
+      }
       parse();
     },
   }));
@@ -244,6 +272,14 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
         emit(true);
       }}
       onInput={() => emit()}
+      onMouseUp={() => {
+        const root = ref.current;
+        if (root) selectedIds.current = selectedLines(root).map((line) => line.dataset.lineId ?? "").filter(Boolean);
+      }}
+      onKeyUp={() => {
+        const root = ref.current;
+        if (root) selectedIds.current = selectedLines(root).map((line) => line.dataset.lineId ?? "").filter(Boolean);
+      }}
       onKeyDown={(event) => {
         if (readOnly) return;
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") return;

@@ -357,6 +357,10 @@ export function NotebookEditor({
   }
 
   function toggleLine(type: LineBlock["type"]) {
+    if (docApi.current) {
+      docApi.current.toggleKind(type);
+      return;
+    }
     const id = currentLineId();
     if (!id) return;
     updateBlocks((blocks) => mapLine(blocks, id, (row) => ({ ...row, type: row.type === type ? "p" : type })));
