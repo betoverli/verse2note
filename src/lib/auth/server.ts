@@ -279,6 +279,9 @@ export const auth = betterAuth({
       // register victim@gmail.com then ride the victim's later Google login.
       // Google/X still create their own users; X does not share Google emails.
       requireLocalEmailVerified: true,
+      // Explicit "add Google/X/email" from a signed-in profile uses /oauth2/link.
+      // Those identities do not share an email, so linking must allow it.
+      allowDifferentEmails: true,
     },
   },
 

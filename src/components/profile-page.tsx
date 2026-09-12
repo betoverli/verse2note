@@ -15,6 +15,7 @@ import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
 import { cleanHandle, profileIsComplete } from "@/lib/profile";
 import { localeLabel, themeLabel } from "@/components/settings-panel";
+import { LinkedMethods } from "@/components/linked-methods";
 import { useAppStore } from "@/lib/store";
 import { getIsAdmin } from "@/lib/usage";
 import { Button } from "@/components/ui/button";
@@ -424,6 +425,7 @@ export function ProfileEdit() {
           {saving ? t(locale, "accountWait") : t(locale, "saveProfile")}
         </Button>
       </section>
+      <LinkedMethods />
     </div>
   );
 }
