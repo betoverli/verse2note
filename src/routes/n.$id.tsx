@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { NotebookEditor } from "@/components/notebook-editor";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { isOwnerHandle } from "@/lib/admin";
 import { t } from "@/lib/i18n";
 import { getGrantedNote, getSharedNote } from "@/lib/notebook-cloud";
 import { remixNote } from "@/lib/notebook-local";
@@ -62,7 +63,7 @@ function SharedNoteRoute() {
   }, [id, user, isPending]);
 
   if (!hydrated) return null;
-  if (!preview) return <Navigate to="/app" />;
+  if (!preview && !isOwnerHandle(useAppStore.getState().handle)) return <Navigate to="/app" />;
 
   if (mine) {
     return (

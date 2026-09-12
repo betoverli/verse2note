@@ -1,3 +1,5 @@
+const OWNER_HANDLES = ["betoverli"];
+
 function splitEnv(name: string) {
   const raw = typeof process !== "undefined" ? process.env[name] : undefined;
   return (raw ?? "")
@@ -11,5 +13,10 @@ export function adminEmails() {
 }
 
 export function adminHandles() {
-  return splitEnv("ADMIN_HANDLES");
+  return [...new Set([...splitEnv("ADMIN_HANDLES"), ...OWNER_HANDLES])];
+}
+
+export function isOwnerHandle(handle: string | null | undefined) {
+  if (!handle) return false;
+  return adminHandles().includes(handle.trim().replace(/^@+/, "").toLowerCase());
 }

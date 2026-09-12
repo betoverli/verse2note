@@ -4,6 +4,7 @@ import { readSessionUser } from "@/lib/auth/session-cache";
 import { mergeCollections } from "@/lib/collections-local";
 import { mergeNotes, mergeSpeakers } from "@/lib/notebook-local";
 import { listMyNotes, listMySpeakers } from "@/lib/notebook-cloud";
+import { isOwnerHandle } from "@/lib/admin";
 import { getIsAdmin } from "@/lib/usage";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { enqueue, flushOutbox, startOutbox, clearOutbox } from "@/lib/outbox";
@@ -80,7 +81,6 @@ export function AccountSync() {
           getIsAdmin().catch(() => false),
         ]);
         if (cancelled) return;
-        useAppStore.getState().setNotebookPreview(Boolean(admin));
         const localCollections = useAppStore.getState().myCollections;
         useAppStore.getState().setMyCollections(mergeCollections(localCollections, collections));
         useAppStore.getState().setNotes(mergeNotes(useAppStore.getState().notes, notes));
@@ -102,6 +102,7 @@ export function AccountSync() {
         }
         syncedFor.current = userId;
         ready.current = true;
+        useAppStore.getState().setNotebookPreview(Boolean(admin) || isOwnerHandle(useAppStore.getState().handle));
       } catch {
         last.current = JSON.stringify(snapshot());
         ready.current = true;
