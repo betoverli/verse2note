@@ -570,8 +570,7 @@ export function NotebookEditor({
               return (
                 <section
                   key={block.id}
-                  className="mt-2 mb-2 rounded-lg bg-surface px-3 py-3 shadow-[var(--shadow-border)]"
-                  style={{ borderLeft: `4px solid ${speaker?.color ?? "#c4a574"}` }}
+                  className="mt-3 mb-2"
                   onClick={(event) => {
                     if (event.target !== event.currentTarget) return;
                     const child = block.children[0];
@@ -581,12 +580,16 @@ export function NotebookEditor({
                     }
                   }}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-[11px] font-medium tracking-wide text-muted uppercase">{speaker?.name ?? "—"}</p>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="size-1.5 shrink-0 rounded-full"
+                      style={{ background: speaker?.color ?? "#c4a574" }}
+                    />
+                    <p className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{speaker?.name ?? "—"}</p>
                     {readOnly ? null : (
                       <button
                         type="button"
-                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-elevated hover:text-fg"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted hover:text-fg"
                         aria-label={t(locale, "notebookRemoveSpeaker")}
                         onClick={(event) => {
                           event.stopPropagation();
@@ -598,7 +601,7 @@ export function NotebookEditor({
                     )}
                   </div>
                   {readOnly ? (
-                    block.title ? <p className="mt-1 font-display text-lg italic">{block.title}</p> : null
+                    block.title ? <p className="mt-0.5 text-sm text-muted">{block.title}</p> : null
                   ) : (
                     <input
                       value={block.title}
@@ -614,10 +617,10 @@ export function NotebookEditor({
                         )
                       }
                       placeholder={t(locale, "notebookSpeakerTitle")}
-                      className="mt-1 w-full bg-transparent font-display text-lg italic outline-none placeholder:text-subtle"
+                      className="mt-0.5 w-full bg-transparent text-sm text-muted outline-none placeholder:text-subtle"
                     />
                   )}
-                  <div className="mt-2 flex flex-col gap-1">
+                  <div className="mt-1 flex flex-col gap-1">
                     {block.children.map((child, childIndex) => (
                       <LineRow
                         key={child.id}
