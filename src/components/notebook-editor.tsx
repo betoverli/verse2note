@@ -21,6 +21,7 @@ import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { Passage } from "@/lib/bible/passage";
 
 function mapLine(blocks: NoteBlock[], id: string, update: (block: LineBlock) => LineBlock): NoteBlock[] {
@@ -257,6 +258,8 @@ export function NotebookEditor({
   const [picker, setPicker] = useState(false);
   const [people, setPeople] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
+  const focusIdRef = useRef(focusId);
+  focusIdRef.current = focusId;
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
   const [tagSheet, setTagSheet] = useState(false);
   const [tag, setTag] = useState("");
@@ -412,59 +415,98 @@ export function NotebookEditor({
     }
   }
 
+  function currentLineId() {
+    if (focusIdRef.current) return focusIdRef.current;
+    const speakerId = useAppStore.getState().notebookActiveSpeakerId;
+    if (speakerId) {
+      const block = latest().blocks.find((row) => row.type === "speaker" && row.speakerId === speakerId);
+      if (block?.type === "speaker") return block.children[0]?.id ?? null;
+    }
+    const first = latest().blocks.find((row): row is LineBlock => row.type !== "speaker");
+    return first?.id ?? null;
+  }
+
+  function toggleLine(type: LineBlock["type"]) {
+    const id = currentLineId();
+    if (!id) return;
+    updateBlocks((blocks) => mapLine(blocks, id, (row) => ({ ...row, type: row.type === type ? "p" : type })));
+  }
+
+  function toolPointer(action: () => void) {
+    return (event: { preventDefault: () => void }) => {
+      event.preventDefault();
+      action();
+    };
+  }
+
+  const activeLine = (() => {
+    const id = focusId;
+    if (!id) return null;
+    for (const block of draft.blocks) {
+      if (block.type === "speaker") {
+        const child = block.children.find((row) => row.id === id);
+        if (child) return child;
+      } else if (block.id === id) return block;
+    }
+    return null;
+  })();
+
   const toolbar = readOnly ? null : (
-    <div className="border-t border-border/60 px-1 pb-1" onMouseDown={(event) => event.preventDefault()}>
+    <div className="border-t border-border/60 px-1 pb-1">
       {pending ? (
         <button
           type="button"
-          onClick={confirmRef}
+          onPointerDown={toolPointer(confirmRef)}
           className="mb-1 flex min-h-10 w-full items-center justify-center rounded-md bg-accent px-3 text-sm text-accent-fg"
         >
           {t(locale, "notebookConfirmRef")}
         </button>
       ) : null}
       <div className="flex items-center justify-between gap-0.5">
-        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onClick={() => formatSelection("bold")}>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onPointerDown={toolPointer(() => formatSelection("bold"))}>
           <Bold />
         </Button>
-        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onClick={() => formatSelection("italic")}>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onPointerDown={toolPointer(() => formatSelection("italic"))}>
           <Italic />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          className="size-11"
+          className={cn("size-11", activeLine?.type === "h" && "bg-elevated")}
           aria-label={t(locale, "notebookHeading")}
-          onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "h" ? "p" : "h" })))}
+          onPointerDown={toolPointer(() => toggleLine("h"))}
         >
           <Type />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          className="size-11"
+          className={cn("size-11", activeLine?.type === "ul" && "bg-elevated")}
           aria-label={t(locale, "notebookList")}
-          onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ul" ? "p" : "ul" })))}
+          onPointerDown={toolPointer(() => toggleLine("ul"))}
         >
           <List />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="icon"
-          className="size-11"
+          className={cn("size-11", activeLine?.type === "ol" && "bg-elevated")}
           aria-label={t(locale, "notebookNumbers")}
-          onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ol" ? "p" : "ol" })))}
+          onPointerDown={toolPointer(() => toggleLine("ol"))}
         >
           <ListOrdered />
         </Button>
-        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddRef")} onClick={() => setPicker(true)}>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddRef")} onPointerDown={toolPointer(() => setPicker(true))}>
           <BookOpen />
         </Button>
-        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddSpeaker")} onClick={() => setPeople(true)}>
+        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddSpeaker")} onPointerDown={toolPointer(() => setPeople(true))}>
           <UserRound />
         </Button>
         {useAppStore.getState().notebookActiveSpeakerId ? (
-          <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onClick={exitSpeaker}>
+          <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onPointerDown={toolPointer(exitSpeaker)}>
             <X />
           </Button>
         ) : null}
