@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
 import { bookById, type Locale } from "@/lib/bible/books";
 import { formatPassage, type Passage } from "@/lib/bible/passage";
-import { readingToPassage, type PlanDay, type ReadingPlan } from "@/lib/bible/reading-plans";
+import { readingToPassage, planLead, type PlanDay, type ReadingPlan } from "@/lib/bible/reading-plans";
 import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
@@ -62,16 +62,20 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
   if (!started || !user) {
     const chapters = plan.days.reduce((n, day) => n + day.readings.length, 0);
     const perDay = Math.max(1, Math.round(chapters / plan.days.length));
+    const lead = planLead(plan.id, locale);
     return (
       <div className="flex flex-col gap-8 pb-8">
-        <div className="space-y-2">
-          <p className="text-sm text-muted">
-            {plan.days.length} {t(locale, "days")}
-          </p>
-          <p className="text-sm text-muted">
-            {perDay} {t(locale, "planChaptersPerDay")}
-          </p>
-        </div>
+        {lead ? <p className="text-sm leading-relaxed text-muted">{lead}</p> : null}
+        <ul className="grid grid-cols-2 gap-3">
+          <li className="flex min-h-[7.5rem] flex-col justify-between rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
+            <span className="font-display text-3xl italic leading-none text-fg">{plan.days.length}</span>
+            <span className="text-xs text-muted">{t(locale, "days")}</span>
+          </li>
+          <li className="flex min-h-[7.5rem] flex-col justify-between rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
+            <span className="font-display text-3xl italic leading-none text-fg">{perDay}</span>
+            <span className="text-xs text-muted">{t(locale, "planChaptersPerDay")}</span>
+          </li>
+        </ul>
         {user ? (
           <Button className="w-full" onClick={() => startPlan(plan.id)}>
             {t(locale, "startPlan")}

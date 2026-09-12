@@ -637,6 +637,183 @@ export const READING_PLANS: ReadingPlan[] = [
   },
 ];
 
+const PLAN_LEADS: Record<string, Record<Locale, string>> = {
+  "bible-year": {
+    pt: "A Bíblia inteira na ordem dos livros, um pouco cada dia, no ritmo de um ano.",
+    en: "The whole Bible in book order, a little each day, at a year’s pace.",
+    es: "Toda la Biblia en el orden de los libros, un poco cada día, al ritmo de un año.",
+  },
+  "bible-90": {
+    pt: "A Bíblia inteira em três meses. São vários capítulos por dia — para quem quer um sprint.",
+    en: "The whole Bible in three months. Several chapters a day — a sprint.",
+    es: "Toda la Biblia en tres meses. Varios capítulos al día — un sprint.",
+  },
+  "nt-90": {
+    pt: "Os 27 livros do Novo Testamento em três meses, na ordem usual.",
+    en: "The 27 books of the New Testament in three months, in the usual order.",
+    es: "Los 27 libros del Nuevo Testamento en tres meses, en el orden habitual.",
+  },
+  "nt-30": {
+    pt: "O Novo Testamento em um mês. Ritmo forte, cerca de nove capítulos por dia.",
+    en: "The New Testament in a month. A hard pace, about nine chapters a day.",
+    es: "El Nuevo Testamento en un mes. Ritmo fuerte, unos nueve capítulos al día.",
+  },
+  "gospels-30": {
+    pt: "Mateus, Marcos, Lucas e João em 30 dias. Quatro retratos de Jesus, um atrás do outro.",
+    en: "Matthew, Mark, Luke and John in 30 days. Four portraits of Jesus, one after another.",
+    es: "Mateo, Marcos, Lucas y Juan en 30 días. Cuatro retratos de Jesús, uno tras otro.",
+  },
+  "john-21": {
+    pt: "Um capítulo de João por dia. O evangelho do Verbo, da luz e da vida.",
+    en: "One chapter of John a day. The gospel of the Word, light and life.",
+    es: "Un capítulo de Juan al día. El evangelio del Verbo, la luz y la vida.",
+  },
+  "matthew-28": {
+    pt: "Mateus em 28 dias: o Messias, o Sermão da Montanha e o Reino.",
+    en: "Matthew in 28 days: the Messiah, the Sermon on the Mount, and the Kingdom.",
+    es: "Mateo en 28 días: el Mesías, el Sermón del Monte y el Reino.",
+  },
+  "luke-24": {
+    pt: "Lucas em 24 dias. A história de Jesus para o mundo, com cuidado e humanidade.",
+    en: "Luke in 24 days. The story of Jesus for the world, careful and human.",
+    es: "Lucas en 24 días. La historia de Jesús para el mundo, cuidadosa y humana.",
+  },
+  "acts-28": {
+    pt: "Um capítulo de Atos por dia. Da subida de Jesus à igreja que atravessa o Império.",
+    en: "One chapter of Acts a day. From Jesus’ ascent to a church that crosses the Empire.",
+    es: "Un capítulo de Hechos al día. De la subida de Jesús a la iglesia que cruza el Imperio.",
+  },
+  "romans-16": {
+    pt: "Romanos em 16 dias. O evangelho de Paulo, da culpa à nova criação.",
+    en: "Romans in 16 days. Paul’s gospel, from guilt to new creation.",
+    es: "Romanos en 16 días. El evangelio de Pablo, de la culpa a la nueva creación.",
+  },
+  "proverbs-31": {
+    pt: "Um capítulo de Provérbios por dia do mês. Sabedoria para a vida comum.",
+    en: "One chapter of Proverbs a day for a month. Wisdom for ordinary life.",
+    es: "Un capítulo de Proverbios al día durante un mes. Sabiduría para la vida cotidiana.",
+  },
+  "psalms-30": {
+    pt: "O saltério em um mês. Vários salmos por dia: lamento, louvor e confiança.",
+    en: "The Psalter in a month. Several psalms a day: lament, praise, and trust.",
+    es: "El salterio en un mes. Varios salmos al día: lamento, alabanza y confianza.",
+  },
+  "pentateuch-90": {
+    pt: "Gênesis a Deuteronômio em 90 dias. Das origens à beira da Terra Prometida.",
+    en: "Genesis through Deuteronomy in 90 days. From the beginnings to the edge of the Promised Land.",
+    es: "Génesis a Deuteronomio en 90 días. De los orígenes al borde de la Tierra Prometida.",
+  },
+  "paul-letters": {
+    pt: "As 13 cartas de Paulo em 30 dias. Igrejas, amigos e a teologia em movimento.",
+    en: "Paul’s 13 letters in 30 days. Churches, friends, and theology on the move.",
+    es: "Las 13 cartas de Pablo en 30 días. Iglesias, amigos y teología en movimiento.",
+  },
+  "chrono-bible": {
+    pt: "A Bíblia na ordem dos acontecimentos, não do índice. Jó no tempo dos patriarcas; os profetas depois dos Reis; no NT, Marcos primeiro. Datas de Joel e Obadias são debatidas.",
+    en: "The Bible in the order of events, not the table of contents. Job in the patriarchal age; the prophets after Kings; in the NT, Mark first. The dates of Joel and Obadiah are debated.",
+    es: "La Biblia en el orden de los hechos, no del índice. Job en la era patriarcal; los profetas después de Reyes; en el NT, Marcos primero. Las fechas de Joel y Abdías se debaten.",
+  },
+  "chrono-ot": {
+    pt: "O Antigo Testamento na ordem da história: Jó depois de Gn 1–11, Salomão no meio de 1 Reis, profetas após a queda dos reinos.",
+    en: "The Old Testament in story order: Job after Gen 1–11, Solomon in the middle of 1 Kings, prophets after the fall of the kingdoms.",
+    es: "El Antiguo Testamento en el orden de la historia: Job después de Gn 1–11, Salomón en medio de 1 Reyes, profetas tras la caída de los reinos.",
+  },
+  "chrono-nt": {
+    pt: "O Novo Testamento pela cronologia mais aceita: Marcos, os outros evangelhos, Atos, depois as cartas na ordem paulina usual.",
+    en: "The New Testament in the most common chronology: Mark, the other gospels, Acts, then the letters in the usual Pauline order.",
+    es: "El Nuevo Testamento según la cronología más aceptada: Marcos, los otros evangelios, Hechos, luego las cartas en el orden paulino habitual.",
+  },
+  "four-paths": {
+    pt: "Quatro faixas ao mesmo tempo, um ano: história, poetas e profetas, evangelhos e Atos, cartas. Cada dia um pedaço de cada caminho.",
+    en: "Four strands at once, for a year: history, poets and prophets, gospels and Acts, letters. Each day a piece of every path.",
+    es: "Cuatro sendas a la vez, un año: historia, poetas y profetas, evangelios y Hechos, cartas. Cada día un trozo de cada camino.",
+  },
+  "ot-year": {
+    pt: "Só o Antigo Testamento, na ordem dos livros, ao longo de um ano.",
+    en: "The Old Testament only, in book order, over a year.",
+    es: "Solo el Antiguo Testamento, en el orden de los libros, a lo largo de un año.",
+  },
+  "isaiah-66": {
+    pt: "Um capítulo de Isaías por dia. Juízo, servo sofredor e a nova criação.",
+    en: "One chapter of Isaiah a day. Judgment, the suffering servant, and new creation.",
+    es: "Un capítulo de Isaías al día. Juicio, el siervo sufriente y la nueva creación.",
+  },
+  "story-40": {
+    pt: "Quarenta capítulos que contam o arco: criação, aliança, êxodo, reino, exílio, Jesus, igreja e a cidade nova.",
+    en: "Forty chapters that tell the arc: creation, covenant, exodus, kingdom, exile, Jesus, the church, and the new city.",
+    es: "Cuarenta capítulos que cuentan el arco: creación, pacto, éxodo, reino, exilio, Jesús, la iglesia y la ciudad nueva.",
+  },
+  "hope-21": {
+    pt: "Três semanas de textos que sustentam: salmos, Isaías, Jesus e a promessa de um céu novo.",
+    en: "Three weeks of texts that hold you up: psalms, Isaiah, Jesus, and the promise of a new heaven.",
+    es: "Tres semanas de textos que sostienen: salmos, Isaías, Jesús y la promesa de un cielo nuevo.",
+  },
+  "prayer-21": {
+    pt: "Orações da Escritura, de Abraão a Jesus. Um capítulo por dia para rezar com a Bíblia.",
+    en: "Prayers from Scripture, from Abraham to Jesus. One chapter a day to pray with the Bible.",
+    es: "Oraciones de la Escritura, de Abraham a Jesús. Un capítulo al día para orar con la Biblia.",
+  },
+  "women-21": {
+    pt: "Hagar, Débora, Rute, Ana, Ester, Maria, a samaritana e outras. Vinte e um capítulos, vozes que a história às vezes baixa.",
+    en: "Hagar, Deborah, Ruth, Hannah, Esther, Mary, the Samaritan woman and others. Twenty-one chapters, voices the story sometimes lowers.",
+    es: "Agar, Débora, Rut, Ana, Ester, María, la samaritana y otras. Veintiún capítulos, voces que la historia a veces baja.",
+  },
+  "justice-14": {
+    pt: "Duas semanas sobre o direito do pobre, o jejum que Deus escolhe e o próximo que a lei não enxerga.",
+    en: "Two weeks on the right of the poor, the fast God chooses, and the neighbor the law can miss.",
+    es: "Dos semanas sobre el derecho del pobre, el ayuno que Dios elige y el prójimo que la ley no ve.",
+  },
+  "wilderness-14": {
+    pt: "Do maná à tentação de Jesus. O deserto como escola: fome, queixa, pão e confiança.",
+    en: "From manna to Jesus’ temptation. The wilderness as a school: hunger, complaint, bread, and trust.",
+    es: "Del maná a la tentación de Jesús. El desierto como escuela: hambre, queja, pan y confianza.",
+  },
+  "covenant-14": {
+    pt: "As alianças em cadeia: Noé, Abraão, Sinai, Davi, a nova aliança em Jeremias e na ceia.",
+    en: "The covenants in a chain: Noah, Abraham, Sinai, David, the new covenant in Jeremiah and at the table.",
+    es: "Los pactos en cadena: Noé, Abraham, Sinaí, David, el nuevo pacto en Jeremías y en la cena.",
+  },
+  "holy-week": {
+    pt: "Oito dias, da entrada em Jerusalém à ressurreição. Para ler na Semana Santa, ou em qualquer semana.",
+    en: "Eight days, from the entry into Jerusalem to the resurrection. For Holy Week, or any week.",
+    es: "Ocho días, de la entrada en Jerusalén a la resurrección. Para la Semana Santa, o cualquier semana.",
+  },
+  "advent-24": {
+    pt: "Vinte e quatro capítulos até o Natal: profecias, salmos reais, a natividade e o nome que é acima de todo nome.",
+    en: "Twenty-four chapters toward Christmas: prophecies, royal psalms, the nativity, and the name above every name.",
+    es: "Veinticuatro capítulos hacia la Navidad: profecías, salmos reales, la natividad y el nombre sobre todo nombre.",
+  },
+  "who-is-jesus": {
+    pt: "Catorze capítulos que perguntam quem ele é: o Verbo, o pão, o pastor, o crucificado e o ressuscitado.",
+    en: "Fourteen chapters that ask who he is: the Word, the bread, the shepherd, the crucified and the risen.",
+    es: "Catorce capítulos que preguntan quién es: el Verbo, el pan, el pastor, el crucificado y el resucitado.",
+  },
+  "lament-14": {
+    pt: "Salmos de luto e um capítulo de Lamentações. Para quando a fé precisa de palavras escuras.",
+    en: "Psalms of grief and a chapter of Lamentations. For when faith needs dark words.",
+    es: "Salmos de duelo y un capítulo de Lamentaciones. Para cuando la fe necesita palabras oscuras.",
+  },
+  "wisdom-21": {
+    pt: "Jó, Provérbios, Eclesiastes e um pouco de Tiago. O medo do Senhor, o limite da razão e o caminho prático.",
+    en: "Job, Proverbs, Ecclesiastes and a little James. The fear of the Lord, the limit of reason, and the practical path.",
+    es: "Job, Proverbios, Eclesiastés y un poco de Santiago. El temor del Señor, el límite de la razón y el camino práctico.",
+  },
+  "apocalyptic": {
+    pt: "Daniel e Apocalipse, um capítulo por dia. Impérios, cordeiros e a esperança que não se rende à história.",
+    en: "Daniel and Revelation, one chapter a day. Empires, lambs, and a hope that will not bow to history.",
+    es: "Daniel y Apocalipsis, un capítulo al día. Imperios, corderos y la esperanza que no se rinde a la historia.",
+  },
+  "early-church": {
+    pt: "Atos, Tiago, 1 Pedro e 1 João. A igreja que nasce, sofre e aprende a amar de verdade.",
+    en: "Acts, James, 1 Peter and 1 John. The church that is born, suffers, and learns to love in earnest.",
+    es: "Hechos, Santiago, 1 Pedro y 1 Juan. La iglesia que nace, sufre y aprende a amar de verdad.",
+  },
+};
+
+export function planLead(id: string, locale: Locale): string {
+  return PLAN_LEADS[id]?.[locale] ?? "";
+}
+
 const CATEGORY_DEFS: { id: string; names: Record<Locale, string> }[] = [
   { id: "duration", names: { pt: "Por duração", en: "By length", es: "Por duración" } },
   { id: "chronological", names: { pt: "Cronológicos", en: "Chronological", es: "Cronológicos" } },

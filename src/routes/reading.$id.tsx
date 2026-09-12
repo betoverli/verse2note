@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
 import { ReadingPlanDetail } from "@/components/reading-plan-detail";
-import { planById, planCategoryById } from "@/lib/bible/reading-plans";
+import { planById, planCategoryById, planLead } from "@/lib/bible/reading-plans";
 import { t } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
@@ -14,11 +14,10 @@ export const Route = createFileRoute("/reading/$id")({
   head: ({ params }) => {
     const plan = planById(params.id);
     const name = plan?.names.pt ?? "Leitura";
+    const lead = plan ? planLead(plan.id, "pt") : "";
     return pageHead({
       title: `Verse2Note — ${name}`,
-      description: plan
-        ? `${plan.names.pt}: ${plan.days.length} dias de capítulos completos.`
-        : "Plano de leitura Verse2Note.",
+      description: lead || (plan ? `${plan.names.pt}: ${plan.days.length} dias de capítulos completos.` : "Plano de leitura Verse2Note."),
       path: `/reading/${params.id}`,
     });
   },

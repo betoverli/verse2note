@@ -1,7 +1,7 @@
 import type { Locale } from "@/lib/bible/books";
 import { formatPassageById } from "@/lib/bible/passage";
 import { LINK_USAGE, resolveLinks, type LinkOk } from "@/lib/bible/link-api";
-import { readingToPassage } from "@/lib/bible/reading-plans";
+import { readingToPassage, planLead } from "@/lib/bible/reading-plans";
 import {
   PLAN_CATEGORIES,
   PLAN_TOTAL,
@@ -39,6 +39,7 @@ function planCard(plan: ReadingPlan, locale: Locale) {
     names: plan.names,
     days: plan.days.length,
     chapters: plan.days.reduce((n, day) => n + day.readings.length, 0),
+    description: planLead(plan.id, locale),
     categoryIds: plan.categoryIds,
   };
 }
