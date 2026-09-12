@@ -103,7 +103,7 @@ export const upsertMyNote = createServerFn({ method: "POST" })
       insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at)
       values (
         ${note.id}, ${context.userId}, ${note.title}, ${note.happenedAt}::date,
-        ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, now()
+        ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz
       )
       on conflict (id) do update set
         title = excluded.title,
@@ -111,7 +111,7 @@ export const upsertMyNote = createServerFn({ method: "POST" })
         tags = excluded.tags,
         blocks = excluded.blocks,
         visibility = excluded.visibility,
-        updated_at = now()
+        updated_at = excluded.updated_at
       where notebook_notes.user_id = ${context.userId}
     `;
     return { ok: true as const };

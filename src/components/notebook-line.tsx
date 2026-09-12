@@ -31,11 +31,12 @@ export function NotebookLine({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const skip = useRef(false);
+  const focused = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (skip.current) {
+    if (skip.current || focused.current) {
       skip.current = false;
       return;
     }
@@ -65,6 +66,11 @@ export function NotebookLine({
         block.type === "h" && "font-display text-xl italic",
         block.inlines.length === 0 && "note-line-empty",
       )}
+      onInput={emit}
+      onBlur={() => {
+        focused.current = false;
+        emit();
+      }}
       onClick={(event) => {
         const target = (event.target as HTMLElement).closest<HTMLElement>(".ref-pill");
         if (!target?.dataset.ref) return;
@@ -75,7 +81,10 @@ export function NotebookLine({
         const url = buildDeepLink(state.appId, passage, translationById(state.translationId), state.preferNative);
         if (url) window.open(url, "_blank", "noopener");
       }}
-      onFocus={onFocus}
+      onFocus={() => {
+        focused.current = true;
+        onFocus();
+      }}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
           event.preventDefault();

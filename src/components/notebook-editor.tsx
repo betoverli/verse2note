@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Bold, BookOpen, Italic, List, ListOrdered, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
@@ -138,9 +138,12 @@ export function NotebookEditor({
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
   const [tag, setTag] = useState("");
   const cite = { book: citeBook, sep: citeSep };
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
   useEffect(() => {
     setDraft(note);
+    draftRef.current = note;
   }, [note.id]);
 
   useEffect(() => {
@@ -148,12 +151,21 @@ export function NotebookEditor({
   }, [setActive]);
 
   function save(next: Note) {
+    draftRef.current = next;
     setDraft(next);
     if (!readOnly) upsertLocalNote(next);
   }
 
+  function latest() {
+    return useAppStore.getState().notes.find((item) => item.id === note.id) ?? draftRef.current;
+  }
+
+  function patch(updater: (current: Note) => Note) {
+    save(updater(latest()));
+  }
+
   function setBlocks(blocks: NoteBlock[]) {
-    save({ ...draft, blocks });
+    patch((current) => ({ ...current, blocks }));
   }
 
   function onEnter(block: LineBlock) {
@@ -214,7 +226,7 @@ export function NotebookEditor({
           readOnly ? undefined : (
             <input
               value={draft.title}
-              onChange={(event) => save({ ...draft, title: event.target.value.slice(0, 80) })}
+              onChange={(event) => patch((current) => ({ ...current, title: event.target.value.slice(0, 80) }))}
               placeholder={t(locale, "notebookMeeting")}
               className="h-10 w-full bg-transparent text-center text-[17px] font-semibold text-fg outline-none placeholder:text-subtle"
             />
@@ -232,7 +244,7 @@ export function NotebookEditor({
             type="date"
             value={draft.happenedAt}
             disabled={readOnly}
-            onChange={(event) => save({ ...draft, happenedAt: event.target.value })}
+            onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
             className="rounded-md bg-surface px-2 py-1 text-fg"
             aria-label={t(locale, "notebookDate")}
           />
@@ -241,7 +253,9 @@ export function NotebookEditor({
               key={item}
               type="button"
               disabled={readOnly}
-              onClick={() => save({ ...draft, tags: draft.tags.filter((tag) => tag !== item) })}
+              onClick={() =>
+                patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))
+              }
               className="rounded-full bg-surface px-2 py-1"
             >
               #{item}
@@ -251,14 +265,26 @@ export function NotebookEditor({
             <input
               value={tag}
               onChange={(event) => setTag(event.target.value)}
+              onBlur={() => {
+                const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                if (!next) return;
+                patch((current) =>
+                  current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                );
+                setTag("");
+              }}
               onKeyDown={(event) => {
                 if (event.key !== "Enter") return;
+                event.preventDefault();
                 const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                if (!next || draft.tags.includes(next)) return;
-                save({ ...draft, tags: [...draft.tags, next] });
+                if (!next) return;
+                patch((current) =>
+                  current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                );
                 setTag("");
               }}
               placeholder={t(locale, "notebookTagAdd")}
+              enterKeyHint="done"
               className="w-24 bg-transparent py-1 outline-none"
             />
           )}
@@ -328,7 +354,7 @@ export function NotebookEditor({
                 block={block}
                 locale={locale}
                 style={cite}
-                placeholder={t(locale, "notebookMeeting")}
+                placeholder={t(locale, "notebookWrite")}
                 onChange={(inlines) => setBlocks(mapLine(draft.blocks, block.id, (row) => ({ ...row, inlines })))}
                 onEnter={() => onEnter(block)}
                 onEmptyBackspace={() => setBlocks(removeLine(draft.blocks, block.id))}
