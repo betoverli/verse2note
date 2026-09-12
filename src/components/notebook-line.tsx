@@ -41,6 +41,7 @@ export function NotebookLine({
   const ref = useRef<HTMLDivElement>(null);
   const skip = useRef(false);
   const focused = useRef(false);
+  const saveTimer = useRef(0);
   const formatKey = `${locale}:${style?.book ?? "name"}:${style?.sep ?? "colon"}`;
   const formatRef = useRef(formatKey);
 
@@ -50,17 +51,20 @@ export function NotebookLine({
     const html = inlinesToHtml(block.inlines, locale, style);
     const formatChanged = formatRef.current !== formatKey;
     formatRef.current = formatKey;
-    if (skip.current && !formatChanged) {
+    if (formatChanged) {
+      el.innerHTML = html;
+      return;
+    }
+    if (focused.current) {
+      if (needsExternalSync(htmlToInlines(el), block.inlines)) el.innerHTML = html;
+      return;
+    }
+    if (skip.current) {
       skip.current = false;
       return;
     }
-    skip.current = false;
     if (el.innerHTML === html) return;
     el.innerHTML = html;
-    if (focused.current) {
-      if (block.inlines.length === 0) placeCaret(el, true);
-      else placeAfterContent(el);
-    }
   }, [block.inlines, locale, formatKey, style?.book, style?.sep]);
 
   useEffect(() => {
@@ -73,7 +77,7 @@ export function NotebookLine({
     if (block.inlines.length === 0) placeCaret(el, true);
   }, [active, block.id]);
 
-  function emit() {
+  function emit(flush = false) {
     const el = ref.current;
     if (!el) return;
     skip.current = true;
@@ -84,11 +88,16 @@ export function NotebookLine({
       inlines = trigger.inlines;
       el.innerHTML = inlinesToHtml(inlines, locale, style);
       placeAfterContent(el);
+      flush = true;
     }
-    onChange(inlines);
     onDetect(detectTrailingRef(inlines, locale));
+    window.clearTimeout(saveTimer.current);
+    if (flush) onChange(inlines);
+    else saveTimer.current = window.setTimeout(() => onChange(inlines), 280);
     if (trigger) onTrigger?.(trigger.kind);
   }
+
+  useEffect(() => () => window.clearTimeout(saveTimer.current), []);
 
   const empty = block.inlines.length === 0;
 
@@ -112,10 +121,10 @@ export function NotebookLine({
         event.preventDefault();
         onFocus();
       }}
-      onInput={emit}
+      onInput={() => emit()}
       onBlur={() => {
         focused.current = false;
-        emit();
+        emit(true);
       }}
       onPaste={(event) => {
         if (!editable) return;
@@ -126,7 +135,7 @@ export function NotebookLine({
         event.preventDefault();
         if (passages.length === 1) {
           document.execCommand("insertHTML", false, inlinesToHtml([passageToRef(passages[0]!)], locale, style));
-          emit();
+          emit(true);
           return;
         }
         onPasteMany?.(passages);
@@ -151,11 +160,12 @@ export function NotebookLine({
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") return;
         if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
           event.preventDefault();
-          emit();
+          emit(true);
           onEnter();
         }
         if ((event.key === "Backspace" || event.key === "Delete") && ref.current && isLineHtmlEmpty(ref.current)) {
           event.preventDefault();
+          emit(true);
           onEmptyBackspace();
         }
       }}
@@ -163,13 +173,14 @@ export function NotebookLine({
         const inputType = (event.nativeEvent as InputEvent).inputType;
         if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
           event.preventDefault();
-          emit();
+          emit(true);
           onEnter();
           return;
         }
         if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
         if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
         event.preventDefault();
+        emit(true);
         onEmptyBackspace();
       }}
     />
@@ -223,4 +234,11 @@ export function consumeTrigger(inlines: NoteInline[]): { inlines: NoteInline[]; 
   if (before) next[next.length - 1] = { ...last, text: before };
   else next.pop();
   return { inlines: next, kind: mark === "@" ? "at" : "slash" };
+}
+
+function needsExternalSync(dom: NoteInline[], props: NoteInline[]) {
+  if (JSON.stringify(dom) === JSON.stringify(props)) return false;
+  const propsRefs = props.filter((part) => part.type === "ref").length;
+  const domRefs = dom.filter((part) => part.type === "ref").length;
+  return propsRefs > domRefs;
 }

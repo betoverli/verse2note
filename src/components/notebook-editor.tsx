@@ -303,7 +303,7 @@ export function NotebookEditor({
   }
 
   function latest() {
-    return useAppStore.getState().notes.find((item) => item.id === note.id) ?? draftRef.current;
+    return draftRef.current;
   }
 
   function patch(updater: (current: Note) => Note) {
@@ -596,6 +596,8 @@ export function NotebookEditor({
                     value={draft.happenedAt}
                     onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
                     aria-label={t(locale, "notebookDate")}
+                    tabIndex={-1}
+                    enterKeyHint="done"
                     className="absolute inset-0 z-10 size-full cursor-pointer appearance-none border-0 bg-transparent p-0 text-transparent opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-datetime-edit]:hidden"
                   />
                 </label>
