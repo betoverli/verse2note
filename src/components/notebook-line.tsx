@@ -98,7 +98,7 @@ export function NotebookLine({
       data-placeholder={empty ? placeholder : undefined}
       suppressContentEditableWarning
       className={cn(
-        "note-line min-h-7 w-full bg-transparent text-base leading-relaxed text-fg outline-none",
+        "note-line min-h-7 w-full bg-transparent leading-relaxed text-fg outline-none",
         block.type === "h" && "font-display text-xl italic",
         empty && placeholder && "note-line-empty",
       )}

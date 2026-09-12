@@ -544,9 +544,10 @@ export function NotebookEditor({
                       </button>
                     )}
                   </div>
-                  {readOnly ? (
-                    block.title ? <p className="mt-0.5 text-sm text-muted">{block.title}</p> : null
-                  ) : (
+                  {block.title ? (
+                    readOnly ? (
+                      <p className="mt-0.5 text-base text-muted">{block.title}</p>
+                    ) : (
                     <input
                       value={block.title}
                       tabIndex={-1}
@@ -560,10 +561,10 @@ export function NotebookEditor({
                           ),
                         )
                       }
-                      placeholder={t(locale, "notebookSpeakerTitle")}
-                      className="mt-0.5 w-full bg-transparent text-sm text-muted outline-none placeholder:text-subtle"
+                      className="mt-0.5 w-full bg-transparent text-base text-muted outline-none"
                     />
-                  )}
+                    )
+                  ) : null}
                   <div className="mt-1 flex flex-col gap-1">
                     {block.children.map((child, childIndex) => (
                       <LineRow
