@@ -83,6 +83,8 @@ export function AppHeader({
   trailing,
   search,
   titleField,
+  extra,
+  compact,
 }: {
   title?: string;
   backTo?: BackTo;
@@ -91,6 +93,8 @@ export function AppHeader({
   trailing?: ReactNode;
   search?: HeaderSearch;
   titleField?: ReactNode;
+  extra?: ReactNode;
+  compact?: boolean;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [apple, setApple] = useState(false);
@@ -106,7 +110,7 @@ export function AppHeader({
 
   return (
     <header className="app-header sticky top-0 z-20 -mx-4 bg-bg px-2 pb-2 sm:-mx-6 sm:px-3">
-      <div className="flex min-h-12 items-center gap-1">
+      <div className={cn("flex min-h-12 items-center gap-1", compact && "hidden")}>
         <div className="flex w-12 shrink-0 items-center justify-start">
           {backTo ? (
             <Button variant="ghost" size="icon" asChild className="size-12 -ml-1 text-fg [&_svg]:size-6">
@@ -180,6 +184,7 @@ export function AppHeader({
           {showSearch ? null : trailing}
         </div>
       </div>
+      {extra}
     </header>
   );
 }

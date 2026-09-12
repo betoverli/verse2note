@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { Bold, BookOpen, Italic, List, ListOrdered, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import {
@@ -15,7 +14,7 @@ import {
   type Speaker,
   type SpeakerBlock,
 } from "@/lib/notebook";
-import { deleteLocalNote, upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
+import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
 import { formatSelection, NotebookLine } from "@/components/notebook-line";
 import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
@@ -73,6 +72,25 @@ function parentSpeaker(blocks: NoteBlock[], lineId: string) {
     if (block.type === "speaker" && block.children.some((child) => child.id === lineId)) return block.speakerId;
   }
   return null;
+}
+
+function useHideOnScroll() {
+  const [compact, setCompact] = useState(false);
+  const last = useRef(0);
+  useEffect(() => {
+    last.current = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - last.current;
+      if (y < 16) setCompact(false);
+      else if (delta > 10) setCompact(true);
+      else if (delta < -10) setCompact(false);
+      last.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return compact;
 }
 
 function LineRow({
@@ -137,7 +155,7 @@ export function NotebookEditor({
   const storedSpeakers = useAppStore((s) => s.speakers);
   const speakers = speakerList ?? storedSpeakers;
   const setActive = useAppStore((s) => s.setNotebookActiveSpeakerId);
-  const navigate = useNavigate();
+  const compact = useHideOnScroll();
   const [draft, setDraft] = useState(note);
   const [picker, setPicker] = useState(false);
   const [people, setPeople] = useState(false);
@@ -228,11 +246,73 @@ export function NotebookEditor({
     .map((id) => speakers.find((item) => item.id === id))
     .filter(Boolean);
 
+  const toolbar = readOnly ? null : (
+    <div className="border-t border-border/60 px-1 pb-1">
+      {pending ? (
+        <button
+          type="button"
+          onClick={confirmRef}
+          className="mb-1 flex min-h-10 w-full items-center justify-center rounded-md bg-accent px-3 text-sm text-accent-fg"
+        >
+          {t(locale, "notebookConfirmRef")}
+        </button>
+      ) : null}
+      <div className="flex items-center justify-between gap-0.5">
+        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onClick={() => formatSelection("bold")}>
+          <Bold />
+        </Button>
+        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onClick={() => formatSelection("italic")}>
+          <Italic />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          aria-label={t(locale, "notebookHeading")}
+          onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "h" ? "p" : "h" })))}
+        >
+          <Type />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          aria-label={t(locale, "notebookList")}
+          onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ul" ? "p" : "ul" })))}
+        >
+          <List />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          aria-label={t(locale, "notebookNumbers")}
+          onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ol" ? "p" : "ol" })))}
+        >
+          <ListOrdered />
+        </Button>
+        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddRef")} onClick={() => setPicker(true)}>
+          <BookOpen />
+        </Button>
+        <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddSpeaker")} onClick={() => setPeople(true)}>
+          <UserRound />
+        </Button>
+        {useAppStore.getState().notebookActiveSpeakerId ? (
+          <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onClick={() => setActive(null)}>
+            <X />
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <AppHeader
         title={draft.title || t(locale, "notebookMeeting")}
         backTo="/notebook"
+        compact={compact}
+        extra={toolbar}
         titleField={
           readOnly ? undefined : (
             <input
@@ -243,13 +323,9 @@ export function NotebookEditor({
             />
           )
         }
-        trailing={
-          readOnly ? null : (
-            <SendToFriendButton kind="note" targetId={draft.id} />
-          )
-        }
+        trailing={readOnly ? null : <SendToFriendButton kind="note" targetId={draft.id} iconOnly />}
       />
-      <div className="flex flex-col gap-3 pb-[calc(var(--tab-bar-height)+6.5rem)]">
+      <div className="flex flex-col gap-3 pb-[calc(var(--tab-bar-height)+1.5rem)]">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <input
             type="date"
@@ -318,6 +394,14 @@ export function NotebookEditor({
                   key={block.id}
                   className="mt-2 mb-2 rounded-lg bg-surface px-3 py-3 shadow-[var(--shadow-border)]"
                   style={{ borderLeft: `4px solid ${speaker?.color ?? "#c4a574"}` }}
+                  onClick={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    const child = block.children[0];
+                    if (child) {
+                      setFocusId(child.id);
+                      setActive(block.speakerId);
+                    }
+                  }}
                 >
                   <p className="text-[11px] font-medium tracking-wide text-muted uppercase">{speaker?.name ?? "—"}</p>
                   {readOnly ? (
@@ -383,91 +467,7 @@ export function NotebookEditor({
             );
           })}
         </div>
-
-        {readOnly ? null : (
-          <Button
-            variant="ghost"
-            className="self-start text-muted"
-            onClick={() => {
-              if (confirm(t(locale, "notebookDelete"))) {
-                deleteLocalNote(draft.id);
-                void navigate({ to: "/notebook" });
-              }
-            }}
-          >
-            {t(locale, "notebookDelete")}
-          </Button>
-        )}
       </div>
-
-      {readOnly ? null : (
-        <div
-          className="fixed inset-x-0 z-30 border-t border-border/70 bg-bg/90 px-3 py-2 backdrop-blur-xl"
-          style={{ bottom: "var(--tab-bar-height)" }}
-        >
-          {pending ? (
-            <button
-              type="button"
-              onClick={confirmRef}
-              className="mb-2 flex min-h-10 w-full items-center justify-center rounded-md bg-accent px-3 text-sm text-accent-fg"
-            >
-              {t(locale, "notebookConfirmRef")}
-            </button>
-          ) : null}
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-1">
-            <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onClick={() => formatSelection("bold")}>
-              <Bold />
-            </Button>
-            <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onClick={() => formatSelection("italic")}>
-              <Italic />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-11"
-              aria-label={t(locale, "notebookHeading")}
-              onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "h" ? "p" : "h" })))}
-            >
-              <Type />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-11"
-              aria-label={t(locale, "notebookList")}
-              onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ul" ? "p" : "ul" })))}
-            >
-              <List />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-11"
-              aria-label={t(locale, "notebookNumbers")}
-              onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ol" ? "p" : "ol" })))}
-            >
-              <ListOrdered />
-            </Button>
-            <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddRef")} onClick={() => setPicker(true)}>
-              <BookOpen />
-            </Button>
-            <Button variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddSpeaker")} onClick={() => setPeople(true)}>
-              <UserRound />
-            </Button>
-            {useAppStore.getState().notebookActiveSpeakerId ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11"
-                aria-label={t(locale, "notebookExitSpeaker")}
-                onClick={() => setActive(null)}
-              >
-                <X />
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      )}
 
       <NotebookPickerSheet open={picker} onClose={() => setPicker(false)} onPick={onPickRef} />
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />

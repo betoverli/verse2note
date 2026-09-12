@@ -229,7 +229,13 @@ html.light {
     color: #3a2a1c;
   }
 
-  .note-line-empty:empty::before {
+  .note-line {
+    text-align: left;
+    caret-color: var(--color-fg);
+  }
+
+  .note-line-empty:empty::before,
+  .note-line-empty:has(> br:only-child)::before {
     content: attr(data-placeholder);
     color: var(--color-subtle);
   }

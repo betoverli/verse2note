@@ -52,19 +52,15 @@ export function NotebookLine({
     if (!el || document.activeElement === el) return;
     el.focus();
     focused.current = true;
-    const sel = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-  }, [active, block.id]);
+    placeCaret(el, block.inlines.length === 0);
+  }, [active, block.id, block.inlines.length]);
 
   function emit() {
     const el = ref.current;
     if (!el) return;
     skip.current = true;
-    const inlines = htmlToInlines(el);
+    let inlines = htmlToInlines(el);
+    if (inlines.length === 1 && inlines[0]?.type === "text" && inlines[0].text === "\n") inlines = [];
     onChange(inlines);
     onDetect(detectTrailingRef(inlines, locale));
   }
@@ -101,6 +97,8 @@ export function NotebookLine({
       }}
       onFocus={() => {
         focused.current = true;
+        const el = ref.current;
+        if (el && block.inlines.length === 0) placeCaret(el, true);
         onFocus();
       }}
       onKeyDown={(event) => {
@@ -120,4 +118,14 @@ export function NotebookLine({
 
 export function formatSelection(command: "bold" | "italic") {
   document.execCommand(command);
+}
+
+function placeCaret(el: HTMLElement, atStart: boolean) {
+  if (!el.childNodes.length) el.appendChild(document.createElement("br"));
+  const sel = window.getSelection();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(atStart);
+  sel?.removeAllRanges();
+  sel?.addRange(range);
 }

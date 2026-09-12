@@ -1,3 +1,4 @@
+import { UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
@@ -12,9 +13,11 @@ import { Button } from "@/components/ui/button";
 export function SendToFriendButton({
   kind,
   targetId,
+  iconOnly,
 }: {
   kind: "plan" | "collection" | "note";
   targetId: string;
+  iconOnly?: boolean;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [open, setOpen] = useState(false);
@@ -109,9 +112,21 @@ export function SendToFriendButton({
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        {t(locale, "linkSend")}
-      </Button>
+      {iconOnly ? (
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-12 text-fg [&_svg]:size-6"
+          aria-label={t(locale, "linkSend")}
+          onClick={() => setOpen(true)}
+        >
+          <UserPlus />
+        </Button>
+      ) : (
+        <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+          {t(locale, "linkSend")}
+        </Button>
+      )}
       {sheet}
     </>
   );

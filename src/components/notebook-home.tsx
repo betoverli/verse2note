@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds, todayKey } from "@/lib/notebook";
-import { createLocalNote, ensureTodayNote } from "@/lib/notebook-local";
+import { createLocalNote, deleteLocalNote, ensureTodayNote } from "@/lib/notebook-local";
 import { listGrantedNotes } from "@/lib/notebook-cloud";
 import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -31,32 +31,44 @@ function NoteCard({ note }: { note: Note }) {
     .slice(0, 3);
   const preview = notePreview(note);
   return (
-    <Link
-      to="/notebook/$id"
-      params={{ id: note.id }}
-      className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
-    >
-      <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
-        {formatDay(note.happenedAt, locale)}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
-        {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
-      </span>
-      {people.length ? (
-        <span className="flex">
-          {people.map((speaker, index) =>
-            speaker ? (
-              <span
-                key={speaker.id}
-                className={cn("size-6 rounded-full ring-2 ring-bg", index ? "-ml-1.5" : "")}
-                style={{ background: speaker.color }}
-              />
-            ) : null,
-          )}
+    <div className="flex items-center overflow-hidden rounded-lg bg-surface shadow-[var(--shadow-border)]">
+      <Link
+        to="/notebook/$id"
+        params={{ id: note.id }}
+        className="flex min-h-16 min-w-0 flex-1 items-center gap-3 px-4 py-3 text-fg transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+      >
+        <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
+          {formatDay(note.happenedAt, locale)}
         </span>
-      ) : null}
-    </Link>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
+          {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
+        </span>
+        {people.length ? (
+          <span className="flex">
+            {people.map((speaker, index) =>
+              speaker ? (
+                <span
+                  key={speaker.id}
+                  className={cn("size-6 rounded-full ring-2 ring-bg", index ? "-ml-1.5" : "")}
+                  style={{ background: speaker.color }}
+                />
+              ) : null,
+            )}
+          </span>
+        ) : null}
+      </Link>
+      <button
+        type="button"
+        className="flex size-12 shrink-0 items-center justify-center text-muted hover:text-fg"
+        aria-label={t(locale, "notebookDelete")}
+        onClick={() => {
+          if (confirm(t(locale, "notebookDelete"))) deleteLocalNote(note.id);
+        }}
+      >
+        <Trash2 className="size-5" />
+      </button>
+    </div>
   );
 }
 
