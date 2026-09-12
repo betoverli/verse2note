@@ -80,6 +80,8 @@ function LineRow({
   locale,
   style,
   placeholder,
+  active,
+  index,
   onChange,
   onEnter,
   onEmptyBackspace,
@@ -90,6 +92,8 @@ function LineRow({
   locale: Parameters<typeof t>[0];
   style: { book: "name" | "abbr"; sep: "colon" | "dot" | "comma" };
   placeholder?: string;
+  active?: boolean;
+  index?: number;
   onChange: (inlines: LineBlock["inlines"]) => void;
   onEnter: () => void;
   onEmptyBackspace: () => void;
@@ -99,12 +103,15 @@ function LineRow({
   return (
     <div className="flex gap-2">
       {block.type === "ul" ? <span className="mt-1 w-4 text-muted">•</span> : null}
-      {block.type === "ol" ? <span className="mt-1 w-4 text-xs text-muted">1.</span> : null}
+      {block.type === "ol" ? (
+        <span className="mt-1 w-4 text-xs text-muted">{(index ?? 0) + 1}.</span>
+      ) : null}
       <NotebookLine
         block={block}
         locale={locale}
         style={style}
         placeholder={placeholder}
+        active={active}
         onChange={onChange}
         onEnter={onEnter}
         onEmptyBackspace={onEmptyBackspace}
@@ -168,19 +175,23 @@ export function NotebookEditor({
     patch((current) => ({ ...current, blocks }));
   }
 
+  function updateBlocks(updater: (blocks: NoteBlock[]) => NoteBlock[]) {
+    patch((current) => ({ ...current, blocks: updater(current.blocks) }));
+  }
+
   function onEnter(block: LineBlock) {
     const next = emptyLine(block.type === "h" ? "p" : block.type);
-    setBlocks(insertAfter(draft.blocks, block.id, next));
+    updateBlocks((blocks) => insertAfter(blocks, block.id, next));
     setFocusId(next.id);
   }
 
   function onPickRef(passage: Passage) {
     if (!focusId) {
-      setBlocks([...draft.blocks, { id: newNoteId(), type: "p", inlines: [passageToRef(passage)] }]);
+      updateBlocks((blocks) => [...blocks, { id: newNoteId(), type: "p", inlines: [passageToRef(passage)] }]);
       return;
     }
-    setBlocks(
-      mapLine(draft.blocks, focusId, (block) => ({
+    updateBlocks((blocks) =>
+      mapLine(blocks, focusId, (block) => ({
         ...block,
         inlines: [...block.inlines, passageToRef(passage)],
       })),
@@ -189,8 +200,8 @@ export function NotebookEditor({
 
   function confirmRef() {
     if (!pending || !focusId) return;
-    setBlocks(
-      mapLine(draft.blocks, focusId, (block) => ({
+    updateBlocks((blocks) =>
+      mapLine(blocks, focusId, (block) => ({
         ...block,
         inlines: replaceTrailingWithRef(block.inlines, pending.start, pending.passage),
       })),
@@ -208,7 +219,7 @@ export function NotebookEditor({
       title: "",
       children: [child],
     };
-    setBlocks([...draft.blocks, block]);
+    updateBlocks((blocks) => [...blocks, block]);
     setFocusId(child.id);
     setActive(speaker.id);
   }
@@ -298,14 +309,14 @@ export function NotebookEditor({
           )}
         </div>
 
-        <div className="flex flex-col gap-3">
-          {draft.blocks.map((block) => {
+        <div className="flex flex-col gap-1">
+          {draft.blocks.map((block, blockIndex) => {
             if (block.type === "speaker") {
               const speaker = speakers.find((item) => item.id === block.speakerId);
               return (
                 <section
                   key={block.id}
-                  className="rounded-lg bg-surface px-3 py-3 shadow-[var(--shadow-border)]"
+                  className="mt-2 mb-2 rounded-lg bg-surface px-3 py-3 shadow-[var(--shadow-border)]"
                   style={{ borderLeft: `4px solid ${speaker?.color ?? "#c4a574"}` }}
                 >
                   <p className="text-[11px] font-medium tracking-wide text-muted uppercase">{speaker?.name ?? "—"}</p>
@@ -315,8 +326,8 @@ export function NotebookEditor({
                     <input
                       value={block.title}
                       onChange={(event) =>
-                        setBlocks(
-                          draft.blocks.map((row) =>
+                        updateBlocks((blocks) =>
+                          blocks.map((row) =>
                             row.id === block.id && row.type === "speaker"
                               ? { ...row, title: event.target.value.slice(0, 80) }
                               : row,
@@ -327,16 +338,18 @@ export function NotebookEditor({
                       className="mt-1 w-full bg-transparent font-display text-lg italic outline-none placeholder:text-subtle"
                     />
                   )}
-                  <div className="mt-2 flex flex-col gap-2">
-                    {block.children.map((child) => (
+                  <div className="mt-2 flex flex-col gap-1">
+                    {block.children.map((child, childIndex) => (
                       <LineRow
                         key={child.id}
                         block={child}
                         locale={locale}
                         style={cite}
-                        onChange={(inlines) => setBlocks(mapLine(draft.blocks, child.id, (row) => ({ ...row, inlines })))}
+                        active={focusId === child.id}
+                        index={child.type === "ol" ? childIndex : undefined}
+                        onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, child.id, (row) => ({ ...row, inlines })))}
                         onEnter={() => onEnter(child)}
-                        onEmptyBackspace={() => setBlocks(removeLine(draft.blocks, child.id))}
+                        onEmptyBackspace={() => updateBlocks((blocks) => removeLine(blocks, child.id))}
                         onFocus={() => {
                           setFocusId(child.id);
                           setActive(block.speakerId);
@@ -348,16 +361,19 @@ export function NotebookEditor({
                 </section>
               );
             }
+            const first = draft.blocks.find((row) => row.type !== "speaker");
             return (
               <LineRow
                 key={block.id}
                 block={block}
                 locale={locale}
                 style={cite}
-                placeholder={t(locale, "notebookWrite")}
-                onChange={(inlines) => setBlocks(mapLine(draft.blocks, block.id, (row) => ({ ...row, inlines })))}
+                active={focusId === block.id}
+                index={block.type === "ol" ? blockIndex : undefined}
+                placeholder={block.id === first?.id && block.type === "p" ? t(locale, "notebookWrite") : undefined}
+                onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, inlines })))}
                 onEnter={() => onEnter(block)}
-                onEmptyBackspace={() => setBlocks(removeLine(draft.blocks, block.id))}
+                onEmptyBackspace={() => updateBlocks((blocks) => removeLine(blocks, block.id))}
                 onFocus={() => {
                   setFocusId(block.id);
                   setActive(parentSpeaker(draft.blocks, block.id));
@@ -410,7 +426,7 @@ export function NotebookEditor({
               size="icon"
               className="size-11"
               aria-label={t(locale, "notebookHeading")}
-              onClick={() => focusId && setBlocks(mapLine(draft.blocks, focusId, (row) => ({ ...row, type: row.type === "h" ? "p" : "h" })))}
+              onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "h" ? "p" : "h" })))}
             >
               <Type />
             </Button>
@@ -419,7 +435,7 @@ export function NotebookEditor({
               size="icon"
               className="size-11"
               aria-label={t(locale, "notebookList")}
-              onClick={() => focusId && setBlocks(mapLine(draft.blocks, focusId, (row) => ({ ...row, type: row.type === "ul" ? "p" : "ul" })))}
+              onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ul" ? "p" : "ul" })))}
             >
               <List />
             </Button>
@@ -428,7 +444,7 @@ export function NotebookEditor({
               size="icon"
               className="size-11"
               aria-label={t(locale, "notebookNumbers")}
-              onClick={() => focusId && setBlocks(mapLine(draft.blocks, focusId, (row) => ({ ...row, type: row.type === "ol" ? "p" : "ol" })))}
+              onClick={() => focusId && updateBlocks((blocks) => mapLine(blocks, focusId, (row) => ({ ...row, type: row.type === "ol" ? "p" : "ol" })))}
             >
               <ListOrdered />
             </Button>

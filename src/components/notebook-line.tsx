@@ -13,6 +13,7 @@ export function NotebookLine({
   locale,
   style,
   placeholder,
+  active,
   onChange,
   onEnter,
   onEmptyBackspace,
@@ -23,6 +24,7 @@ export function NotebookLine({
   locale: Locale;
   style?: Partial<CiteStyle>;
   placeholder?: string;
+  active?: boolean;
   onChange: (inlines: NoteInline[]) => void;
   onEnter: () => void;
   onEmptyBackspace: () => void;
@@ -44,6 +46,20 @@ export function NotebookLine({
     if (el.innerHTML !== html) el.innerHTML = html;
   }, [block.inlines, locale, style]);
 
+  useEffect(() => {
+    if (!active) return;
+    const el = ref.current;
+    if (!el || document.activeElement === el) return;
+    el.focus();
+    focused.current = true;
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
+  }, [active, block.id]);
+
   function emit() {
     const el = ref.current;
     if (!el) return;
@@ -53,18 +69,20 @@ export function NotebookLine({
     onDetect(detectTrailingRef(inlines, locale));
   }
 
+  const empty = block.inlines.length === 0;
+
   return (
     <div
       ref={ref}
       contentEditable
       role="textbox"
       aria-multiline="true"
-      data-placeholder={placeholder}
+      data-placeholder={empty ? placeholder : undefined}
       suppressContentEditableWarning
       className={cn(
         "note-line min-h-7 w-full bg-transparent text-base leading-relaxed text-fg outline-none",
         block.type === "h" && "font-display text-xl italic",
-        block.inlines.length === 0 && "note-line-empty",
+        empty && placeholder && "note-line-empty",
       )}
       onInput={emit}
       onBlur={() => {
