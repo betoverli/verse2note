@@ -42,6 +42,38 @@ html.light {
   --shadow-border-hover: 0 0 0 1px rgb(28 24 20 / 0.18);
 }
 
+html.light .sheet-invert {
+  --color-bg: #121110;
+  --color-surface: #1c1a18;
+  --color-elevated: #262320;
+  --color-fg: #f3eee6;
+  --color-muted: #a89f93;
+  --color-subtle: #7a736a;
+  --color-accent: #e8dcc8;
+  --color-accent-fg: #1a1714;
+  --color-border: rgb(243 238 230 / 0.12);
+  --color-ring: #e8dcc8;
+  --shadow-border: 0 0 0 1px rgb(243 238 230 / 0.08);
+  background-color: var(--color-elevated);
+  color: var(--color-fg);
+}
+
+html.dark .sheet-invert {
+  --color-bg: #f4efe6;
+  --color-surface: #ebe4d6;
+  --color-elevated: #fffaf2;
+  --color-fg: #1c1814;
+  --color-muted: #6b6358;
+  --color-subtle: #8a8176;
+  --color-accent: #2a241e;
+  --color-accent-fg: #f7f1e6;
+  --color-border: rgb(28 24 20 / 0.12);
+  --color-ring: #2a241e;
+  --shadow-border: 0 0 0 1px rgb(28 24 20 / 0.1);
+  background-color: var(--color-elevated);
+  color: var(--color-fg);
+}
+
 @layer components {
   .app-header {
     padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);

@@ -60,6 +60,8 @@ function placeAfterContent(el: HTMLElement) {
 
 export type NotebookDocHandle = {
   flush: () => void;
+  markCaret: () => void;
+  clearCaret: () => void;
   insertPassage: (passage: Passage, lineId?: string | null) => void;
   toggleKind: (type: LineType) => void;
 };
@@ -100,6 +102,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   const enterLock = useRef(false);
   const selectedIds = useRef<string[]>([]);
   const lastLineId = useRef<string | null>(null);
+  const hold = useRef(false);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const sig = `${blocksSignature(blocks)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
@@ -112,6 +115,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (hold.current) return;
     if (focused.current && sigRef.current === sig) return;
     sigRef.current = sig;
     const html = renderHtml();
@@ -126,10 +130,45 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
 
   useImperativeHandle(handle, () => ({
     flush: () => parse(),
+    markCaret: () => {
+      const root = ref.current;
+      if (!root) return;
+      root.querySelectorAll("[data-caret-mark]").forEach((node) => node.remove());
+      const mark = document.createElement("span");
+      mark.dataset.caretMark = "1";
+      mark.append("\u200B");
+      const line = lineElFromSel();
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && line && sel.anchorNode && line.contains(sel.anchorNode)) {
+        const range = sel.getRangeAt(0);
+        range.collapse(true);
+        range.insertNode(mark);
+      } else if (line) line.append(mark);
+      else root.append(mark);
+      hold.current = true;
+      lastLineId.current = line?.dataset.lineId ?? lastLineId.current;
+    },
+    clearCaret: () => {
+      hold.current = false;
+      ref.current?.querySelectorAll("[data-caret-mark]").forEach((node) => node.remove());
+    },
     insertPassage: (passage: Passage, lineId?: string | null) => {
       const root = ref.current;
       if (!root) return;
       const html = inlinesToHtml([passageToRef(passage)], locale, style);
+      const mark = root.querySelector<HTMLElement>("[data-caret-mark]");
+      hold.current = false;
+      if (mark) {
+        const line = mark.closest<HTMLElement>(".note-line");
+        mark.insertAdjacentHTML("beforebegin", html);
+        mark.remove();
+        if (line) {
+          tidyLine(line);
+          placeAfterContent(line);
+        }
+        parse();
+        return;
+      }
       const id = lineId || lastLineId.current;
       const line =
         (id ? root.querySelector<HTMLElement>(`[data-line-id="${id}"]`) : null) ??
@@ -298,7 +337,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       }}
       onBlur={() => {
         focused.current = false;
-        emit(true);
+        if (!hold.current) emit(true);
       }}
       onInput={() => emit()}
       onMouseUp={() => {

@@ -38,7 +38,7 @@ export function NotebookSpeakerSheet({
   return (
     <ViewportSheet onClose={onClose}>
       <div
-        className="max-h-full w-full max-w-md overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
+        className="sheet-invert max-h-full w-full max-w-md overflow-y-auto rounded-t-xl p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <p className="text-sm font-medium text-fg">{t(locale, "notebookAddSpeaker")}</p>

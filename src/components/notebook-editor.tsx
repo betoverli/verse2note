@@ -433,7 +433,18 @@ export function NotebookEditor({
         >
           <ListOrdered />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddRef")} onPointerDown={toolPointer(() => setPicker(true))}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          aria-label={t(locale, "notebookAddRef")}
+          onPointerDown={() => docApi.current?.markCaret()}
+          onClick={() => {
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            setPicker(true);
+          }}
+        >
           <BookOpen />
         </Button>
         <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddSpeaker")} onPointerDown={toolPointer(() => setPeople(true))}>
@@ -462,7 +473,14 @@ export function NotebookEditor({
           compact={vv.keyboard ? false : compact}
           extra={
             picker ? (
-              <NotebookPickerSheet open onClose={() => setPicker(false)} onPick={onPickRef} />
+              <NotebookPickerSheet
+                open
+                onClose={() => {
+                  docApi.current?.clearCaret();
+                  setPicker(false);
+                }}
+                onPick={onPickRef}
+              />
             ) : (
               toolbar
             )
@@ -525,7 +543,15 @@ export function NotebookEditor({
             setActive(id ? speakerBlockOf(latest().blocks, id)?.speakerId ?? null : null);
           }}
           onDetect={setPending}
-          onTrigger={(kind) => (kind === "at" ? setPeople(true) : setPicker(true))}
+          onTrigger={(kind) => {
+            if (kind === "at") {
+              setPeople(true);
+              return;
+            }
+            docApi.current?.markCaret();
+            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            setPicker(true);
+          }}
           onRemoveSpeaker={removeSpeaker}
         />
       </div>
@@ -533,7 +559,7 @@ export function NotebookEditor({
       {tagSheet ? (
         <ViewportSheet onClose={() => setTagSheet(false)}>
           <div
-            className="max-h-full w-full max-w-sm overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+            className="sheet-invert max-h-full w-full max-w-sm overflow-y-auto rounded-t-xl p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
             onClick={(event) => event.stopPropagation()}
           >
                 <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookTags")}</p>
