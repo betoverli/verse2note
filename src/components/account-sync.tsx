@@ -50,7 +50,6 @@ export function AccountSync() {
       }
       syncedFor.current = null;
       useAppStore.getState().clearAccount();
-      useAppStore.getState().setNotebookPreview(false);
       clearOutbox();
       useAppStore.getState().setCloudHydrated(true);
       ready.current = false;
