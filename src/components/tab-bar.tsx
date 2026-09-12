@@ -52,6 +52,8 @@ export function showTabBar(pathname: string) {
 export function TabBar() {
   const locale = useAppStore((s) => s.locale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const notebookPreview = useAppStore((s) => s.notebookPreview);
+  const tabs = TABS.filter((tab) => tab.to !== "/notebook" || notebookPreview);
 
   return (
     <nav
@@ -59,7 +61,7 @@ export function TabBar() {
       aria-label={t(locale, "appName")}
     >
       <ul className="mx-auto flex max-w-4xl">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = tab.match(pathname);
           return (

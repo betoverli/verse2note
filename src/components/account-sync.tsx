@@ -4,6 +4,7 @@ import { readSessionUser } from "@/lib/auth/session-cache";
 import { mergeCollections } from "@/lib/collections-local";
 import { mergeNotes, mergeSpeakers } from "@/lib/notebook-local";
 import { listMyNotes, listMySpeakers } from "@/lib/notebook-cloud";
+import { getIsAdmin } from "@/lib/usage";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { enqueue, flushOutbox, startOutbox, clearOutbox } from "@/lib/outbox";
 import { profileIsComplete } from "@/lib/profile";
@@ -50,6 +51,7 @@ export function AccountSync() {
       }
       syncedFor.current = null;
       useAppStore.getState().clearAccount();
+      useAppStore.getState().setNotebookPreview(false);
       clearOutbox();
       useAppStore.getState().setCloudHydrated(true);
       ready.current = false;
@@ -70,13 +72,15 @@ export function AccountSync() {
     void (async () => {
       try {
         await flushOutbox();
-        const [cloud, collections, notes, speakers] = await Promise.all([
+        const [cloud, collections, notes, speakers, admin] = await Promise.all([
           getPrefs(),
           listMyCollections(),
           listMyNotes(),
           listMySpeakers(),
+          getIsAdmin().catch(() => false),
         ]);
         if (cancelled) return;
+        useAppStore.getState().setNotebookPreview(Boolean(admin));
         const localCollections = useAppStore.getState().myCollections;
         useAppStore.getState().setMyCollections(mergeCollections(localCollections, collections));
         useAppStore.getState().setNotes(mergeNotes(useAppStore.getState().notes, notes));

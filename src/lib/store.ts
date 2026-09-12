@@ -48,6 +48,7 @@ type AppState = {
   notes: Note[];
   speakers: Speaker[];
   notebookActiveSpeakerId: string | null;
+  notebookPreview: boolean;
   cloudHydrated: boolean;
   cloudProfileOk: boolean;
   setLocale: (locale: Locale) => void;
@@ -90,6 +91,7 @@ type AppState = {
   setNotes: (items: Note[]) => void;
   setSpeakers: (items: Speaker[]) => void;
   setNotebookActiveSpeakerId: (id: string | null) => void;
+  setNotebookPreview: (value: boolean) => void;
   setCloudHydrated: (value: boolean) => void;
   setCloudProfileOk: (value: boolean) => void;
   clearAccount: () => void;
@@ -131,6 +133,7 @@ export const useAppStore = create<AppState>()(
       notes: [],
       speakers: [],
       notebookActiveSpeakerId: null,
+      notebookPreview: false,
       cloudHydrated: false,
       cloudProfileOk: false,
       setLocale: (locale) => {
@@ -270,6 +273,7 @@ export const useAppStore = create<AppState>()(
       setNotes: (notes) => set({ notes }),
       setSpeakers: (speakers) => set({ speakers }),
       setNotebookActiveSpeakerId: (notebookActiveSpeakerId) => set({ notebookActiveSpeakerId }),
+      setNotebookPreview: (notebookPreview) => set({ notebookPreview }),
       setCloudHydrated: (cloudHydrated) => set({ cloudHydrated }),
       setCloudProfileOk: (cloudProfileOk) => set({ cloudProfileOk }),
       clearAccount: () =>
@@ -283,6 +287,7 @@ export const useAppStore = create<AppState>()(
           lastName: "",
           profileEmail: "",
           myCollections: [],
+          notebookPreview: false,
           cloudProfileOk: false,
         }),
       resetSelection: () =>

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { NotebookEditor } from "@/components/notebook-editor";
@@ -26,6 +26,8 @@ export const Route = createFileRoute("/n/$id")({
 function SharedNoteRoute() {
   const { id } = Route.useParams();
   const locale = useAppStore((s) => s.locale);
+  const hydrated = useAppStore((s) => s.cloudHydrated);
+  const preview = useAppStore((s) => s.notebookPreview);
   const mine = useAppStore((s) => s.notes.find((item) => item.id === id));
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
@@ -58,6 +60,9 @@ function SharedNoteRoute() {
       cancelled = true;
     };
   }, [id, user, isPending]);
+
+  if (!hydrated) return null;
+  if (!preview) return <Navigate to="/app" />;
 
   if (mine) {
     return (

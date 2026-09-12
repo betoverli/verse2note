@@ -39,6 +39,7 @@ function toCopyItem(
 export function LinkPreview() {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const notebookPreview = useAppStore((s) => s.notebookPreview);
   const citeBook = useAppStore((s) => s.citeBook);
   const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
@@ -219,7 +220,7 @@ export function LinkPreview() {
                 </p>
                 <div className="-mr-1 flex shrink-0 items-center">
                   {passage ? <SaveToCollectionButton passages={[passage]} iconOnly /> : null}
-                  {passage ? (
+                  {passage && notebookPreview ? (
                     <Button
                       size="icon"
                       variant="ghost"

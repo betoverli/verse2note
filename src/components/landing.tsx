@@ -27,7 +27,7 @@ const JSON_LD = {
     "Rich-text copy with a deep link",
     "Multiple Bible apps",
     "160 themed collections in 14 categories",
-    "Meeting notebook with Bible reference pills",
+    "34 reading plans of whole chapters",
     "Optional Google / X / email account for My plans",
     "API, skill and MCP for AI agents (no login)",
     "Works offline after first open",
