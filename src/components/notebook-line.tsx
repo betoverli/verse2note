@@ -34,17 +34,27 @@ export function NotebookLine({
   const ref = useRef<HTMLDivElement>(null);
   const skip = useRef(false);
   const focused = useRef(false);
+  const formatKey = `${locale}:${style?.book ?? "name"}:${style?.sep ?? "colon"}`;
+  const formatRef = useRef(formatKey);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (skip.current || focused.current) {
+    const html = inlinesToHtml(block.inlines, locale, style);
+    const formatChanged = formatRef.current !== formatKey;
+    formatRef.current = formatKey;
+    if (skip.current && !formatChanged) {
       skip.current = false;
       return;
     }
-    const html = inlinesToHtml(block.inlines, locale, style);
-    if (el.innerHTML !== html) el.innerHTML = html;
-  }, [block.inlines, locale, style]);
+    skip.current = false;
+    if (el.innerHTML === html) return;
+    el.innerHTML = html;
+    if (focused.current) {
+      if (block.inlines.length === 0) placeCaret(el, true);
+      else placeAfterContent(el);
+    }
+  }, [block.inlines, locale, formatKey, style?.book, style?.sep]);
 
   useEffect(() => {
     if (!active) return;

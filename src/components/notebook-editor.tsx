@@ -161,6 +161,7 @@ function useHideOnScroll(enabled: boolean) {
 function LineRow({
   block,
   locale,
+  copyLocale,
   style,
   placeholder,
   active,
@@ -173,6 +174,7 @@ function LineRow({
 }: {
   block: LineBlock;
   locale: Parameters<typeof t>[0];
+  copyLocale: Parameters<typeof t>[0];
   style: { book: "name" | "abbr"; sep: "colon" | "dot" | "comma" };
   placeholder?: string;
   active?: boolean;
@@ -191,7 +193,7 @@ function LineRow({
       ) : null}
       <NotebookLine
         block={block}
-        locale={locale}
+        locale={copyLocale}
         style={style}
         placeholder={placeholder}
         active={active}
@@ -215,6 +217,7 @@ export function NotebookEditor({
   speakerList?: Speaker[];
 }) {
   const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
   const citeBook = useAppStore((s) => s.citeBook);
   const citeSep = useAppStore((s) => s.citeSep);
   const storedSpeakers = useAppStore((s) => s.speakers);
@@ -558,6 +561,7 @@ export function NotebookEditor({
                         key={child.id}
                         block={child}
                         locale={locale}
+                        copyLocale={copyLocale}
                         style={cite}
                         active={!readOnly && focusId === child.id}
                         index={child.type === "ol" ? childIndex : undefined}
@@ -581,6 +585,7 @@ export function NotebookEditor({
                 key={block.id}
                 block={block}
                 locale={locale}
+                copyLocale={copyLocale}
                 style={cite}
                 active={!readOnly && focusId === block.id}
                 index={block.type === "ol" ? blockIndex : undefined}
