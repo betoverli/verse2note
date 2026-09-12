@@ -242,7 +242,6 @@ export function NotebookEditor({
   const [people, setPeople] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
-  const [dateOpen, setDateOpen] = useState(false);
   const [tagSheet, setTagSheet] = useState(false);
   const [tag, setTag] = useState("");
   const tagRef = useRef<HTMLInputElement>(null);
@@ -481,27 +480,23 @@ export function NotebookEditor({
           trailing={
             readOnly ? null : (
               <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-12 text-fg [&_svg]:size-6"
-                  aria-label={t(locale, "notebookDate")}
-                  onClick={() => {
-                    setTagSheet(false);
-                    setDateOpen(true);
-                  }}
-                >
-                  <CalendarDays />
-                </Button>
+                <label className="relative flex size-12 cursor-pointer items-center justify-center text-fg">
+                  <CalendarDays className="size-6" />
+                  <span className="sr-only">{t(locale, "notebookDate")}</span>
+                  <input
+                    type="date"
+                    value={draft.happenedAt}
+                    onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                    aria-label={t(locale, "notebookDate")}
+                  />
+                </label>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="size-12 text-fg [&_svg]:size-6"
                   aria-label={t(locale, "notebookTags")}
-                  onClick={() => {
-                    setDateOpen(false);
-                    setTagSheet(true);
-                  }}
+                  onClick={() => setTagSheet(true)}
                 >
                   <Hash />
                 </Button>
@@ -619,29 +614,6 @@ export function NotebookEditor({
           })}
         </div>
       </div>
-
-      {dateOpen && typeof document !== "undefined"
-        ? createPortal(
-            <div className="fixed inset-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center" onClick={() => setDateOpen(false)}>
-              <div
-                className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookDate")}</p>
-                <input
-                  type="date"
-                  value={draft.happenedAt}
-                  onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
-                  className="h-12 w-full rounded-md bg-surface px-3 text-base text-fg"
-                />
-                <Button className="mt-3 w-full" onClick={() => setDateOpen(false)}>
-                  {t(locale, "back")}
-                </Button>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
 
       {tagSheet && typeof document !== "undefined"
         ? createPortal(
