@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2, UserPlus } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds, todayKey } from "@/lib/notebook";
 import { createLocalNote, deleteLocalNote, ensureTodayNote } from "@/lib/notebook-local";
@@ -26,6 +26,7 @@ function formatDay(iso: string, locale: string) {
 function NoteCard({ note }: { note: Note }) {
   const locale = useAppStore((s) => s.locale);
   const speakers = useAppStore((s) => s.speakers);
+  const navigate = useNavigate();
   const people = noteSpeakerIds(note)
     .map((id) => speakers.find((item) => item.id === id))
     .filter(Boolean)
@@ -50,31 +51,11 @@ function NoteCard({ note }: { note: Note }) {
       el.style.transition = animate ? "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)" : "none";
       el.style.transform = `translate3d(${value}px,0,0)`;
     }
-    const p = Math.min(1.15, Math.abs(value) / Math.max(1, width.current * 0.42));
-    if (shareBg.current) shareBg.current.style.opacity = value > 8 ? "1" : "0";
-    if (deleteBg.current) deleteBg.current.style.opacity = value < -8 ? "1" : "0";
+    const p = Math.min(1.2, Math.abs(value) / Math.max(1, width.current * 0.32));
+    if (shareBg.current) shareBg.current.style.opacity = value > 6 ? "1" : "0";
+    if (deleteBg.current) deleteBg.current.style.opacity = value < -6 ? "1" : "0";
     if (shareIcon.current) shareIcon.current.style.transform = `scale(${0.82 + p * 0.28})`;
     if (deleteIcon.current) deleteIcon.current.style.transform = `scale(${0.82 + p * 0.28})`;
-  }
-
-  function onPointerDown(event: ReactPointerEvent) {
-    if (event.button) return;
-    width.current = wrap.current?.getBoundingClientRect().width || 1;
-    start.current = { x: event.clientX, y: event.clientY, lock: "" };
-  }
-
-  function onPointerMove(event: ReactPointerEvent) {
-    const dx = event.clientX - start.current.x;
-    const dy = event.clientY - start.current.y;
-    if (!start.current.lock) {
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-      start.current.lock = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
-      if (start.current.lock === "h") wrap.current?.setPointerCapture(event.pointerId);
-    }
-    if (start.current.lock !== "h") return;
-    event.preventDefault();
-    const max = width.current;
-    paint(Math.max(-max, Math.min(max, dx)));
   }
 
   function finish(dir: "share" | "delete" | "reset") {
@@ -98,15 +79,78 @@ function NoteCard({ note }: { note: Note }) {
     paint(0, true);
   }
 
-  function onPointerUp() {
-    const lock = start.current.lock;
-    start.current.lock = "";
-    if (lock !== "h") return;
-    const threshold = width.current * 0.42;
-    if (x.current <= -threshold) finish("delete");
-    else if (x.current >= threshold) finish("share");
-    else finish("reset");
-  }
+  useEffect(() => {
+    const el = layer.current;
+    if (!el) return;
+
+    const point = (event: TouchEvent | PointerEvent) => {
+      if ("touches" in event) {
+        const touch = event.touches[0] ?? event.changedTouches[0];
+        return { x: touch?.clientX ?? 0, y: touch?.clientY ?? 0 };
+      }
+      return { x: event.clientX, y: event.clientY };
+    };
+
+    const onStart = (event: TouchEvent | PointerEvent) => {
+      if ("button" in event && event.button) return;
+      width.current = wrap.current?.getBoundingClientRect().width || 1;
+      const p = point(event);
+      start.current = { x: p.x, y: p.y, lock: "" };
+    };
+
+    const onMove = (event: TouchEvent | PointerEvent) => {
+      const p = point(event);
+      if (!p.x && !p.y && !start.current.lock) return;
+      const dx = p.x - start.current.x;
+      const dy = p.y - start.current.y;
+      if (!start.current.lock) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        start.current.lock = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+      }
+      if (start.current.lock !== "h") return;
+      event.preventDefault();
+      const max = width.current;
+      paint(Math.max(-max, Math.min(max, dx)));
+    };
+
+    const onEnd = () => {
+      const lock = start.current.lock;
+      const dx = x.current;
+      start.current.lock = "";
+      if (lock !== "h") return;
+      const threshold = Math.max(72, width.current * 0.28);
+      if (dx <= -threshold) finish("delete");
+      else if (dx >= threshold) finish("share");
+      else finish("reset");
+    };
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    const onPointerStart = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      onStart(event);
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      onMove(event);
+    };
+    el.addEventListener("pointerdown", onPointerStart);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup", onEnd);
+    el.addEventListener("pointercancel", onEnd);
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+      el.removeEventListener("pointerdown", onPointerStart);
+      el.removeEventListener("pointermove", onPointerMove);
+      el.removeEventListener("pointerup", onEnd);
+      el.removeEventListener("pointercancel", onEnd);
+    };
+  }, [note.id]);
 
   if (gone) return null;
 
@@ -114,7 +158,7 @@ function NoteCard({ note }: { note: Note }) {
     <div ref={wrap} className="relative overflow-hidden rounded-lg shadow-[var(--shadow-border)]">
       <div
         ref={shareBg}
-        className="absolute inset-0 flex items-center justify-start bg-accent px-5 text-accent-fg opacity-0"
+        className="pointer-events-none absolute inset-0 flex items-center justify-start bg-accent px-5 text-accent-fg opacity-0"
         aria-hidden
       >
         <span ref={shareIcon} className="inline-flex">
@@ -123,7 +167,7 @@ function NoteCard({ note }: { note: Note }) {
       </div>
       <div
         ref={deleteBg}
-        className="absolute inset-0 flex items-center justify-end bg-[#8b3a32] px-5 text-[#f3eee6] opacity-0"
+        className="pointer-events-none absolute inset-0 flex items-center justify-end bg-[#8b3a32] px-5 text-[#f3eee6] opacity-0"
         aria-hidden
       >
         <span ref={deleteIcon} className="inline-flex">
@@ -132,22 +176,15 @@ function NoteCard({ note }: { note: Note }) {
       </div>
       <div
         ref={layer}
+        role="link"
         className="relative bg-surface will-change-transform"
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
         style={{ touchAction: "pan-y" }}
+        onClick={() => {
+          if (Math.abs(x.current) > 12) return;
+          void navigate({ to: "/notebook/$id", params: { id: note.id } });
+        }}
       >
-        <Link
-          to="/notebook/$id"
-          params={{ id: note.id }}
-          draggable={false}
-          onClick={(event) => {
-            if (Math.abs(x.current) > 12) event.preventDefault();
-          }}
-          className="flex min-h-16 items-center gap-3 px-4 py-3 text-fg"
-        >
+        <div className="flex min-h-16 items-center gap-3 px-4 py-3 text-fg">
           <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
             {formatDay(note.happenedAt, locale)}
           </span>
@@ -168,7 +205,7 @@ function NoteCard({ note }: { note: Note }) {
               )}
             </span>
           ) : null}
-        </Link>
+        </div>
       </div>
       <SendToFriendButton kind="note" targetId={note.id} hideTrigger open={share} onOpenChange={setShare} />
     </div>

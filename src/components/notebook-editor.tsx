@@ -19,7 +19,6 @@ import { useAppStore } from "@/lib/store";
 import { formatSelection, NotebookLine } from "@/components/notebook-line";
 import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
-import { SendToFriendButton } from "@/components/send-to-friend";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import type { Passage } from "@/lib/bible/passage";
@@ -441,7 +440,7 @@ export function NotebookEditor({
               />
             )
           }
-          trailing={readOnly ? null : <SendToFriendButton kind="note" targetId={draft.id} iconOnly />}
+          trailing={null}
         />
       </div>
       <div style={{ height: chromeH }} aria-hidden />
