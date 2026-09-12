@@ -444,7 +444,7 @@ export function NotebookEditor({
         />
       </div>
       <div style={{ height: chromeH }} aria-hidden />
-      <div className="flex flex-col gap-3 pb-[calc(var(--tab-bar-height)+1.5rem)]">
+      <div className="flex flex-col gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <input
             type="date"

@@ -22,7 +22,7 @@ function NotebookNoteRoute() {
   const note = useAppStore((s) => s.notes.find((item) => item.id === id));
   if (!note) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-8 sm:px-6">
         <AppHeader title={t(locale, "notebook")} backTo="/notebook" />
         <p className="text-sm text-muted">{t(locale, "notebookEmpty")}</p>
         <Button asChild>
