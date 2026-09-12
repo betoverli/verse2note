@@ -2,8 +2,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2, UserPlus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
-import { noteMatches, notePreview, noteSpeakerIds, todayKey } from "@/lib/notebook";
-import { createLocalNote, deleteLocalNote, ensureTodayNote } from "@/lib/notebook-local";
+import { noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
+import { createLocalNote, deleteLocalNote } from "@/lib/notebook-local";
 import { listGrantedNotes } from "@/lib/notebook-cloud";
 import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -246,7 +246,6 @@ export function NotebookHome({ query }: { query: string }) {
   const [tag, setTag] = useState<string | null>(null);
   const [speakerId, setSpeakerId] = useState<string | null>(null);
   const [granted, setGranted] = useState<Note[]>([]);
-  const today = notes.find((item) => item.happenedAt === todayKey());
 
   useEffect(() => {
     if (!user) return;
@@ -265,11 +264,6 @@ export function NotebookHome({ query }: { query: string }) {
     return list;
   }, [notes, query, speakers, filter, tag, speakerId, granted]);
 
-  function openToday() {
-    const note = ensureTodayNote();
-    void navigate({ to: "/notebook/$id", params: { id: note.id } });
-  }
-
   function openNew() {
     const note = createLocalNote();
     void navigate({ to: "/notebook/$id", params: { id: note.id } });
@@ -284,17 +278,6 @@ export function NotebookHome({ query }: { query: string }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <button
-        type="button"
-        onClick={openToday}
-        className="flex min-h-20 flex-col justify-center rounded-lg bg-accent px-4 py-3 text-left text-accent-fg shadow-[var(--shadow-border)]"
-      >
-        <span className="text-[11px] font-medium tracking-wide uppercase opacity-70">{t(locale, "notebookToday")}</span>
-        <span className="font-display text-2xl italic">
-          {today?.title || t(locale, "notebookMeeting")}
-        </span>
-      </button>
-
       <div className="flex gap-2 overflow-x-auto">
         {filters.map((item) => (
           <button
