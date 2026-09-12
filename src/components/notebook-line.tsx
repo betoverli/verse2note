@@ -72,7 +72,8 @@ export function NotebookLine({
   return (
     <div
       ref={ref}
-      contentEditable
+      contentEditable={Boolean(active)}
+      tabIndex={active ? 0 : -1}
       role="textbox"
       aria-multiline="true"
       data-placeholder={empty ? placeholder : undefined}
@@ -82,6 +83,11 @@ export function NotebookLine({
         block.type === "h" && "font-display text-xl italic",
         empty && placeholder && "note-line-empty",
       )}
+      onMouseDown={(event) => {
+        if (active) return;
+        event.preventDefault();
+        onFocus();
+      }}
       onInput={emit}
       onBlur={() => {
         focused.current = false;

@@ -85,6 +85,7 @@ export function AppHeader({
   titleField,
   extra,
   compact,
+  pinned,
 }: {
   title?: string;
   backTo?: BackTo;
@@ -95,6 +96,7 @@ export function AppHeader({
   titleField?: ReactNode;
   extra?: ReactNode;
   compact?: boolean;
+  pinned?: boolean;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [apple, setApple] = useState(false);
@@ -109,7 +111,7 @@ export function AppHeader({
   }, [showSearch]);
 
   return (
-    <header className="app-header sticky top-0 z-20 -mx-4 bg-bg px-2 pb-2 sm:-mx-6 sm:px-3">
+    <header className={cn("app-header z-20 bg-bg px-2 pb-2", pinned ? "relative" : "sticky top-0 -mx-4 sm:-mx-6 sm:px-3")}>
       <div className={cn("flex min-h-12 items-center gap-1", compact && "hidden")}>
         <div className="flex w-12 shrink-0 items-center justify-start">
           {backTo ? (

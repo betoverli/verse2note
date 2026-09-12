@@ -233,6 +233,8 @@ html.light {
   .note-line {
     text-align: left;
     caret-color: var(--color-fg);
+    scroll-margin-top: 9rem;
+    scroll-margin-bottom: 6rem;
   }
 
   .note-line-empty:empty::before,

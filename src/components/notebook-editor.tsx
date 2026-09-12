@@ -74,10 +74,36 @@ function parentSpeaker(blocks: NoteBlock[], lineId: string) {
   return null;
 }
 
-function useHideOnScroll() {
+function useVisualViewport() {
+  const [state, setState] = useState({ offsetTop: 0, keyboard: false });
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      setState({
+        offsetTop: vv.offsetTop,
+        keyboard: window.innerHeight - vv.height > 80,
+      });
+    };
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    update();
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+    };
+  }, []);
+  return state;
+}
+
+function useHideOnScroll(enabled: boolean) {
   const [compact, setCompact] = useState(false);
   const last = useRef(0);
   useEffect(() => {
+    if (!enabled) {
+      setCompact(false);
+      return;
+    }
     last.current = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
@@ -89,7 +115,7 @@ function useHideOnScroll() {
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [enabled]);
   return compact;
 }
 
@@ -155,7 +181,10 @@ export function NotebookEditor({
   const storedSpeakers = useAppStore((s) => s.speakers);
   const speakers = speakerList ?? storedSpeakers;
   const setActive = useAppStore((s) => s.setNotebookActiveSpeakerId);
-  const compact = useHideOnScroll();
+  const vv = useVisualViewport();
+  const compact = useHideOnScroll(!vv.keyboard);
+  const chromeRef = useRef<HTMLDivElement>(null);
+  const [chromeH, setChromeH] = useState(108);
   const [draft, setDraft] = useState(note);
   const [picker, setPicker] = useState(false);
   const [people, setPeople] = useState(false);
@@ -174,6 +203,15 @@ export function NotebookEditor({
   useEffect(() => {
     return () => setActive(null);
   }, [setActive]);
+
+  useEffect(() => {
+    const el = chromeRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setChromeH(el.getBoundingClientRect().height));
+    ro.observe(el);
+    setChromeH(el.getBoundingClientRect().height);
+    return () => ro.disconnect();
+  }, [compact, pending, readOnly]);
 
   function save(next: Note) {
     draftRef.current = next;
@@ -247,7 +285,7 @@ export function NotebookEditor({
     .filter(Boolean);
 
   const toolbar = readOnly ? null : (
-    <div className="border-t border-border/60 px-1 pb-1">
+    <div className="border-t border-border/60 px-1 pb-1" onMouseDown={(event) => event.preventDefault()}>
       {pending ? (
         <button
           type="button"
@@ -308,27 +346,38 @@ export function NotebookEditor({
 
   return (
     <>
-      <AppHeader
-        title={draft.title || t(locale, "notebookMeeting")}
-        backTo="/notebook"
-        compact={compact}
-        extra={toolbar}
-        titleField={
-          readOnly ? undefined : (
-            <input
-              value={draft.title}
-              onChange={(event) => patch((current) => ({ ...current, title: event.target.value.slice(0, 80) }))}
-              placeholder={t(locale, "notebookMeeting")}
-              className="h-10 w-full bg-transparent text-center text-[17px] font-semibold text-fg outline-none placeholder:text-subtle"
-            />
-          )
-        }
-        trailing={readOnly ? null : <SendToFriendButton kind="note" targetId={draft.id} iconOnly />}
-      />
+      <div
+        ref={chromeRef}
+        className="fixed inset-x-0 z-40 bg-bg px-2 sm:px-3"
+        style={{ top: vv.offsetTop }}
+      >
+        <AppHeader
+          pinned
+          title={draft.title || t(locale, "notebookMeeting")}
+          backTo="/notebook"
+          compact={vv.keyboard ? false : compact}
+          extra={toolbar}
+          titleField={
+            readOnly ? undefined : (
+              <input
+                value={draft.title}
+                tabIndex={-1}
+                enterKeyHint="done"
+                onChange={(event) => patch((current) => ({ ...current, title: event.target.value.slice(0, 80) }))}
+                placeholder={t(locale, "notebookMeeting")}
+                className="h-10 w-full bg-transparent text-center text-[17px] font-semibold text-fg outline-none placeholder:text-subtle"
+              />
+            )
+          }
+          trailing={readOnly ? null : <SendToFriendButton kind="note" targetId={draft.id} iconOnly />}
+        />
+      </div>
+      <div style={{ height: chromeH }} aria-hidden />
       <div className="flex flex-col gap-3 pb-[calc(var(--tab-bar-height)+1.5rem)]">
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <input
             type="date"
+            tabIndex={-1}
             value={draft.happenedAt}
             disabled={readOnly}
             onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
@@ -371,6 +420,7 @@ export function NotebookEditor({
                 setTag("");
               }}
               placeholder={t(locale, "notebookTagAdd")}
+              tabIndex={-1}
               enterKeyHint="done"
               className="w-24 bg-transparent py-1 outline-none"
             />
@@ -409,6 +459,8 @@ export function NotebookEditor({
                   ) : (
                     <input
                       value={block.title}
+                      tabIndex={-1}
+                      enterKeyHint="done"
                       onChange={(event) =>
                         updateBlocks((blocks) =>
                           blocks.map((row) =>
@@ -429,7 +481,7 @@ export function NotebookEditor({
                         block={child}
                         locale={locale}
                         style={cite}
-                        active={focusId === child.id}
+                        active={!readOnly && focusId === child.id}
                         index={child.type === "ol" ? childIndex : undefined}
                         onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, child.id, (row) => ({ ...row, inlines })))}
                         onEnter={() => onEnter(child)}
@@ -452,7 +504,7 @@ export function NotebookEditor({
                 block={block}
                 locale={locale}
                 style={cite}
-                active={focusId === block.id}
+                active={!readOnly && focusId === block.id}
                 index={block.type === "ol" ? blockIndex : undefined}
                 placeholder={block.id === first?.id && block.type === "p" ? t(locale, "notebookWrite") : undefined}
                 onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, inlines })))}
