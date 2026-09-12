@@ -126,10 +126,17 @@ export function NotebookLine({
           emit();
           onEnter();
         }
-        if (event.key === "Backspace" && ref.current && htmlToInlines(ref.current).length === 0) {
+        if ((event.key === "Backspace" || event.key === "Delete") && ref.current && isLineHtmlEmpty(ref.current)) {
           event.preventDefault();
           onEmptyBackspace();
         }
+      }}
+      onBeforeInput={(event) => {
+        const inputType = (event.nativeEvent as InputEvent).inputType;
+        if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
+        if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
+        event.preventDefault();
+        onEmptyBackspace();
       }}
     />
   );
@@ -162,4 +169,10 @@ function placeAfterContent(el: HTMLElement) {
   range.collapse(true);
   sel?.removeAllRanges();
   sel?.addRange(range);
+}
+
+function isLineHtmlEmpty(el: HTMLElement) {
+  if (el.querySelector(".ref-pill")) return false;
+  const text = (el.innerText ?? "").replace(/\u200B/g, "").replace(/\s/g, "");
+  return text.length === 0;
 }

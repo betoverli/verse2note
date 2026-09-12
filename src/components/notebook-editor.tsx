@@ -75,7 +75,24 @@ function insertAfter(blocks: NoteBlock[], id: string, next: LineBlock): NoteBloc
   return out;
 }
 
+function flattenLineIds(blocks: NoteBlock[]) {
+  const ids: string[] = [];
+  for (const block of blocks) {
+    if (block.type === "speaker") {
+      for (const child of block.children) ids.push(child.id);
+    } else ids.push(block.id);
+  }
+  return ids;
+}
+
+function prevLineId(blocks: NoteBlock[], id: string) {
+  const ids = flattenLineIds(blocks);
+  const index = ids.indexOf(id);
+  return index > 0 ? ids[index - 1] : null;
+}
+
 function removeLine(blocks: NoteBlock[], id: string): NoteBlock[] {
+  if (flattenLineIds(blocks).length <= 1) return blocks;
   const out: NoteBlock[] = [];
   for (const block of blocks) {
     if (block.type === "speaker") {
@@ -261,6 +278,12 @@ export function NotebookEditor({
     const next = emptyLine(block.type === "h" ? "p" : block.type);
     updateBlocks((blocks) => insertAfter(blocks, block.id, next));
     setFocusId(next.id);
+  }
+
+  function onMergeBack(id: string) {
+    const prev = prevLineId(latest().blocks, id);
+    updateBlocks((blocks) => removeLine(blocks, id));
+    if (prev) setFocusId(prev);
   }
 
   function onPickRef(passage: Passage) {
@@ -540,7 +563,7 @@ export function NotebookEditor({
                         index={child.type === "ol" ? childIndex : undefined}
                         onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, child.id, (row) => ({ ...row, inlines })))}
                         onEnter={() => onEnter(child)}
-                        onEmptyBackspace={() => updateBlocks((blocks) => removeLine(blocks, child.id))}
+                        onEmptyBackspace={() => onMergeBack(child.id)}
                         onFocus={() => {
                           setFocusId(child.id);
                           setActive(block.speakerId);
@@ -564,7 +587,7 @@ export function NotebookEditor({
                 placeholder={block.id === first?.id && block.type === "p" ? t(locale, "notebookWrite") : undefined}
                 onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, inlines })))}
                 onEnter={() => onEnter(block)}
-                onEmptyBackspace={() => updateBlocks((blocks) => removeLine(blocks, block.id))}
+                onEmptyBackspace={() => onMergeBack(block.id)}
                 onFocus={() => {
                   setFocusId(block.id);
                   setActive(parentSpeaker(draft.blocks, block.id));
