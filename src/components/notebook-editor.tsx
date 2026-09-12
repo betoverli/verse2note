@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { Bold, BookOpen, CalendarDays, Hash, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { detectTrailingRef, emptyLine, newNoteId, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type NoteInline, type Speaker, type SpeakerBlock } from "@/lib/notebook";
@@ -11,6 +10,7 @@ import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
+import { ViewportSheet } from "@/components/viewport-sheet";
 import { cn } from "@/lib/utils";
 import type { Passage } from "@/lib/bible/passage";
 
@@ -806,13 +806,12 @@ export function NotebookEditor({
         </div>
       </div>
 
-      {tagSheet && typeof document !== "undefined"
-        ? createPortal(
-            <div className="fixed inset-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center" onClick={() => setTagSheet(false)}>
-              <div
-                className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
-                onClick={(event) => event.stopPropagation()}
-              >
+      {tagSheet ? (
+        <ViewportSheet onClose={() => setTagSheet(false)}>
+          <div
+            className="max-h-full w-full max-w-sm overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
                 <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookTags")}</p>
                 <div className="mb-3 flex flex-wrap gap-2">
                   {draft.tags.map((item) => (
@@ -865,8 +864,7 @@ export function NotebookEditor({
                   {t(locale, "back")}
                 </Button>
               </div>
-            </div>,
-            document.body,
+            </ViewportSheet>
           )
         : null}
 

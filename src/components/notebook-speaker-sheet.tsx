@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { SPEAKER_COLORS, newNoteId, type Speaker } from "@/lib/notebook";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ViewportSheet } from "@/components/viewport-sheet";
 
 export function NotebookSpeakerSheet({
   open,
@@ -33,16 +33,16 @@ export function NotebookSpeakerSheet({
     onClose();
   }
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center" onClick={onClose}>
+  return (
+    <ViewportSheet onClose={onClose}>
       <div
-        className="w-full max-w-md rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
+        className="max-h-full w-full max-w-md overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <p className="text-sm font-medium text-fg">{t(locale, "notebookAddSpeaker")}</p>
-        <ul className="mt-3 max-h-56 space-y-1 overflow-y-auto">
+        <ul className="mt-3 max-h-40 space-y-1 overflow-y-auto">
           {speakers.map((speaker) => (
             <li key={speaker.id}>
               <button
@@ -75,7 +75,6 @@ export function NotebookSpeakerSheet({
           <Button type="submit">{t(locale, "notebookSaveSpeaker")}</Button>
         </form>
       </div>
-    </div>,
-    document.body,
+    </ViewportSheet>
   );
 }

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { OT_BOOKS, NT_BOOKS, bookById, type Book } from "@/lib/bible/books";
 import type { Passage } from "@/lib/bible/passage";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { NumberGrid } from "@/components/number-grid";
 import { Button } from "@/components/ui/button";
+import { ViewportSheet } from "@/components/viewport-sheet";
 
 export function NotebookPickerSheet({
   open,
@@ -70,12 +70,12 @@ export function NotebookPickerSheet({
     onClose();
   }
 
-  if (!open || typeof document === "undefined") return null;
+  if (!open) return null;
 
-  return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center" onClick={onClose}>
+  return (
+    <ViewportSheet onClose={onClose}>
       <div
-        className="max-h-[80dvh] w-full max-w-lg overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
+        className="max-h-full w-full max-w-lg overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
@@ -134,7 +134,6 @@ export function NotebookPickerSheet({
           </button>
         ) : null}
       </div>
-    </div>,
-    document.body,
+    </ViewportSheet>
   );
 }
