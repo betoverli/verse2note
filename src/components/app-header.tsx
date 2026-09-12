@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronLeft, Search, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
@@ -18,6 +18,12 @@ type BackTo =
   | "/reading"
   | "/reading/all"
   | "/reading/category/$categoryId";
+
+export type HeaderSearch = {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+};
 
 function HeaderTitle({ title }: { title?: string }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -74,17 +80,26 @@ export function AppHeader({
   backTo,
   backParams,
   trailing,
+  search,
 }: {
   title?: string;
   backTo?: BackTo;
   backParams?: { categoryId: string };
   backLabel?: string;
   trailing?: ReactNode;
+  search?: HeaderSearch;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [apple, setApple] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => setApple(isAppleUa()), []);
   const BackIcon = apple ? ChevronLeft : ArrowLeft;
+  const showSearch = Boolean(search && (searchOpen || search.value));
+
+  useEffect(() => {
+    if (showSearch) inputRef.current?.focus();
+  }, [showSearch]);
 
   return (
     <header className="app-header sticky top-0 z-20 -mx-4 bg-bg px-2 pb-2 sm:-mx-6 sm:px-3">
@@ -105,8 +120,60 @@ export function AppHeader({
             </Button>
           ) : null}
         </div>
-        <HeaderTitle title={title} />
-        <div className="flex min-w-12 shrink-0 items-center justify-end">{trailing}</div>
+        {showSearch && search ? (
+          <div className="min-w-0 flex-1">
+            <input
+              ref={inputRef}
+              type="search"
+              value={search.value}
+              onChange={(event) => search.onChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  search.onChange("");
+                  setSearchOpen(false);
+                }
+              }}
+              placeholder={search.placeholder}
+              aria-label={search.placeholder}
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="search"
+              className="h-10 w-full rounded-md bg-surface px-3 text-base text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-search-cancel-button]:hidden"
+            />
+          </div>
+        ) : (
+          <HeaderTitle title={title} />
+        )}
+        <div className="flex min-w-12 shrink-0 items-center justify-end">
+          {search ? (
+            showSearch ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-12 text-fg [&_svg]:size-6"
+                aria-label={t(locale, "back")}
+                onClick={() => {
+                  search.onChange("");
+                  setSearchOpen(false);
+                }}
+              >
+                <X />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-12 text-fg [&_svg]:size-6"
+                aria-label={search.placeholder}
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search />
+              </Button>
+            )
+          ) : null}
+          {showSearch ? null : trailing}
+        </div>
       </div>
     </header>
   );

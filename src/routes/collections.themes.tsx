@@ -24,17 +24,11 @@ function AllThemesRoute() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
-      <AppHeader title={t(locale, "allThemes")} backTo="/collections" backLabel={t(locale, "collections")} />
-      <label className="block">
-        <span className="sr-only">{t(locale, "collectionsSearch")}</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t(locale, "collectionsSearch")}
-          className="h-11 w-full rounded-md bg-surface px-4 text-base text-fg shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/70"
-        />
-      </label>
+      <AppHeader
+        title={t(locale, "allThemes")}
+        backTo="/collections"
+        search={{ value: query, onChange: setQuery, placeholder: t(locale, "collectionsSearch") }}
+      />
       <ThemeList items={items} from="all" />
     </main>
   );

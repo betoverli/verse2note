@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { ReadingPage } from "@/components/reading-page";
 import { t } from "@/lib/i18n";
@@ -17,10 +18,14 @@ export const Route = createFileRoute("/reading/")({
 
 function ReadingIndexRoute() {
   const locale = useAppStore((s) => s.locale);
+  const [query, setQuery] = useState("");
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
-      <AppHeader title={t(locale, "reading")} />
-      <ReadingPage />
+      <AppHeader
+        title={t(locale, "reading")}
+        search={{ value: query, onChange: setQuery, placeholder: t(locale, "readingSearch") }}
+      />
+      <ReadingPage query={query} />
     </main>
   );
 }

@@ -16,7 +16,7 @@ import {
   Smile,
   Sparkles,
 } from "lucide-react";
-import { useMemo, useState, type ComponentType } from "react";
+import { useMemo, type ComponentType } from "react";
 import { searchCategories, THEME_TOTAL, type Category } from "@/lib/bible/categories";
 import { searchCollections } from "@/lib/bible/collections";
 import { t } from "@/lib/i18n";
@@ -41,26 +41,14 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   "worship-prayer": Music,
 };
 
-export function CollectionsPage() {
+export function CollectionsPage({ query }: { query: string }) {
   const locale = useAppStore((s) => s.locale);
-  const [query, setQuery] = useState("");
   const categories = useMemo(() => searchCategories(query, locale), [query, locale]);
   const themes = useMemo(() => searchCollections(query, locale), [query, locale]);
   const searching = query.trim().length > 0;
 
   return (
     <div className="flex flex-col gap-8">
-      <label className="block">
-        <span className="sr-only">{t(locale, "collectionsSearch")}</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t(locale, "collectionsSearch")}
-          className="h-11 w-full rounded-md bg-surface px-4 text-base text-fg shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/70"
-        />
-      </label>
-
       {searching ? (
         <>
           {categories.length > 0 ? <CategoryGrid items={categories} /> : null}

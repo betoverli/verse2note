@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen, CalendarDays, Clock, Library } from "lucide-react";
-import { useMemo, useState, type ComponentType } from "react";
+import { useMemo, type ComponentType } from "react";
 import {
   PLAN_TOTAL,
   planById,
@@ -21,11 +21,10 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   books: Library,
 };
 
-export function ReadingPage() {
+export function ReadingPage({ query }: { query: string }) {
   const locale = useAppStore((s) => s.locale);
   const activePlans = useAppStore((s) => s.activePlans);
   const { user } = useCurrentUserState();
-  const [query, setQuery] = useState("");
   const categories = useMemo(() => searchPlanCategories(query, locale), [query, locale]);
   const plans = useMemo(() => searchPlans(query, locale), [query, locale]);
   const mine = useMemo(
@@ -36,16 +35,6 @@ export function ReadingPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <label className="block">
-        <span className="sr-only">{t(locale, "readingSearch")}</span>
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t(locale, "readingSearch")}
-          className="h-11 w-full rounded-md bg-surface px-4 text-base text-fg shadow-[var(--shadow-border)] outline-none placeholder:text-subtle focus-visible:ring-2 focus-visible:ring-ring/70"
-        />
-      </label>
       {searching ? (
         <>
           {categories.length > 0 ? <CategoryGrid items={categories} /> : null}
