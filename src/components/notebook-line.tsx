@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 import type { Locale } from "@/lib/bible/books";
 import type { CiteStyle } from "@/lib/bible/passage";
-import { detectTrailingRef, type LineBlock, type NoteInline } from "@/lib/notebook";
-import { htmlToInlines, inlinesToHtml, passageFromDataset } from "@/lib/notebook-html";
+import type { Passage } from "@/lib/bible/passage";
+import { detectTrailingRef, passageToRef, type LineBlock, type NoteInline } from "@/lib/notebook";
+import { htmlToInlines, inlinesToHtml, parseClipboardPassages, passageFromDataset } from "@/lib/notebook-html";
 import { buildDeepLink } from "@/lib/bible/apps";
 import { translationById } from "@/lib/bible/translations";
 import { useAppStore } from "@/lib/store";
@@ -15,14 +16,13 @@ export function NotebookLine({
   placeholder,
   active,
   editable = true,
-  hosted = false,
-  index,
   onChange,
   onEnter,
   onEmptyBackspace,
   onFocus,
   onDetect,
   onTrigger,
+  onPasteMany,
 }: {
   block: LineBlock;
   locale: Locale;
@@ -30,14 +30,13 @@ export function NotebookLine({
   placeholder?: string;
   active?: boolean;
   editable?: boolean;
-  hosted?: boolean;
-  index?: number;
   onChange: (inlines: NoteInline[]) => void;
   onEnter: () => void;
   onEmptyBackspace: () => void;
   onFocus: () => void;
   onDetect: (value: ReturnType<typeof detectTrailingRef>) => void;
   onTrigger?: (kind: "at" | "slash") => void;
+  onPasteMany?: (passages: Passage[]) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const skip = useRef(false);
@@ -51,11 +50,6 @@ export function NotebookLine({
     const html = inlinesToHtml(block.inlines, locale, style);
     const formatChanged = formatRef.current !== formatKey;
     formatRef.current = formatKey;
-    if (hosted && !formatChanged) {
-      if (JSON.stringify(htmlToInlines(el)) === JSON.stringify(block.inlines)) return;
-      el.innerHTML = html;
-      return;
-    }
     if (skip.current && !formatChanged) {
       skip.current = false;
       return;
@@ -67,18 +61,17 @@ export function NotebookLine({
       if (block.inlines.length === 0) placeCaret(el, true);
       else placeAfterContent(el);
     }
-  }, [block.inlines, locale, formatKey, style?.book, style?.sep, hosted]);
+  }, [block.inlines, locale, formatKey, style?.book, style?.sep]);
 
   useEffect(() => {
-    if (hosted || !active) return;
+    if (!active) return;
     const el = ref.current;
     if (!el) return;
     if (document.activeElement === el) return;
     el.focus();
     focused.current = true;
     if (block.inlines.length === 0) placeCaret(el, true);
-    else placeAfterContent(el);
-  }, [active, block.id, hosted]);
+  }, [active, block.id]);
 
   function emit() {
     const el = ref.current;
@@ -103,10 +96,8 @@ export function NotebookLine({
     <div
       ref={ref}
       data-line-id={block.id}
-      data-kind={block.type}
-      data-index={block.type === "ol" ? String(index ?? "") : undefined}
-      contentEditable={hosted ? undefined : Boolean(editable)}
-      tabIndex={hosted || !editable ? -1 : 0}
+      contentEditable={Boolean(editable)}
+      tabIndex={editable ? 0 : -1}
       role="textbox"
       aria-multiline="true"
       data-placeholder={empty ? placeholder : undefined}
@@ -117,76 +108,70 @@ export function NotebookLine({
         empty && placeholder && "note-line-empty",
       )}
       onMouseDown={(event) => {
-        if (hosted || active) return;
+        if (active) return;
         event.preventDefault();
         onFocus();
       }}
-      onInput={hosted ? undefined : emit}
+      onInput={emit}
       onBlur={() => {
         focused.current = false;
         emit();
       }}
+      onPaste={(event) => {
+        if (!editable) return;
+        const html = event.clipboardData?.getData("text/html") ?? "";
+        const plain = event.clipboardData?.getData("text/plain") ?? "";
+        const passages = parseClipboardPassages(html, plain);
+        if (!passages.length) return;
+        event.preventDefault();
+        if (passages.length === 1) {
+          document.execCommand("insertHTML", false, inlinesToHtml([passageToRef(passages[0]!)], locale, style));
+          emit();
+          return;
+        }
+        onPasteMany?.(passages);
+      }}
       onClick={(event) => {
+        if (!window.getSelection()?.isCollapsed) return;
         const target = (event.target as HTMLElement).closest<HTMLElement>(".ref-pill");
         if (target?.dataset.ref) {
-          if (!window.getSelection()?.isCollapsed) return;
           const passage = passageFromDataset(target.dataset.ref);
           if (!passage) return;
           event.preventDefault();
           const state = useAppStore.getState();
           const url = buildDeepLink(state.appId, passage, translationById(state.translationId), state.preferNative);
           if (url) window.open(url, "_blank", "noopener");
-          return;
-        }
-        if (hosted) return;
-        if (event.target === ref.current && block.inlines.some((part) => part.type === "ref")) {
-          event.preventDefault();
-          placeAfterContent(ref.current);
         }
       }}
       onFocus={() => {
         focused.current = true;
-        if (!hosted) {
-          const el = ref.current;
-          if (el) {
-            if (block.inlines.length === 0) placeCaret(el, true);
-            else if (block.inlines.some((part) => part.type === "ref")) placeAfterContent(el);
-          }
-        }
         onFocus();
       }}
-      onKeyDown={
-        hosted
-          ? undefined
-          : (event) => {
-              if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
-                event.preventDefault();
-                emit();
-                onEnter();
-              }
-              if ((event.key === "Backspace" || event.key === "Delete") && ref.current && isLineHtmlEmpty(ref.current)) {
-                event.preventDefault();
-                onEmptyBackspace();
-              }
-            }
-      }
-      onBeforeInput={
-        hosted
-          ? undefined
-          : (event) => {
-              const inputType = (event.nativeEvent as InputEvent).inputType;
-              if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
-                event.preventDefault();
-                emit();
-                onEnter();
-                return;
-              }
-              if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
-              if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
-              event.preventDefault();
-              onEmptyBackspace();
-            }
-      }
+      onKeyDown={(event) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") return;
+        if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
+          event.preventDefault();
+          emit();
+          onEnter();
+        }
+        if ((event.key === "Backspace" || event.key === "Delete") && ref.current && isLineHtmlEmpty(ref.current)) {
+          event.preventDefault();
+          onEmptyBackspace();
+        }
+      }}
+      onBeforeInput={(event) => {
+        const inputType = (event.nativeEvent as InputEvent).inputType;
+        if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
+          event.preventDefault();
+          emit();
+          onEnter();
+          return;
+        }
+        if (inputType !== "deleteContentBackward" && inputType !== "deleteContentForward") return;
+        if (!ref.current || !isLineHtmlEmpty(ref.current)) return;
+        event.preventDefault();
+        onEmptyBackspace();
+      }}
     />
   );
 }

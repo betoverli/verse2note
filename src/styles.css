@@ -233,12 +233,10 @@ html.light {
   .note-doc {
     -webkit-user-select: text;
     user-select: text;
-    -webkit-touch-callout: default;
     caret-color: var(--color-fg);
   }
 
   .note-line {
-    position: relative;
     text-align: left;
     caret-color: var(--color-fg);
     scroll-margin-top: 9rem;
@@ -248,27 +246,6 @@ html.light {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
-  }
-
-  .note-line[data-kind="ul"],
-  .note-line[data-kind="ol"] {
-    padding-left: 1.35rem;
-  }
-
-  .note-line[data-kind="ul"]::before,
-  .note-line[data-kind="ol"]::before {
-    position: absolute;
-    left: 0;
-    color: var(--color-muted);
-  }
-
-  .note-line[data-kind="ul"]::before {
-    content: "•";
-  }
-
-  .note-line[data-kind="ol"]::before {
-    content: attr(data-index) ".";
-    font-variant-numeric: tabular-nums;
   }
 
   .note-line-empty:empty::before,
