@@ -49,10 +49,15 @@ function InboxPage() {
   }
 
   async function open(item: InboxItem) {
-    if (!item.read) {
-      await markNotificationsRead({ data: { id: item.id } });
-      setItems((list) => list?.map((row) => (row.id === item.id ? { ...row, read: true } : row)) ?? list);
+    try {
+      if (!item.read) {
+        await markNotificationsRead({ data: { id: item.id } });
+        setItems((list) => list?.map((row) => (row.id === item.id ? { ...row, read: true } : row)) ?? list);
+      }
+    } catch {
+      /* still open */
     }
+    router.history.push(item.href);
   }
 
   return (
@@ -79,7 +84,7 @@ function InboxPage() {
               <button
                 type="button"
                 onClick={() => {
-                  void open(item).then(() => router.history.push(item.href));
+                  void open(item);
                 }}
                 className={cn(
                   "flex w-full flex-col gap-1 rounded-lg bg-surface px-4 py-3 text-left text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]",

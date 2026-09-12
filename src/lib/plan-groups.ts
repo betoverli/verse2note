@@ -97,6 +97,10 @@ export const joinPlanGroup = createServerFn({ method: "POST" })
     `;
     const group = groups[0];
     if (!group) return { ok: false as const, error: "missing" as const, planId: "" };
+    const already = await sql<{ user_id: string }>`
+      select user_id from plan_group_members where group_id = ${group.id} and user_id = ${context.userId}
+    `;
+    if (already[0]) return { ok: true as const, planId: group.plan_id, error: null };
     await sql`
       insert into plan_group_members (group_id, user_id)
       values (${group.id}, ${context.userId})

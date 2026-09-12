@@ -60,7 +60,7 @@ Plan ids: bible-year, bible-90, nt-90, nt-30, gospels-30, john-21, matthew-28, l
 - This file: /llms.txt
 - Sitemap: /sitemap.xml
 
-Private (noindex, not for agents): /login, /profile, /profile/*
+Private (noindex, not for agents): /login, /profile, /profile/*, /inbox, /c/, /g/, /admin
 
 ## For agents
 

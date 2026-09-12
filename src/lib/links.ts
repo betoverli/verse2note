@@ -190,10 +190,12 @@ export const requestLink = createServerFn({ method: "POST" })
     if (current === "accepted") return { ok: true as const, error: null, status: current };
     if (current === "outgoing") return { ok: true as const, error: null, status: current };
     if (current === "incoming") {
-      await sql`
+      const rows = await sql<{ id: string }>`
         update user_links set status = 'accepted'
         where requester_id = ${other.user_id} and addressee_id = ${context.userId} and status = 'pending'
+        returning id
       `;
+      if (!rows[0]) return { ok: false as const, error: "missing" as const, status: "none" as const };
       void import("@/lib/notify.server").then((mod) =>
         mod.notifySocial(context.userId, other.user_id, "friends", "notifyLinkAcceptedTitle", "notifyLinkAcceptedBody", {
           href: "/profile/friends",
@@ -209,6 +211,10 @@ export const requestLink = createServerFn({ method: "POST" })
       values (${newId()}, ${context.userId}, ${other.user_id}, ${"pending"})
       on conflict (requester_id, addressee_id) do nothing
     `;
+    await sql`
+      delete from user_links
+      where requester_id = ${other.user_id} and addressee_id = ${context.userId} and status = 'pending'
+    `;
     void import("@/lib/notify.server").then((mod) =>
       mod.notifySocial(context.userId, other.user_id, "friends", "notifyLinkTitle", "notifyLinkBody", {
         href: "/profile/friends",
@@ -221,14 +227,20 @@ export const acceptLink = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((data: { handle: string }) => data)
   .handler(async ({ context, data }) => {
+    if (!allowRequest(`link-acc:${context.userId}`, 30, 86_400_000)) {
+      return { ok: false as const };
+    }
     const handle = cleanHandle(data.handle);
     const sql = await getSql();
     const other = handle ? await prefsByHandle(sql, handle) : null;
     if (!other) return { ok: false as const };
-    await sql`
+    if ((await friendCount(sql, context.userId)) >= MAX_FRIENDS) return { ok: false as const };
+    const rows = await sql<{ id: string }>`
       update user_links set status = 'accepted'
       where requester_id = ${other.user_id} and addressee_id = ${context.userId} and status = 'pending'
+      returning id
     `;
+    if (!rows[0]) return { ok: false as const };
     void import("@/lib/notify.server").then((mod) =>
       mod.notifySocial(context.userId, other.user_id, "friends", "notifyLinkAcceptedTitle", "notifyLinkAcceptedBody", {
         href: "/profile/friends",
@@ -249,6 +261,11 @@ export const declineLink = createServerFn({ method: "POST" })
       delete from user_links
       where (requester_id = ${other.user_id} and addressee_id = ${context.userId})
          or (requester_id = ${context.userId} and addressee_id = ${other.user_id})
+    `;
+    await sql`
+      delete from collection_grants
+      where (from_id = ${context.userId} and user_id = ${other.user_id})
+         or (from_id = ${other.user_id} and user_id = ${context.userId})
     `;
     return { ok: true as const };
   });

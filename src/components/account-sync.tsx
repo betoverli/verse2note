@@ -46,7 +46,6 @@ export function AccountSync() {
       useAppStore.getState().setCloudHydrated(true);
       return;
     }
-    useAppStore.getState().setCloudProfileOk(false);
     let cancelled = false;
     const timeout = window.setTimeout(() => {
       if (!cancelled) useAppStore.getState().setCloudHydrated(true);

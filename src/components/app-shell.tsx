@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { AccountSync } from "@/components/account-sync";
 import { Coachmarks } from "@/components/coachmarks";
@@ -70,46 +70,30 @@ export function AppShell() {
     });
   }, [onboarded, user, navigate, startPlan]);
 
+  let body: ReactNode;
   if (publicPage) {
-    return (
+    body = <Outlet />;
+  } else if (showSplash) {
+    body = <SplashScreen />;
+  } else if (showOnboarding) {
+    body = <Onboarding onBack={() => void navigate({ to: "/" })} />;
+  } else if (showProfile) {
+    body = <CompleteProfile />;
+  } else {
+    body = (
       <>
         <Outlet />
-        <AccountSync />
-        <UsagePing />
+        {tabs ? <TabBar /> : null}
+        <Coachmarks />
       </>
     );
   }
-  if (showSplash) {
-    return (
-      <>
-        <SplashScreen />
-        <AccountSync />
-      </>
-    );
-  }
-  if (showOnboarding) {
-    return (
-      <>
-        <Onboarding onBack={() => void navigate({ to: "/" })} />
-        <AccountSync />
-      </>
-    );
-  }
-  if (showProfile) {
-    return (
-      <>
-        <CompleteProfile />
-        <AccountSync />
-      </>
-    );
-  }
+
   return (
     <>
-      <Outlet />
-      {tabs ? <TabBar /> : null}
-      <Coachmarks />
+      {body}
       <AccountSync />
-      <UsagePing />
+      {publicPage || (!showSplash && !showOnboarding && !showProfile) ? <UsagePing /> : null}
     </>
   );
 }

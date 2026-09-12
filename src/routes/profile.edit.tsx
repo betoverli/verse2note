@@ -7,12 +7,14 @@ import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/profile/edit")({
   component: ProfileEditRoute,
-  head: () =>
-    pageHead({
+  head: () => {
+    const seo = pageHead({
       title: "Verse2Note — Editar perfil",
       description: "Edite avatar, @, nome e e-mail.",
       path: "/profile/edit",
-    }),
+    });
+    return { ...seo, meta: [...seo.meta, { name: "robots", content: "noindex" }] };
+  },
 });
 
 function ProfileEditRoute() {

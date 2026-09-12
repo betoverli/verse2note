@@ -192,7 +192,12 @@ export async function notifyPlanMarked(actorId: string, planId: string, day: num
     select distinct m.user_id
     from plan_group_members m
     join plan_groups g on g.id = m.group_id
-    where g.plan_id = ${planId} and m.user_id <> ${actorId}
+    where g.plan_id = ${planId}
+      and m.user_id <> ${actorId}
+      and exists (
+        select 1 from plan_group_members me
+        where me.group_id = m.group_id and me.user_id = ${actorId}
+      )
   `;
   for (const row of members) {
     const locale = await userLocale(sql, row.user_id);
@@ -308,6 +313,19 @@ export async function saveSubscription(
   data: { endpoint: string; p256dh: string; auth: string },
 ) {
   if (!data.endpoint.startsWith("https://")) return { ok: false as const };
+  let host = "";
+  try {
+    host = new URL(data.endpoint).hostname;
+  } catch {
+    return { ok: false as const };
+  }
+  const allowed =
+    host.endsWith(".googleapis.com") ||
+    host.endsWith(".mozilla.com") ||
+    host.endsWith(".push.apple.com") ||
+    host.endsWith(".windows.com") ||
+    host.endsWith(".microsoft.com");
+  if (!allowed) return { ok: false as const };
   const p256dh = data.p256dh.slice(0, 200);
   const auth = data.auth.slice(0, 200);
   if (!p256dh || !auth) return { ok: false as const };
@@ -315,7 +333,8 @@ export async function saveSubscription(
   await sql`
     insert into push_subscriptions (endpoint, user_id, p256dh, auth)
     values (${data.endpoint.slice(0, 2000)}, ${userId}, ${p256dh}, ${auth})
-    on conflict (endpoint) do update set user_id = excluded.user_id, p256dh = excluded.p256dh, auth = excluded.auth
+    on conflict (endpoint) do update set p256dh = excluded.p256dh, auth = excluded.auth
+    where push_subscriptions.user_id = excluded.user_id
   `;
   return { ok: true as const };
 }

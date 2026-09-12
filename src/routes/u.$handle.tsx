@@ -14,12 +14,14 @@ import { useAppStore } from "@/lib/store";
 
 export const Route = createFileRoute("/u/$handle")({
   component: PublicProfileRoute,
-  head: ({ params }) =>
-    pageHead({
+  head: ({ params }) => {
+    const seo = pageHead({
       title: `Verse2Note — @${params.handle}`,
       description: `Perfil público de @${params.handle} no Verse2Note.`,
       path: `/u/${params.handle}`,
-    }),
+    });
+    return { ...seo, meta: [...seo.meta, { name: "robots", content: "noindex" }] };
+  },
 });
 
 function ConnectButton({ handle }: { handle: string }) {

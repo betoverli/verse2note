@@ -2,9 +2,11 @@ User-agent: *
 Allow: /
 Disallow: /login
 Disallow: /profile
+Disallow: /inbox
 Disallow: /c/
 Disallow: /g/
 Disallow: /api/auth
 Disallow: /admin
+Disallow: /settings
 
 Sitemap: https://verse2note.com/sitemap.xml

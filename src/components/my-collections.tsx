@@ -5,7 +5,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { t } from "@/lib/i18n";
 import {
   createMyCollection,
+  listGrantedCollections,
   listMyCollections,
+  type UserCollection,
 } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,7 @@ export function MyCollections() {
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
+  const [granted, setGranted] = useState<UserCollection[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -27,6 +30,11 @@ export function MyCollections() {
     void listMyCollections().then((rows) => {
       if (!cancelled) setMyCollections(rows);
     });
+    void listGrantedCollections()
+      .then((rows) => {
+        if (!cancelled) setGranted(rows);
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -68,6 +76,7 @@ export function MyCollections() {
   }
 
   return (
+    <>
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "myCollections")}</h2>
@@ -127,5 +136,34 @@ export function MyCollections() {
         </ul>
       ) : null}
     </section>
+    {granted.length > 0 ? (
+      <section className="space-y-3">
+        <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "sharedWithMe")}</h2>
+        <ul className="flex flex-col gap-2">
+          {granted.map((item) => (
+            <li key={item.id}>
+              <Link
+                to="/c/$id"
+                params={{ id: item.id }}
+                className="flex min-h-14 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              >
+                <span className="flex items-center gap-3">
+                  <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
+                    <ListPlus className="size-5" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-medium">{item.title}</span>
+                    <span className="mt-0.5 block text-xs text-muted">
+                      {item.passages.length} {t(locale, "refs")}
+                    </span>
+                  </span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ) : null}
+    </>
   );
 }

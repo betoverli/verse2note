@@ -4,7 +4,7 @@ Picker de referências bíblicas. Escolha livro, capítulo e versos; copie um te
 
 Live: [verse2note.com](https://verse2note.com)
 
-Português, English, Español. PWA offline. Sem conta.
+Português, English, Español. PWA offline. Conta opcional (Google, X ou e-mail).
 
 ## Local
 

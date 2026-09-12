@@ -131,6 +131,20 @@ export const getSharedCollection = createServerFn({ method: "GET" })
     return fromRow(row);
   });
 
+export const listGrantedCollections = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql<Row>`
+      select c.id, c.title, c.slug, c.visibility, c.passages, coalesce(c.source_id, '') as source_id, c.updated_at
+      from user_collections c
+      join collection_grants g on g.collection_id = c.id
+      where g.user_id = ${context.userId}
+      order by g.created_at desc
+    `;
+    return rows.map(fromRow);
+  });
+
 export const getGrantedCollection = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((data: { id: string }) => data)
