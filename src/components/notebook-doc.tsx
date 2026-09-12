@@ -73,6 +73,7 @@ type NotebookDocProps = {
   speakers: Speaker[];
   readOnly?: boolean;
   placeholder?: string;
+  keyboard?: boolean;
   onBlocks: (blocks: NoteBlock[]) => void;
   onFocusLine: (id: string | null) => void;
   onDetect: (value: ReturnType<typeof detectTrailingRef>) => void;
@@ -88,6 +89,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     speakers,
     readOnly,
     placeholder,
+    keyboard,
     onBlocks,
     onFocusLine,
     onDetect,
@@ -241,6 +243,11 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     onDetect(detectTrailingRef(inlines, locale));
   }
 
+  function keepVisible() {
+    const line = lineElFromSel();
+    line?.scrollIntoView({ block: "center", inline: "nearest" });
+  }
+
   function emit(flush = false) {
     window.clearTimeout(timer.current);
     if (flush) parse();
@@ -260,6 +267,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     const next = makeLine(kind);
     target.after(next);
     placeCaret(next, true);
+    keepVisible();
     parse();
   }
 
@@ -335,15 +343,20 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       role="textbox"
       aria-multiline="true"
       className="note-doc outline-none"
+      style={{ paddingBottom: keyboard ? "46dvh" : "8rem" }}
       onFocus={() => {
         focused.current = true;
         onFocusLine(lineElFromSel()?.dataset.lineId ?? null);
+        requestAnimationFrame(keepVisible);
       }}
       onBlur={() => {
         focused.current = false;
         if (!hold.current) emit(true);
       }}
-      onInput={() => emit()}
+      onInput={() => {
+        emit();
+        keepVisible();
+      }}
       onMouseUp={() => {
         const root = ref.current;
         if (root) selectedIds.current = selectedLines(root).map((line) => line.dataset.lineId ?? "").filter(Boolean);

@@ -544,6 +544,7 @@ export function NotebookEditor({
           speakers={speakers}
           readOnly={readOnly}
           placeholder={t(locale, "notebookWrite")}
+          keyboard={vv.keyboard}
           onBlocks={setBlocks}
           onFocusLine={(id) => {
             setFocusId(id);
