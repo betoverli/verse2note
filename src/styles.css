@@ -64,7 +64,6 @@ html.light {
   }
 
   .app-header h1 {
-    overflow: visible;
     line-height: 1.35;
     -webkit-font-smoothing: auto;
   }
