@@ -163,6 +163,31 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     parse();
   }
 
+  function splitLineAtCaret(line: HTMLElement, kind: string) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !sel.anchorNode || !line.contains(sel.anchorNode)) {
+      insertLineAfter(line, kind);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) range.deleteContents();
+    const after = document.createRange();
+    after.setStart(range.endContainer, range.endOffset);
+    after.setEnd(line, line.childNodes.length);
+    const fragment = after.extractContents();
+    const next = makeLine(kind);
+    const hasContent = Boolean(
+      fragment.querySelector?.(".ref-pill") || (fragment.textContent ?? "").replace(/\u200B/g, "").trim(),
+    );
+    next.replaceChildren();
+    if (hasContent) next.append(fragment);
+    else next.append(document.createElement("br"));
+    if (isLineHtmlEmpty(line)) line.replaceChildren(document.createElement("br"));
+    line.after(next);
+    placeCaret(next, true);
+    parse();
+  }
+
   function onEnter() {
     if (enterLock.current) return;
     enterLock.current = true;
@@ -188,7 +213,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       parse();
       return;
     }
-    insertLineAfter(line, kind);
+    splitLineAtCaret(line, kind);
   }
 
   function onMerge() {
