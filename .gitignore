@@ -18,3 +18,4 @@ dist
 .project_id
 .DS_Store
 *.local
+scripts/__pycache__/

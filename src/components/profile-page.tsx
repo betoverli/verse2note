@@ -10,6 +10,7 @@ import { BADGE_IDS, type BadgeId } from "@/lib/badges";
 import { listLinks } from "@/lib/links";
 import { toast } from "sonner";
 import { appById } from "@/lib/bible/apps";
+import type { Locale } from "@/lib/bible/books";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
 import { t } from "@/lib/i18n";
 import { cleanHandle, profileIsComplete } from "@/lib/profile";
@@ -165,6 +166,26 @@ function SettingCards({ earned }: { earned: number }) {
   );
 }
 
+async function shareProfile(handle: string, locale: Locale) {
+  const url = `${window.location.origin}/u/${handle}`;
+  try {
+    if (typeof navigator.share === "function") {
+      await navigator.share({ title: `@${handle}`, url });
+      return;
+    }
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    const id = toast.success(t(locale, "profileCopied"));
+    window.setTimeout(() => toast.dismiss(id), 2000);
+  } catch {
+    const id = toast.error(t(locale, "copyProfile"));
+    window.setTimeout(() => toast.dismiss(id), 2000);
+  }
+}
+
 export function ProfileView() {
   const locale = useAppStore((s) => s.locale);
   const avatarId = useAppStore((s) => s.avatarId);
@@ -202,9 +223,20 @@ export function ProfileView() {
         <section className="flex flex-col items-center gap-3 pt-2">
           <ProfileAvatar id={avatarId} url={avatarUrl} className="size-20 bg-elevated" iconClassName="size-8" />
           {handle ? (
-            <Link to="/u/$handle" params={{ handle }} className="font-display text-xl italic text-fg">
-              @{handle}
-            </Link>
+            <div className="flex items-center gap-0.5">
+              <Link to="/u/$handle" params={{ handle }} className="font-display text-xl italic text-fg">
+                @{handle}
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted [&_svg]:size-3.5"
+                aria-label={t(locale, "copyProfile")}
+                onClick={() => void shareProfile(handle, locale)}
+              >
+                <Share2 />
+              </Button>
+            </div>
           ) : (
             <p className="text-sm text-muted">{t(locale, "handleMissing")}</p>
           )}
@@ -398,46 +430,14 @@ export function ProfileEdit() {
 
 export function ProfileHeaderActions() {
   const locale = useAppStore((s) => s.locale);
-  const handle = useAppStore((s) => s.handle);
   const { user, isPending } = useCurrentUserState();
   if (isPending || !user) return null;
 
-  async function onShare() {
-    if (!handle) {
-      const id = toast.error(t(locale, "handleMissing"));
-      window.setTimeout(() => toast.dismiss(id), 2000);
-      return;
-    }
-    const url = `${window.location.origin}/u/${handle}`;
-    try {
-      if (typeof navigator.share === "function") {
-        await navigator.share({ title: `@${handle}`, url });
-        return;
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") return;
-      /* copy */
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      const id = toast.success(t(locale, "profileCopied"));
-      window.setTimeout(() => toast.dismiss(id), 2000);
-    } catch {
-      const id = toast.error(t(locale, "copyProfile"));
-      window.setTimeout(() => toast.dismiss(id), 2000);
-    }
-  }
-
   return (
-    <div className="flex items-center">
-      <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "copyProfile")} onClick={() => void onShare()}>
-        <Share2 />
-      </Button>
-      <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "editProfile")} asChild>
-        <Link to="/profile/edit">
-          <Pencil />
-        </Link>
-      </Button>
-    </div>
+    <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "editProfile")} asChild>
+      <Link to="/profile/edit">
+        <Pencil />
+      </Link>
+    </Button>
   );
 }

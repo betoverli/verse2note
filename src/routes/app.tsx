@@ -3,7 +3,6 @@ import { AppHeader } from "@/components/app-header";
 import { LinkPreview } from "@/components/link-preview";
 import { Picker } from "@/components/picker";
 import { NotifyBell } from "@/components/notify-bell";
-import { RecentsMenu } from "@/components/recents-menu";
 import { bookById } from "@/lib/bible/books";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
@@ -37,12 +36,7 @@ function AppPage() {
     >
       <AppHeader
         title={book ? book.names[locale] : t(locale, "navBooks")}
-        trailing={
-          <span className="flex items-center">
-            <NotifyBell />
-            <RecentsMenu />
-          </span>
-        }
+        trailing={<NotifyBell />}
       />
       <Picker />
       <LinkPreview />

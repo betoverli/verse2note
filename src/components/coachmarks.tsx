@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 
 const STEPS: { id: string; body: I18nKey; maxH?: number }[] = [
   { id: "books", body: "tourBooks", maxH: 0.36 },
-  { id: "recents", body: "tourRecents" },
   { id: "collections", body: "tourCollections" },
   { id: "reading", body: "tourReading" },
   { id: "settings", body: "tourSettings" },
