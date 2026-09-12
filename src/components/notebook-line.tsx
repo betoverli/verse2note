@@ -16,6 +16,7 @@ export function NotebookLine({
   active,
   editable = true,
   hosted = false,
+  index,
   onChange,
   onEnter,
   onEmptyBackspace,
@@ -30,6 +31,7 @@ export function NotebookLine({
   active?: boolean;
   editable?: boolean;
   hosted?: boolean;
+  index?: number;
   onChange: (inlines: NoteInline[]) => void;
   onEnter: () => void;
   onEmptyBackspace: () => void;
@@ -101,6 +103,8 @@ export function NotebookLine({
     <div
       ref={ref}
       data-line-id={block.id}
+      data-kind={block.type}
+      data-index={block.type === "ol" ? String(index ?? "") : undefined}
       contentEditable={hosted ? undefined : Boolean(editable)}
       tabIndex={hosted || !editable ? -1 : 0}
       role="textbox"
@@ -125,6 +129,7 @@ export function NotebookLine({
       onClick={(event) => {
         const target = (event.target as HTMLElement).closest<HTMLElement>(".ref-pill");
         if (target?.dataset.ref) {
+          if (!window.getSelection()?.isCollapsed) return;
           const passage = passageFromDataset(target.dataset.ref);
           if (!passage) return;
           event.preventDefault();
@@ -133,6 +138,7 @@ export function NotebookLine({
           if (url) window.open(url, "_blank", "noopener");
           return;
         }
+        if (hosted) return;
         if (event.target === ref.current && block.inlines.some((part) => part.type === "ref")) {
           event.preventDefault();
           placeAfterContent(ref.current);

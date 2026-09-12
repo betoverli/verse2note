@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bold, BookOpen, CalendarDays, Hash, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { detectTrailingRef, emptyLine, newNoteId, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type NoteInline, type Speaker, type SpeakerBlock } from "@/lib/notebook";
-import { htmlToInlines } from "@/lib/notebook-html";
+import { htmlToInlines, inlinesToHtml, parseClipboardPassages } from "@/lib/notebook-html";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
 import { consumeTrigger, formatSelection, isLineHtmlEmpty, NotebookLine, placeCaret } from "@/components/notebook-line";
@@ -231,33 +231,22 @@ function LineRow({
   onTrigger?: (kind: "at" | "slash") => void;
 }) {
   return (
-    <div className="flex gap-2">
-      {block.type === "ul" ? (
-        <span contentEditable={false} className="mt-0.5 w-5 shrink-0 text-[17px] leading-relaxed text-muted">
-          •
-        </span>
-      ) : null}
-      {block.type === "ol" && index ? (
-        <span contentEditable={false} className="mt-0.5 w-6 shrink-0 text-[17px] leading-relaxed tabular-nums text-muted">
-          {index}.
-        </span>
-      ) : null}
-      <NotebookLine
-        block={block}
-        locale={copyLocale}
-        style={style}
-        placeholder={placeholder}
-        active={active}
-        editable={editable}
-        hosted
-        onChange={onChange}
-        onEnter={onEnter}
-        onEmptyBackspace={onEmptyBackspace}
-        onFocus={onFocus}
-        onDetect={onDetect}
-        onTrigger={onTrigger}
-      />
-    </div>
+    <NotebookLine
+      block={block}
+      locale={copyLocale}
+      style={style}
+      placeholder={placeholder}
+      active={active}
+      editable={editable}
+      hosted
+      index={index}
+      onChange={onChange}
+      onEnter={onEnter}
+      onEmptyBackspace={onEmptyBackspace}
+      onFocus={onFocus}
+      onDetect={onDetect}
+      onTrigger={onTrigger}
+    />
   );
 }
 
@@ -382,6 +371,51 @@ export function NotebookEditor({
     setPending(detectTrailingRef(inlines, copyLocale));
     setFocusId(id);
     setActive(speakerBlockOf(latest().blocks, id)?.speakerId ?? null);
+  }
+
+  function insertPassages(passages: Passage[]) {
+    if (!passages.length) return;
+    const id = lineIdFromSelection() ?? focusIdRef.current;
+    if (passages.length === 1) {
+      document.execCommand("insertHTML", false, inlinesToHtml([passageToRef(passages[0]!)], copyLocale, cite));
+      emitDoc();
+      return;
+    }
+    const lines = passages.map((passage) => ({ ...emptyLine("p"), inlines: [passageToRef(passage)] }));
+    const current = id ? findLine(latest().blocks, id) : null;
+    const replace = Boolean(current && current.inlines.length === 0 && id);
+    updateBlocks((blocks) => {
+      if (replace && id) {
+        const [first, ...rest] = lines;
+        if (!first) return blocks;
+        let next = mapLine(blocks, id, (row) => ({ ...row, inlines: first.inlines }));
+        let after = id;
+        for (const line of rest) {
+          next = insertAfter(next, after, line);
+          after = line.id;
+        }
+        return next;
+      }
+      let next = blocks;
+      let after = id;
+      for (const line of lines) {
+        next = after ? insertAfter(next, after, line) : [...next, line];
+        after = line.id;
+      }
+      return next;
+    });
+    const last = lines[lines.length - 1];
+    if (last) focusLine(last.id, false);
+  }
+
+  function selectWholeNote() {
+    const root = docRef.current;
+    if (!root) return;
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(root);
+    sel?.removeAllRanges();
+    sel?.addRange(range);
   }
 
   function onEnter(id: string) {
@@ -656,14 +690,13 @@ export function NotebookEditor({
           }}
           onKeyDown={(event) => {
             if (readOnly) return;
-            const id = lineIdFromSelection() ?? focusIdRef.current;
-            if (!id) return;
-            if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
               event.preventDefault();
-              emitDoc();
-              onEnter(id);
+              selectWholeNote();
               return;
             }
+            const id = lineIdFromSelection() ?? focusIdRef.current;
+            if (!id) return;
             const el = docRef.current?.querySelector<HTMLElement>(`[data-line-id="${id}"]`);
             if ((event.key === "Backspace" || event.key === "Delete") && el && isLineHtmlEmpty(el)) {
               event.preventDefault();
@@ -690,6 +723,15 @@ export function NotebookEditor({
               event.preventDefault();
               onMergeBack(id);
             }
+          }}
+          onPaste={(event) => {
+            if (readOnly) return;
+            const html = event.clipboardData?.getData("text/html") ?? "";
+            const plain = event.clipboardData?.getData("text/plain") ?? "";
+            const passages = parseClipboardPassages(html, plain);
+            if (!passages.length) return;
+            event.preventDefault();
+            insertPassages(passages);
           }}
           onFocus={() => {
             const id = lineIdFromSelection();

@@ -1,6 +1,7 @@
 import { formatPassageById, type CiteStyle, type Passage } from "@/lib/bible/passage";
+import { parseReference } from "@/lib/bible/parse";
 import type { Locale } from "@/lib/bible/books";
-import { inlineToPassage, refKind, type NoteInline } from "@/lib/notebook";
+import { inlineToPassage, passageToRef, refKind, type NoteInline } from "@/lib/notebook";
 
 function escapeHtml(value: string) {
   return value
@@ -59,6 +60,14 @@ function walk(node: Node, marks: { bold?: boolean; italic?: boolean }, out: Note
     if (ref) out.push(ref);
     return;
   }
+  if (node.tagName === "A") {
+    const label = (node.textContent ?? "").replaceAll("\u200B", "").trim();
+    const passage = parseCopiedLabel(label);
+    if (passage) {
+      out.push(passageToRef(passage));
+      return;
+    }
+  }
   if (node.tagName === "BR") {
     out.push({ type: "text", text: "\n", bold: marks.bold, italic: marks.italic });
     return;
@@ -103,4 +112,40 @@ export function passageFromDataset(value: string): Passage | null {
     verseStart: ref.verseStart,
     verseEnd: ref.verseEnd,
   };
+}
+
+export function parseCopiedLabel(label: string): Passage | null {
+  const text = label.trim();
+  if (!text) return null;
+  return parseReference(text, "pt") ?? parseReference(text, "en") ?? parseReference(text, "es");
+}
+
+export function parseClipboardPassages(html: string, plain: string): Passage[] {
+  const out: Passage[] = [];
+  const seen = new Set<string>();
+  function add(passage: Passage | null) {
+    if (!passage) return;
+    const key = `${passage.bookId}:${passage.chapter}:${passage.verseStart}:${passage.verseEnd}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(passage);
+  }
+  if (html) {
+    try {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      doc.querySelectorAll("[data-ref]").forEach((el) => add(passageFromDataset(el.getAttribute("data-ref") ?? "")));
+      doc.querySelectorAll("a").forEach((el) => add(parseCopiedLabel(el.textContent ?? "")));
+    } catch {
+      /* ignore */
+    }
+  }
+  if (!out.length && plain) {
+    for (const raw of plain.split(/\n+/)) {
+      const line = raw.trim();
+      if (!line || /^[a-z][a-z0-9+.-]*:\/\//i.test(line)) continue;
+      const md = line.match(/^\[([^\]]+)\]\([^)]+\)$/);
+      add(parseCopiedLabel(md ? md[1] : line));
+    }
+  }
+  return out;
 }
