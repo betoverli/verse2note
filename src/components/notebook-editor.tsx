@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, BookOpen, Italic, List, ListOrdered, Type, UserRound, X } from "lucide-react";
+import { Bold, BookOpen, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import {
   detectTrailingRef,
@@ -233,6 +233,8 @@ export function NotebookEditor({
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
   const [tag, setTag] = useState("");
+  const [tagOpen, setTagOpen] = useState(false);
+  const tagRef = useRef<HTMLInputElement>(null);
   const cite = { book: citeBook, sep: citeSep };
   const draftRef = useRef(draft);
   draftRef.current = draft;
@@ -245,6 +247,10 @@ export function NotebookEditor({
   useEffect(() => {
     return () => setActive(null);
   }, [setActive]);
+
+  useEffect(() => {
+    if (tagOpen) tagRef.current?.focus();
+  }, [tagOpen]);
 
   useEffect(() => {
     const el = chromeRef.current;
@@ -463,33 +469,52 @@ export function NotebookEditor({
               #{item}
             </button>
           ))}
-          {readOnly ? null : (
+          {readOnly ? null : tagOpen ? (
             <input
+              ref={tagRef}
               value={tag}
               onChange={(event) => setTag(event.target.value)}
               onBlur={() => {
                 const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                if (!next) return;
-                patch((current) =>
-                  current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                );
+                if (next) {
+                  patch((current) =>
+                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                  );
+                }
                 setTag("");
+                setTagOpen(false);
               }}
               onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  setTag("");
+                  setTagOpen(false);
+                  return;
+                }
                 if (event.key !== "Enter") return;
                 event.preventDefault();
                 const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                if (!next) return;
-                patch((current) =>
-                  current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                );
+                if (next) {
+                  patch((current) =>
+                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                  );
+                }
                 setTag("");
+                setTagOpen(false);
               }}
               placeholder={t(locale, "notebookTagAdd")}
               tabIndex={-1}
               enterKeyHint="done"
-              className="w-24 bg-transparent py-1 outline-none"
+              className="w-24 rounded-full bg-surface px-2 py-1 text-fg outline-none"
             />
+          ) : (
+            <button
+              type="button"
+              className="flex size-7 items-center justify-center rounded-full bg-surface text-muted hover:text-fg"
+              aria-label={t(locale, "notebookTagAdd")}
+              onClick={() => setTagOpen(true)}
+            >
+              <Plus className="size-3.5" />
+            </button>
           )}
           {used.map((speaker) =>
             speaker ? (
