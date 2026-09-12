@@ -108,6 +108,11 @@ html.light {
     border-radius: 999px;
   }
 
+  .badge-seal[data-size="lg"] {
+    width: 11.5rem;
+    height: 11.5rem;
+  }
+
   .badge-seal[data-earned="true"] {
     box-shadow:
       0 0 0 1px rgb(232 220 200 / 0.28),
@@ -118,6 +123,73 @@ html.light {
     box-shadow:
       0 0 0 1px rgb(28 24 20 / 0.12),
       0 10px 22px rgb(28 24 20 / 0.12);
+  }
+
+  .badge-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 999px;
+    animation: badge-pop 0.55s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  }
+
+  .badge-hero .badge-seal {
+    animation: badge-float 4.2s ease-in-out 0.45s infinite;
+  }
+
+  .badge-hero-shine {
+    pointer-events: none;
+    position: absolute;
+    inset: -20%;
+    background: linear-gradient(
+      115deg,
+      transparent 35%,
+      rgb(255 255 255 / 0.38) 50%,
+      transparent 65%
+    );
+    animation: badge-shine 2.6s ease-in-out 0.5s infinite;
+    mix-blend-mode: overlay;
+  }
+
+  @keyframes badge-pop {
+    0% {
+      transform: scale(0.72);
+      opacity: 0;
+    }
+    70% {
+      transform: scale(1.08);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes badge-float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-3deg);
+    }
+    50% {
+      transform: translateY(-10px) rotate(3deg);
+    }
+  }
+
+  @keyframes badge-shine {
+    0% {
+      transform: translateX(-80%) rotate(18deg);
+    }
+    100% {
+      transform: translateX(80%) rotate(18deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .badge-hero,
+    .badge-hero .badge-seal,
+    .badge-hero-shine {
+      animation: none;
+    }
   }
 }
 

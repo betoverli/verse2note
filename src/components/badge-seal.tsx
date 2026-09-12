@@ -172,11 +172,20 @@ function Glyph({ id, earned }: { id: BadgeId; earned: boolean }) {
   }
 }
 
-export function BadgeSeal({ id, earned }: { id: BadgeId; earned: boolean }) {
+export function BadgeSeal({
+  id,
+  earned,
+  size = "md",
+}: {
+  id: BadgeId;
+  earned: boolean;
+  size?: "md" | "lg";
+}) {
   return (
     <span
       className={cn("badge-seal", earned ? "text-accent-fg" : "text-subtle")}
       data-earned={earned ? "true" : "false"}
+      data-size={size}
     >
       <Glyph id={id} earned={earned} />
     </span>
