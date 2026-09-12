@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v2";
+const CACHE = "verse2note-v3";
 
 const PRECACHE = [
   "/",
@@ -6,6 +6,7 @@ const PRECACHE = [
   "/collections",
   "/reading",
   "/profile",
+  "/inbox",
   "/about",
   "/for-ai",
   "/llms.txt",
@@ -78,5 +79,39 @@ self.addEventListener("fetch", (event) => {
         }
         return Response.error();
       }),
+  );
+});
+
+self.addEventListener("push", (event) => {
+  let payload = { title: "Verse2Note", body: "", href: "/app" };
+  try {
+    const data = event.data ? event.data.json() : {};
+    payload = { ...payload, ...data };
+  } catch {
+    if (event.data) payload.body = event.data.text();
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title, {
+      body: payload.body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { href: payload.href || "/app" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const raw = event.notification.data?.href;
+  const href = typeof raw === "string" && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/app";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      const existing = windows[0];
+      if (existing) {
+        if ("navigate" in existing) void existing.navigate(href);
+        return existing.focus();
+      }
+      return self.clients.openWindow(href);
+    }),
   );
 });

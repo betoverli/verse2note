@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Award, BarChart3, BookOpen, CircleHelp, Globe, Pencil, Share2, Sun } from "lucide-react";
+import { Award, BarChart3, Bell, BookOpen, CircleHelp, Globe, Pencil, Share2, Sun } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AVATARS, PHOTO_AVATAR, AvatarMark, ProfileAvatar } from "@/lib/avatars";
 import { getMyBadges } from "@/lib/badge-stats";
 import { BADGE_IDS, type BadgeId } from "@/lib/badges";
+import { getNotifyPrefs, type NotifyPrefs } from "@/lib/notify";
+import { notifySummary } from "@/components/notify-settings";
 import { toast } from "sonner";
 import { appById } from "@/lib/bible/apps";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
@@ -74,6 +76,15 @@ function SettingCards({ earned }: { earned: number }) {
   const appId = useAppStore((s) => s.appId);
   const app = appById(appId);
   const { user } = useCurrentUserState();
+  const [notify, setNotify] = useState<NotifyPrefs | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    void getNotifyPrefs()
+      .then((data) => setNotify({ reading: data.reading, friends: data.friends, shares: data.shares }))
+      .catch(() => undefined);
+  }, [user]);
+
   const cards = [
     ...(user
       ? [
@@ -82,6 +93,12 @@ function SettingCards({ earned }: { earned: number }) {
             icon: Award,
             title: t(locale, "badges"),
             subtitle: `${earned} / ${BADGE_IDS.length}`,
+          },
+          {
+            to: "/profile/notifications" as const,
+            icon: Bell,
+            title: t(locale, "notifications"),
+            subtitle: notify ? notifySummary(locale, notify) : t(locale, "notifyOff"),
           },
         ]
       : []),

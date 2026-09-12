@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ForAiRouteImport } from './routes/for-ai'
+import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReadingRouteImport } from './routes/reading'
@@ -34,6 +35,7 @@ import { Route as ProfileBibleRouteImport } from './routes/profile.bible'
 import { Route as ProfileEditRouteImport } from './routes/profile.edit'
 import { Route as ProfileHelpRouteImport } from './routes/profile.help'
 import { Route as ProfileLanguageRouteImport } from './routes/profile.language'
+import { Route as ProfileNotificationsRouteImport } from './routes/profile.notifications'
 import { Route as ProfileThemeRouteImport } from './routes/profile.theme'
 import { Route as ReadingIndexRouteImport } from './routes/reading.index'
 import { Route as ReadingIdRouteImport } from './routes/reading.$id'
@@ -71,6 +73,11 @@ const CollectionsRoute = CollectionsRouteImport.update({
 const ForAiRoute = ForAiRouteImport.update({
   id: '/for-ai',
   path: '/for-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InboxRoute = InboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -168,6 +175,11 @@ const ProfileLanguageRoute = ProfileLanguageRouteImport.update({
   path: '/language',
   getParentRoute: () => ProfileRoute,
 } as any)
+const ProfileNotificationsRoute = ProfileNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ProfileThemeRoute = ProfileThemeRouteImport.update({
   id: '/theme',
   path: '/theme',
@@ -218,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
@@ -235,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
   '/profile/language': typeof ProfileLanguageRoute
+  '/profile/notifications': typeof ProfileNotificationsRoute
   '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
@@ -252,6 +266,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/app': typeof AppRoute
   '/for-ai': typeof ForAiRoute
+  '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
@@ -267,6 +282,7 @@ export interface FileRoutesByTo {
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
   '/profile/language': typeof ProfileLanguageRoute
+  '/profile/notifications': typeof ProfileNotificationsRoute
   '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
@@ -286,6 +302,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
@@ -303,6 +320,7 @@ export interface FileRoutesById {
   '/profile/edit': typeof ProfileEditRoute
   '/profile/help': typeof ProfileHelpRoute
   '/profile/language': typeof ProfileLanguageRoute
+  '/profile/notifications': typeof ProfileNotificationsRoute
   '/profile/theme': typeof ProfileThemeRoute
   '/reading/$id': typeof ReadingIdRoute
   '/reading/all': typeof ReadingAllRoute
@@ -323,6 +341,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/inbox'
     | '/login'
     | '/profile'
     | '/reading'
@@ -340,6 +359,7 @@ export interface FileRouteTypes {
     | '/profile/edit'
     | '/profile/help'
     | '/profile/language'
+    | '/profile/notifications'
     | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
@@ -357,6 +377,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/for-ai'
+    | '/inbox'
     | '/login'
     | '/settings'
     | '/api/collections'
@@ -372,6 +393,7 @@ export interface FileRouteTypes {
     | '/profile/edit'
     | '/profile/help'
     | '/profile/language'
+    | '/profile/notifications'
     | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
@@ -390,6 +412,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/inbox'
     | '/login'
     | '/profile'
     | '/reading'
@@ -407,6 +430,7 @@ export interface FileRouteTypes {
     | '/profile/edit'
     | '/profile/help'
     | '/profile/language'
+    | '/profile/notifications'
     | '/profile/theme'
     | '/reading/$id'
     | '/reading/all'
@@ -426,6 +450,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ForAiRoute: typeof ForAiRoute
+  InboxRoute: typeof InboxRoute
   LoginRoute: typeof LoginRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   ReadingRoute: typeof ReadingRouteWithChildren
@@ -482,6 +507,13 @@ declare module '@tanstack/react-router' {
       path: '/for-ai'
       fullPath: '/for-ai'
       preLoaderRoute: typeof ForAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inbox': {
+      id: '/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof InboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -617,6 +649,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileLanguageRouteImport
       parentRoute: typeof ProfileRoute
     }
+    '/profile/notifications': {
+      id: '/profile/notifications'
+      path: '/notifications'
+      fullPath: '/profile/notifications'
+      preLoaderRoute: typeof ProfileNotificationsRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/profile/theme': {
       id: '/profile/theme'
       path: '/theme'
@@ -700,6 +739,7 @@ interface ProfileRouteChildren {
   ProfileEditRoute: typeof ProfileEditRoute
   ProfileHelpRoute: typeof ProfileHelpRoute
   ProfileLanguageRoute: typeof ProfileLanguageRoute
+  ProfileNotificationsRoute: typeof ProfileNotificationsRoute
   ProfileThemeRoute: typeof ProfileThemeRoute
   ProfileIndexRoute: typeof ProfileIndexRoute
 }
@@ -710,6 +750,7 @@ const ProfileRouteChildren: ProfileRouteChildren = {
   ProfileEditRoute: ProfileEditRoute,
   ProfileHelpRoute: ProfileHelpRoute,
   ProfileLanguageRoute: ProfileLanguageRoute,
+  ProfileNotificationsRoute: ProfileNotificationsRoute,
   ProfileThemeRoute: ProfileThemeRoute,
   ProfileIndexRoute: ProfileIndexRoute,
 }
@@ -741,6 +782,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   ForAiRoute: ForAiRoute,
+  InboxRoute: InboxRoute,
   LoginRoute: LoginRoute,
   ProfileRoute: ProfileRouteWithChildren,
   ReadingRoute: ReadingRouteWithChildren,

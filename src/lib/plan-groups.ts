@@ -102,6 +102,9 @@ export const joinPlanGroup = createServerFn({ method: "POST" })
       values (${group.id}, ${context.userId})
       on conflict do nothing
     `;
+    void import("@/lib/notify.server")
+      .then((mod) => mod.notifyPlanJoined(context.userId, group.id, group.plan_id))
+      .catch(() => undefined);
     return { ok: true as const, planId: group.plan_id, error: null };
   });
 

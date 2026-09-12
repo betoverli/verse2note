@@ -204,6 +204,9 @@ export const remixCollection = createServerFn({ method: "POST" })
       insert into user_collections (id, user_id, title, visibility, passages, source_id, updated_at)
       values (${id}, ${context.userId}, ${source.title}, ${"private"}, ${JSON.stringify(source.passages)}, ${source.id}, now())
     `;
+    void import("@/lib/notify.server")
+      .then((mod) => mod.notifyCollectionRemix(context.userId, row.user_id, source.title, source.id))
+      .catch(() => undefined);
     return { ok: true as const, id };
   });
 

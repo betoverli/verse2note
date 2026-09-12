@@ -79,6 +79,9 @@ export const pingVisit = createServerFn({ method: "POST" })
         pageviews = usage_daily.pageviews + 1,
         signed_in = usage_daily.signed_in + excluded.signed_in
     `;
+    void import("@/lib/notify.server")
+      .then((mod) => mod.maybeSendDigests())
+      .catch(() => undefined);
     return { ok: true as const };
   });
 

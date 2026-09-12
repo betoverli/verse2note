@@ -30,6 +30,7 @@ const TABS = [
 export function showTabBar(pathname: string) {
   return (
     pathname === "/app" ||
+    pathname === "/inbox" ||
     pathname === "/profile" ||
     pathname.startsWith("/profile/") ||
     pathname.startsWith("/collections") ||

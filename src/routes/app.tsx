@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
 import { LinkPreview } from "@/components/link-preview";
 import { Picker } from "@/components/picker";
+import { NotifyBell } from "@/components/notify-bell";
 import { RecentsMenu } from "@/components/recents-menu";
 import { bookById } from "@/lib/bible/books";
 import { t } from "@/lib/i18n";
@@ -34,7 +35,15 @@ function AppPage() {
         dock ? "pb-[calc(var(--tab-bar-height)+16rem)]" : "pb-[calc(var(--tab-bar-height)+1rem)]",
       )}
     >
-      <AppHeader title={book ? book.names[locale] : t(locale, "navBooks")} trailing={<RecentsMenu />} />
+      <AppHeader
+        title={book ? book.names[locale] : t(locale, "navBooks")}
+        trailing={
+          <span className="flex items-center">
+            <NotifyBell />
+            <RecentsMenu />
+          </span>
+        }
+      />
       <Picker />
       <LinkPreview />
     </main>

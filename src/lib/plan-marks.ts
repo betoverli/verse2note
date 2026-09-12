@@ -62,6 +62,9 @@ export const markPlanDay = createServerFn({ method: "POST" })
       values (${context.userId}, ${data.planId}, ${data.day}, current_date)
     `;
     await persistProgress(sql, context.userId);
+    void import("@/lib/notify.server")
+      .then((mod) => mod.notifyPlanMarked(context.userId, data.planId, data.day))
+      .catch(() => undefined);
     return { ok: true as const, error: null };
   });
 
