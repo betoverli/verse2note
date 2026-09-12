@@ -7,9 +7,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { AVATARS, PHOTO_AVATAR, AvatarMark, ProfileAvatar } from "@/lib/avatars";
 import { getMyBadges } from "@/lib/badge-stats";
 import { BADGE_IDS, type BadgeId } from "@/lib/badges";
-import { getNotifyPrefs, type NotifyPrefs } from "@/lib/notify";
 import { listLinks } from "@/lib/links";
-import { notifySummary } from "@/components/notify-settings";
 import { toast } from "sonner";
 import { appById } from "@/lib/bible/apps";
 import { savePrefs, syncAccountPhoto } from "@/lib/cloud";
@@ -78,15 +76,11 @@ function SettingCards({ earned }: { earned: number }) {
   const appId = useAppStore((s) => s.appId);
   const app = appById(appId);
   const { user } = useCurrentUserState();
-  const [notify, setNotify] = useState<NotifyPrefs | null>(null);
   const [friendCount, setFriendCount] = useState(0);
   const [incomingCount, setIncomingCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
-    void getNotifyPrefs()
-      .then((data) => setNotify({ reading: data.reading, friends: data.friends, shares: data.shares }))
-      .catch(() => undefined);
     void listLinks()
       .then((data) => {
         setFriendCount(data.friends.length);
@@ -116,7 +110,7 @@ function SettingCards({ earned }: { earned: number }) {
             to: "/profile/notifications" as const,
             icon: Bell,
             title: t(locale, "notifications"),
-            subtitle: notify ? notifySummary(locale, notify) : t(locale, "notifyOff"),
+            subtitle: t(locale, "notifySetup"),
           },
         ]
       : []),
