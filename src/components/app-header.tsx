@@ -81,6 +81,7 @@ export function AppHeader({
   backParams,
   trailing,
   search,
+  titleField,
 }: {
   title?: string;
   backTo?: BackTo;
@@ -88,6 +89,7 @@ export function AppHeader({
   backLabel?: string;
   trailing?: ReactNode;
   search?: HeaderSearch;
+  titleField?: ReactNode;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [apple, setApple] = useState(false);
@@ -142,6 +144,8 @@ export function AppHeader({
               className="h-10 w-full rounded-md bg-surface px-3 text-base text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-search-cancel-button]:hidden"
             />
           </div>
+        ) : titleField ? (
+          <div className="min-w-0 flex-1">{titleField}</div>
         ) : (
           <HeaderTitle title={title} />
         )}

@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink, Link2, Trash2 } from "lucide-react";
+import { Check, Copy, ExternalLink, Link2, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ import type { CollectionPassage } from "@/lib/user-collection";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { AppHeader } from "@/components/app-header";
 import { SendToFriendButton } from "@/components/send-to-friend";
 
 function toCopyItem(
@@ -168,6 +168,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   const [visibility, setVisibility] = useState(collection.visibility);
   const [copied, setCopied] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
 
   const items = passages
     .map((item) => toCopyItem(item, locale, appId, translationId, preferNative))
@@ -220,8 +221,19 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
 
   async function onRename() {
     const next = title.trim();
-    if (!next || next === collection.title) return;
+    if (!next) {
+      setTitle(collection.title);
+      return;
+    }
+    if (next === collection.title) return;
+    setTitle(next);
     await persist({ title: next });
+  }
+
+  async function toggleEdit() {
+    if (editing) await onRename();
+    setEditing((open) => !open);
+    setConfirmDelete(false);
   }
 
   async function onShare() {
@@ -256,20 +268,42 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   }
 
   return (
-    <div className="flex flex-col gap-6 pb-8">
-      <form
-        className="flex gap-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void onRename();
-        }}
-      >
-        <Input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={60} />
-        <Button type="submit" variant="secondary">
-          {t(locale, "collectionRename")}
-        </Button>
-      </form>
-
+    <>
+      <AppHeader
+        title={title}
+        backTo="/collections"
+        titleField={
+          editing ? (
+            <input
+              value={title}
+              maxLength={60}
+              onChange={(event) => setTitle(event.target.value)}
+              onBlur={() => void onRename()}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void onRename();
+                  (event.target as HTMLInputElement).blur();
+                }
+              }}
+              aria-label={t(locale, "collectionName")}
+              className="h-10 w-full rounded-md bg-surface px-3 text-center text-base font-semibold text-fg outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            />
+          ) : undefined
+        }
+        trailing={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-12 text-fg [&_svg]:size-5"
+            aria-label={t(locale, editing ? "collectionDone" : "collectionEdit")}
+            onClick={() => void toggleEdit()}
+          >
+            {editing ? <Check /> : <Pencil />}
+          </Button>
+        }
+      />
+      <div className="flex flex-col gap-6 pb-8">
       {passages.length === 0 ? (
         <div className="space-y-3">
           <p className="text-sm text-muted">{t(locale, "collectionEmpty")}</p>
@@ -280,13 +314,23 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
       ) : (
         <CollectionPassageCards
           passages={passages}
-          editable
-          onTitle={onTitle}
-          onTitleSave={onTitleSave}
-          onRemove={(passage) => void onRemove(passage)}
+          editable={editing}
+          onTitle={editing ? onTitle : undefined}
+          onTitleSave={editing ? onTitleSave : undefined}
+          onRemove={editing ? (passage) => void onRemove(passage) : undefined}
         />
       )}
 
+      {editing ? (
+        <div className="flex flex-col gap-2">
+          <Button variant="secondary" asChild>
+            <Link to="/app">{t(locale, "addToCollection")}</Link>
+          </Button>
+          <Button variant="ghost" className="text-muted" onClick={() => void onDelete()}>
+            {confirmDelete ? t(locale, "collectionDeleteConfirm") : t(locale, "collectionDelete")}
+          </Button>
+        </div>
+      ) : (
       <div className="flex flex-col gap-2">
         {items.length > 0 ? (
           <Button onClick={() => void onCopyAll()}>{t(locale, "copyCollection")}</Button>
@@ -299,11 +343,10 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
         <button type="button" onClick={() => void onShare()} className="text-center text-xs text-muted">
           {visibility === "private" ? t(locale, "collectionPrivate") : t(locale, "collectionShared")}
         </button>
-        <Button variant="ghost" className="text-muted" onClick={() => void onDelete()}>
-          {confirmDelete ? t(locale, "collectionDeleteConfirm") : t(locale, "collectionDelete")}
-        </Button>
       </div>
+      )}
     </div>
+    </>
   );
 }
 

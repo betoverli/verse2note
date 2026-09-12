@@ -87,7 +87,12 @@ function UserCollectionRoute() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader title={collection.title} backTo="/collections" />
-      {mine ? <UserCollectionDetail collection={collection} /> : <SharedCollectionView collection={collection} />}
+      {mine ? <UserCollectionDetail collection={collection} /> : (
+        <>
+          <AppHeader title={collection.title} backTo="/collections" />
+          <SharedCollectionView collection={collection} />
+        </>
+      )}
     </main>
   );
 }
