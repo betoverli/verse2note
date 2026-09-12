@@ -165,6 +165,22 @@ function useHideOnScroll(enabled: boolean) {
   return compact;
 }
 
+function olNumber(items: LineBlock[], id: string) {
+  const index = items.findIndex((item) => item.id === id);
+  if (index < 0 || items[index]?.type !== "ol") return undefined;
+  let n = 0;
+  for (let i = index; i >= 0 && items[i]?.type === "ol"; i -= 1) n += 1;
+  return n;
+}
+
+function rootOlNumber(blocks: NoteBlock[], id: string) {
+  const index = blocks.findIndex((item) => item.id === id);
+  if (index < 0 || blocks[index]?.type !== "ol") return undefined;
+  let n = 0;
+  for (let i = index; i >= 0 && blocks[i]?.type === "ol"; i -= 1) n += 1;
+  return n;
+}
+
 function LineRow({
   block,
   locale,
@@ -196,9 +212,9 @@ function LineRow({
 }) {
   return (
     <div className="flex gap-2">
-      {block.type === "ul" ? <span className="mt-1 w-4 text-muted">•</span> : null}
-      {block.type === "ol" ? (
-        <span className="mt-1 w-4 text-xs text-muted">{(index ?? 0) + 1}.</span>
+      {block.type === "ul" ? <span className="mt-0.5 w-5 shrink-0 text-[17px] leading-relaxed text-muted">•</span> : null}
+      {block.type === "ol" && index ? (
+        <span className="mt-0.5 w-6 shrink-0 text-[17px] leading-relaxed tabular-nums text-muted">{index}.</span>
       ) : null}
       <NotebookLine
         block={block}
@@ -296,6 +312,10 @@ export function NotebookEditor({
   function onEnter(block: LineBlock) {
     const current = latest();
     const speaker = speakerBlockOf(current.blocks, block.id);
+    if (block.inlines.length === 0 && (block.type === "ul" || block.type === "ol")) {
+      updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, type: "p" })));
+      return;
+    }
     const lastChild = speaker?.children[speaker.children.length - 1];
     if (speaker && lastChild?.id === block.id && block.inlines.length === 0) {
       const next = ensureLineAfter(current.blocks, speaker.id);
@@ -563,7 +583,7 @@ export function NotebookEditor({
                     )
                   ) : null}
                   <div className="mt-1 flex flex-col gap-1">
-                    {block.children.map((child, childIndex) => (
+                    {block.children.map((child) => (
                       <LineRow
                         key={child.id}
                         block={child}
@@ -571,7 +591,7 @@ export function NotebookEditor({
                         copyLocale={copyLocale}
                         style={cite}
                         active={!readOnly && focusId === child.id}
-                        index={child.type === "ol" ? childIndex : undefined}
+                        index={olNumber(block.children, child.id)}
                         onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, child.id, (row) => ({ ...row, inlines })))}
                         onEnter={() => onEnter(child)}
                         onEmptyBackspace={() => onMergeBack(child.id)}
@@ -596,7 +616,7 @@ export function NotebookEditor({
                 copyLocale={copyLocale}
                 style={cite}
                 active={!readOnly && focusId === block.id}
-                index={block.type === "ol" ? blockIndex : undefined}
+                index={rootOlNumber(draft.blocks, block.id)}
                 placeholder={block.id === first?.id && block.type === "p" ? t(locale, "notebookWrite") : undefined}
                 onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, inlines })))}
                 onEnter={() => onEnter(block)}
