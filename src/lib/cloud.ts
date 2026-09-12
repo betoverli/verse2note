@@ -5,6 +5,7 @@ import { appById } from "@/lib/bible/apps";
 import type { Locale } from "@/lib/bible/books";
 import { planById } from "@/lib/bible/reading-plans";
 import type { CopyFormat } from "@/lib/copy-rich";
+import type { CiteBook, CiteSep } from "@/lib/bible/passage";
 import type { Theme } from "@/lib/theme";
 import { getSql } from "@/lib/db";
 import { progressFromMarks } from "@/lib/plan-marks";
@@ -18,6 +19,8 @@ export type CloudPrefs = {
   translationId: string;
   preferNative: boolean;
   copyFormat: CopyFormat;
+  citeBook: CiteBook;
+  citeSep: CiteSep;
   booksCompact: boolean;
   theme: Theme;
   activePlans: string[];
@@ -37,6 +40,8 @@ type PrefsRow = {
   translation_id: string;
   prefer_native: boolean;
   copy_format: string;
+  cite_book: string;
+  cite_sep: string;
   books_compact: boolean;
   theme: string;
   active_plans: string;
@@ -55,6 +60,14 @@ function asLocale(value: string): Locale {
 
 function asFormat(value: string): CopyFormat {
   return value === "markdown" || value === "plain" || value === "rich" ? value : "rich";
+}
+
+function asCiteBook(value: string): CiteBook {
+  return value === "abbr" ? "abbr" : "name";
+}
+
+function asCiteSep(value: string): CiteSep {
+  return value === "dot" || value === "comma" ? value : "colon";
 }
 
 function asTheme(value: string): Theme {
@@ -77,6 +90,8 @@ function fromRow(row: PrefsRow): CloudPrefs {
     translationId: row.translation_id,
     preferNative: Boolean(row.prefer_native),
     copyFormat: asFormat(row.copy_format),
+    citeBook: asCiteBook(row.cite_book),
+    citeSep: asCiteSep(row.cite_sep),
     booksCompact: Boolean(row.books_compact),
     theme: asTheme(row.theme),
     activePlans: parseJson<string[]>(row.active_plans, []),
@@ -109,6 +124,8 @@ export function mergePrefs(local: CloudPrefs, cloud: CloudPrefs | null): CloudPr
     translationId: cloud.translationId,
     preferNative: cloud.preferNative,
     copyFormat: cloud.copyFormat,
+    citeBook: cloud.citeBook,
+    citeSep: cloud.citeSep,
     booksCompact: cloud.booksCompact,
     theme: cloud.theme,
     activePlans: ids,
@@ -127,7 +144,7 @@ export const getPrefs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     const rows = await sql<PrefsRow>`
-      select locale, copy_locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
+      select locale, copy_locale, app_id, translation_id, prefer_native, copy_format, cite_book, cite_sep, books_compact, theme,
              active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email
       from user_prefs
       where user_id = ${context.userId}
@@ -171,15 +188,17 @@ export const savePrefs = createServerFn({ method: "POST" })
     const copyLocale = asLocale(data.copyLocale || data.locale);
     const appId = appById(data.appId) ? data.appId : "youversion";
     const copyFormat = asFormat(data.copyFormat);
+    const citeBook = asCiteBook(data.citeBook);
+    const citeSep = asCiteSep(data.citeSep);
     const theme = asTheme(data.theme);
     try {
       await sql`
       insert into user_prefs (
-        user_id, locale, copy_locale, app_id, translation_id, prefer_native, copy_format, books_compact, theme,
+        user_id, locale, copy_locale, app_id, translation_id, prefer_native, copy_format, cite_book, cite_sep, books_compact, theme,
         active_plans, plan_progress, avatar_id, avatar_url, handle, first_name, last_name, email, updated_at
       ) values (
         ${context.userId}, ${locale}, ${copyLocale}, ${appId}, ${data.translationId.slice(0, 40)}, ${Boolean(data.preferNative)},
-        ${copyFormat}, ${Boolean(data.booksCompact)}, ${theme}, ${active}, ${progress},
+        ${copyFormat}, ${citeBook}, ${citeSep}, ${Boolean(data.booksCompact)}, ${theme}, ${active}, ${progress},
         ${avatarId}, ${cleanAvatarUrl(data.avatarUrl)}, ${handle}, ${cleanName(data.firstName)}, ${cleanName(data.lastName)}, ${cleanEmail(data.profileEmail) || data.profileEmail.trim().slice(0, 120)}, now()
       )
       on conflict (user_id) do update set
@@ -189,6 +208,8 @@ export const savePrefs = createServerFn({ method: "POST" })
         translation_id = excluded.translation_id,
         prefer_native = excluded.prefer_native,
         copy_format = excluded.copy_format,
+        cite_book = excluded.cite_book,
+        cite_sep = excluded.cite_sep,
         books_compact = excluded.books_compact,
         theme = excluded.theme,
         active_plans = excluded.active_plans,

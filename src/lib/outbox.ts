@@ -89,6 +89,8 @@ function snapshot(): CloudPrefs {
     translationId: s.translationId,
     preferNative: s.preferNative,
     copyFormat: s.copyFormat,
+    citeBook: s.citeBook,
+    citeSep: s.citeSep,
     booksCompact: s.booksCompact,
     theme: s.theme,
     activePlans: s.activePlans,

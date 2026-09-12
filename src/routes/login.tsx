@@ -92,6 +92,8 @@ export function Login() {
               translationId: useAppStore.getState().translationId,
               preferNative: useAppStore.getState().preferNative,
               copyFormat: useAppStore.getState().copyFormat,
+              citeBook: useAppStore.getState().citeBook,
+              citeSep: useAppStore.getState().citeSep,
               booksCompact: useAppStore.getState().booksCompact,
               theme: useAppStore.getState().theme,
               activePlans: useAppStore.getState().activePlans,

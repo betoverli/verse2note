@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
 import { SNIPPET_SOURCES, type Collection } from "@/lib/bible/collections";
 import { bookById, type Locale } from "@/lib/bible/books";
-import { formatPassage, type Passage } from "@/lib/bible/passage";
+import { formatPassage, type CiteStyle, type Passage } from "@/lib/bible/passage";
 import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
@@ -17,18 +17,21 @@ function toCopyItem(
   appId: string,
   translationId: string,
   preferNative: boolean,
+  style?: Partial<CiteStyle>,
 ): CopyItem | null {
   const book = bookById(passage.bookId);
   const translation = translationById(translationId);
   if (!book) return null;
   const url = buildDeepLink(appId, passage, translation, preferNative);
   if (!url) return null;
-  return { label: formatPassage(book, passage, locale), url };
+  return { label: formatPassage(book, passage, locale, style), url };
 }
 
 export function CollectionDetail({ collection }: { collection: Collection }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -37,7 +40,7 @@ export function CollectionDetail({ collection }: { collection: Collection }) {
   const [copied, setCopied] = useState<"all" | string | null>(null);
 
   const items = collection.passages
-    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative))
+    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative, { book: citeBook, sep: citeSep }))
     .filter((item): item is CopyItem => item != null);
 
   function flash(key: "all" | string) {

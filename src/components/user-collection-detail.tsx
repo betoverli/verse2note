@@ -4,7 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
 import { bookById, type Locale } from "@/lib/bible/books";
-import { formatPassage, samePassage, type Passage } from "@/lib/bible/passage";
+import { formatPassage, samePassage, type CiteStyle, type Passage } from "@/lib/bible/passage";
 import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
@@ -26,13 +26,14 @@ function toCopyItem(
   appId: string,
   translationId: string,
   preferNative: boolean,
+  style?: Partial<CiteStyle>,
 ): CopyItem | null {
   const book = bookById(passage.bookId);
   const translation = translationById(translationId);
   if (!book) return null;
   const url = buildDeepLink(appId, passage, translation, preferNative);
   if (!url) return null;
-  return { label: formatPassage(book, passage, locale), url };
+  return { label: formatPassage(book, passage, locale, style), url };
 }
 
 function passageKey(passage: Passage) {
@@ -54,6 +55,8 @@ export function CollectionPassageCards({
 }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -85,7 +88,10 @@ export function CollectionPassageCards({
   return (
     <ul className="flex flex-col gap-2">
       {passages.map((passage) => {
-        const item = toCopyItem(passage, copyLocale, appId, translationId, preferNative);
+        const item = toCopyItem(passage, copyLocale, appId, translationId, preferNative, {
+          book: citeBook,
+          sep: citeSep,
+        });
         if (!item) return null;
         const key = passageKey(passage);
         return (
@@ -157,6 +163,8 @@ export function CollectionPassageCards({
 export function UserCollectionDetail({ collection }: { collection: UserCollection }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -170,7 +178,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   const [editing, setEditing] = useState(false);
 
   const items = passages
-    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative))
+    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative, { book: citeBook, sep: citeSep }))
     .filter((item): item is CopyItem => item != null);
 
   function persist(next: {
@@ -346,6 +354,8 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
 export function SharedCollectionView({ collection }: { collection: UserCollection }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -353,7 +363,7 @@ export function SharedCollectionView({ collection }: { collection: UserCollectio
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
   const items = collection.passages
-    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative))
+    .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative, { book: citeBook, sep: citeSep }))
     .filter((item): item is CopyItem => item != null);
 
   async function onCopyAll() {

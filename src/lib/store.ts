@@ -4,6 +4,7 @@ import type { Locale } from "@/lib/bible/books";
 import { bookById } from "@/lib/bible/books";
 import type { Passage } from "@/lib/bible/passage";
 import { samePassage } from "@/lib/bible/passage";
+import type { CiteBook, CiteSep } from "@/lib/bible/passage";
 import { DEFAULT_TRANSLATION, translationsFor } from "@/lib/bible/translations";
 import type { CopyFormat } from "@/lib/copy-rich";
 import { detectLocale } from "@/lib/i18n";
@@ -20,6 +21,8 @@ type AppState = {
   translationId: string;
   preferNative: boolean;
   copyFormat: CopyFormat;
+  citeBook: CiteBook;
+  citeSep: CiteSep;
   booksCompact: boolean;
   theme: Theme;
   onboarded: boolean;
@@ -48,6 +51,8 @@ type AppState = {
   setTranslationId: (id: string) => void;
   setPreferNative: (value: boolean) => void;
   setCopyFormat: (format: CopyFormat) => void;
+  setCiteBook: (value: CiteBook) => void;
+  setCiteSep: (value: CiteSep) => void;
   setBooksCompact: (value: boolean) => void;
   setTheme: (theme: Theme) => void;
   completeOnboarding: () => void;
@@ -93,6 +98,8 @@ export const useAppStore = create<AppState>()(
       translationId: DEFAULT_TRANSLATION[detectLocale()],
       preferNative: false,
       copyFormat: "rich",
+      citeBook: "name",
+      citeSep: "colon",
       booksCompact: false,
       theme: "system",
       onboarded: false,
@@ -130,6 +137,8 @@ export const useAppStore = create<AppState>()(
       setTranslationId: (translationId) => set({ translationId }),
       setPreferNative: (preferNative) => set({ preferNative }),
       setCopyFormat: (copyFormat) => set({ copyFormat }),
+      setCiteBook: (citeBook) => set({ citeBook }),
+      setCiteSep: (citeSep) => set({ citeSep }),
       setBooksCompact: (booksCompact) => set({ booksCompact }),
       setTheme: (theme) => {
         set({ theme });
@@ -225,6 +234,8 @@ export const useAppStore = create<AppState>()(
           translationId: prefs.translationId,
           preferNative: prefs.preferNative,
           copyFormat: prefs.copyFormat,
+          citeBook: prefs.citeBook,
+          citeSep: prefs.citeSep,
           booksCompact: prefs.booksCompact,
           theme: prefs.theme,
           activePlans: prefs.activePlans,
@@ -283,6 +294,8 @@ export const useAppStore = create<AppState>()(
         translationId: state.translationId,
         preferNative: state.preferNative,
         copyFormat: state.copyFormat,
+        citeBook: state.citeBook,
+        citeSep: state.citeSep,
         booksCompact: state.booksCompact,
         theme: state.theme,
         onboarded: state.onboarded,
@@ -322,6 +335,8 @@ export const useAppStore = create<AppState>()(
           copyLocale: saved.copyLocale === "en" || saved.copyLocale === "es" || saved.copyLocale === "pt"
             ? saved.copyLocale
             : saved.locale ?? current.locale,
+          citeBook: saved.citeBook === "abbr" ? "abbr" : "name",
+          citeSep: saved.citeSep === "dot" || saved.citeSep === "comma" ? saved.citeSep : "colon",
         };
       },
       onRehydrateStorage: () => (state) => {

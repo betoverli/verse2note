@@ -1,6 +1,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowLeft, Monitor, Moon, Sun } from "lucide-react";
 import type { Locale } from "@/lib/bible/books";
+import { bookById } from "@/lib/bible/books";
+import { formatPassage, type CiteBook, type CiteSep } from "@/lib/bible/passage";
 import { appById, appHasOptions, appIcon } from "@/lib/bible/apps";
 import { TRANSLATIONS } from "@/lib/bible/translations";
 import { clipboardDropsHtmlLinks, type CopyFormat } from "@/lib/copy-rich";
@@ -72,6 +74,19 @@ export function LanguageSettings() {
   const copyLocale = useAppStore((s) => s.copyLocale);
   const setLocale = useAppStore((s) => s.setLocale);
   const setCopyLocale = useAppStore((s) => s.setCopyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
+  const setCiteBook = useAppStore((s) => s.setCiteBook);
+  const setCiteSep = useAppStore((s) => s.setCiteSep);
+  const john = bookById("JHN");
+  const sample = john
+    ? formatPassage(
+        john,
+        { bookId: "JHN", chapter: 3, verseStart: 16, verseEnd: 18 },
+        copyLocale,
+        { book: citeBook, sep: citeSep },
+      )
+    : "";
   return (
     <div className="flex flex-col gap-6">
       <Section title={t(locale, "uiLanguage")} lead={t(locale, "uiLanguageLead")}>
@@ -96,6 +111,28 @@ export function LanguageSettings() {
               title={item.toUpperCase()}
               subtitle={t(locale, LOCALE_LABEL[item])}
               onClick={() => setCopyLocale(item)}
+            />
+          ))}
+        </div>
+      </Section>
+      <Section title={t(locale, "citeFormat")} lead={sample || t(locale, "citeFormatLead")}>
+        <div className="grid grid-cols-2 gap-2">
+          {(["name", "abbr"] as CiteBook[]).map((item) => (
+            <Choice
+              key={item}
+              active={citeBook === item}
+              title={t(locale, item === "name" ? "citeName" : "citeAbbr")}
+              onClick={() => setCiteBook(item)}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {(["colon", "dot", "comma"] as CiteSep[]).map((item) => (
+            <Choice
+              key={item}
+              active={citeSep === item}
+              title={item === "colon" ? "3:16" : item === "dot" ? "3.16" : "3,16"}
+              onClick={() => setCiteSep(item)}
             />
           ))}
         </div>

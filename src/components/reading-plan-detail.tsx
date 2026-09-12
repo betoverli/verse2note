@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { buildDeepLink } from "@/lib/bible/apps";
 import { bookById, type Locale } from "@/lib/bible/books";
-import { formatPassage, type Passage } from "@/lib/bible/passage";
+import { formatPassage, type CiteStyle, type Passage } from "@/lib/bible/passage";
 import { readingToPassage, planLead, type PlanDay, type ReadingPlan } from "@/lib/bible/reading-plans";
 import { translationById } from "@/lib/bible/translations";
 import { copyReferences, type CopyItem } from "@/lib/copy-rich";
@@ -25,13 +25,14 @@ function toCopyItem(
   appId: string,
   translationId: string,
   preferNative: boolean,
+  style?: Partial<CiteStyle>,
 ): CopyItem | null {
   const book = bookById(passage.bookId);
   const translation = translationById(translationId);
   if (!book) return null;
   const url = buildDeepLink(appId, passage, translation, preferNative);
   if (!url) return null;
-  return { label: formatPassage(book, passage, locale), url };
+  return { label: formatPassage(book, passage, locale, style), url };
 }
 
 function dayItems(
@@ -40,9 +41,10 @@ function dayItems(
   appId: string,
   translationId: string,
   preferNative: boolean,
+  style?: Partial<CiteStyle>,
 ): CopyItem[] {
   return day.readings
-    .map((reading) => toCopyItem(readingToPassage(reading), locale, appId, translationId, preferNative))
+    .map((reading) => toCopyItem(readingToPassage(reading), locale, appId, translationId, preferNative, style))
     .filter((item): item is CopyItem => item != null);
 }
 
@@ -99,6 +101,8 @@ export function ReadingPlanDetail({ plan }: { plan: ReadingPlan }) {
 function PlanTracker({ plan }: { plan: ReadingPlan }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -313,7 +317,10 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
         {plan.days.map((day) => {
           const complete = doneDays.includes(day.day);
           const passages = day.readings.map(readingToPassage);
-          const items = dayItems(day, copyLocale, appId, translationId, preferNative);
+          const items = dayItems(day, copyLocale, appId, translationId, preferNative, {
+            book: citeBook,
+            sep: citeSep,
+          });
           const who = others.filter((member) => member.days.includes(day.day));
           return (
             <li

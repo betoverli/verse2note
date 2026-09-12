@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { appById, appIcon, buildDeepLink, buildHttpLink } from "@/lib/bible/apps";
 import { bookById, type Locale } from "@/lib/bible/books";
-import { formatPassage, formatPassageById, samePassage, type Passage } from "@/lib/bible/passage";
+import { formatPassage, formatPassageById, samePassage, type CiteStyle, type Passage } from "@/lib/bible/passage";
 import { translationById } from "@/lib/bible/translations";
 import {
   canWebShare,
@@ -23,6 +23,7 @@ function toCopyItem(
   translationId: string,
   preferNative: boolean,
   httpOnly: boolean,
+  style?: Partial<CiteStyle>,
 ): CopyItem | null {
   const book = bookById(passage.bookId);
   const translation = translationById(translationId);
@@ -31,12 +32,14 @@ function toCopyItem(
     ? buildHttpLink(appId, passage, translation)
     : buildDeepLink(appId, passage, translation, preferNative);
   if (!url) return null;
-  return { label: formatPassage(book, passage, locale), url };
+  return { label: formatPassage(book, passage, locale, style), url };
 }
 
 export function LinkPreview() {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const citeBook = useAppStore((s) => s.citeBook);
+  const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
   const translationId = useAppStore((s) => s.translationId);
   const preferNative = useAppStore((s) => s.preferNative);
@@ -63,11 +66,12 @@ export function LinkPreview() {
   const passage = bookId && chapter ? { bookId, chapter, verseStart, verseEnd } : null;
   const translation = translationById(translationId);
   const app = appById(appId);
+  const cite = { book: citeBook, sep: citeSep };
   const current = passage
-    ? toCopyItem(passage, copyLocale, appId, translationId, preferNative, false)
+    ? toCopyItem(passage, copyLocale, appId, translationId, preferNative, false, cite)
     : null;
   const currentShare = passage
-    ? toCopyItem(passage, copyLocale, appId, translationId, preferNative, true)
+    ? toCopyItem(passage, copyLocale, appId, translationId, preferNative, true, cite)
     : current;
   const inList = Boolean(passage && list.some((item) => samePassage(item, passage)));
 
@@ -120,7 +124,7 @@ export function LinkPreview() {
 
   function listItems(httpOnly: boolean) {
     return list
-      .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative, httpOnly))
+      .map((item) => toCopyItem(item, copyLocale, appId, translationId, preferNative, httpOnly, cite))
       .filter((item): item is CopyItem => item != null);
   }
 
@@ -189,7 +193,7 @@ export function LinkPreview() {
                     onClick={() => applyPassage(item)}
                     className="min-h-11 px-3 text-sm text-fg hover:bg-elevated"
                   >
-                    {formatPassageById(item, copyLocale)}
+                    {formatPassageById(item, copyLocale, cite)}
                   </button>
                   <button
                     type="button"

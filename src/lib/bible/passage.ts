@@ -8,20 +8,36 @@ export type Passage = {
   verseEnd: number | null;
 };
 
-export function formatPassage(book: Book, passage: Passage, locale: Locale): string {
-  const name = book.names[locale];
+export type CiteBook = "name" | "abbr";
+export type CiteSep = "colon" | "dot" | "comma";
+export type CiteStyle = { book: CiteBook; sep: CiteSep };
+
+const SEP: Record<CiteSep, string> = {
+  colon: ":",
+  dot: ".",
+  comma: ",",
+};
+
+export function formatPassage(
+  book: Book,
+  passage: Passage,
+  locale: Locale,
+  style?: Partial<CiteStyle>,
+): string {
+  const label = style?.book === "abbr" ? book.abbr[locale] : book.names[locale];
+  const sep = SEP[style?.sep ?? "colon"];
   const { chapter, verseStart, verseEnd } = passage;
-  if (!verseStart) return `${name} ${chapter}`;
-  if (!verseEnd || verseEnd === verseStart) return `${name} ${chapter}:${verseStart}`;
+  if (!verseStart) return `${label} ${chapter}`;
+  if (!verseEnd || verseEnd === verseStart) return `${label} ${chapter}${sep}${verseStart}`;
   const lo = Math.min(verseStart, verseEnd);
   const hi = Math.max(verseStart, verseEnd);
-  return `${name} ${chapter}:${lo}–${hi}`;
+  return `${label} ${chapter}${sep}${lo}–${hi}`;
 }
 
-export function formatPassageById(passage: Passage, locale: Locale): string {
+export function formatPassageById(passage: Passage, locale: Locale, style?: Partial<CiteStyle>): string {
   const book = bookById(passage.bookId);
   if (!book) return "";
-  return formatPassage(book, passage, locale);
+  return formatPassage(book, passage, locale, style);
 }
 
 export function verseBounds(passage: Passage): { start: number | null; end: number | null } {
