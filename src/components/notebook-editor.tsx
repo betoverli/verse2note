@@ -33,6 +33,28 @@ function mapLine(blocks: NoteBlock[], id: string, update: (block: LineBlock) => 
   });
 }
 
+function insertAfterAnchor(blocks: NoteBlock[], id: string | null, next: NoteBlock): NoteBlock[] {
+  if (!id) return [...blocks, next];
+  const out: NoteBlock[] = [];
+  let placed = false;
+  for (const block of blocks) {
+    if (block.type === "speaker") {
+      out.push(block);
+      if (block.id === id || block.children.some((child) => child.id === id)) {
+        out.push(next);
+        placed = true;
+      }
+      continue;
+    }
+    out.push(block);
+    if (block.id === id) {
+      out.push(next);
+      placed = true;
+    }
+  }
+  return placed ? out : [...out, next];
+}
+
 function insertAfter(blocks: NoteBlock[], id: string, next: LineBlock): NoteBlock[] {
   const out: NoteBlock[] = [];
   for (const block of blocks) {
@@ -275,9 +297,27 @@ export function NotebookEditor({
       title: "",
       children: [child],
     };
-    updateBlocks((blocks) => [...blocks, block]);
+    updateBlocks((blocks) => insertAfterAnchor(blocks, focusId, block));
     setFocusId(child.id);
     setActive(speaker.id);
+  }
+
+  function removeSpeaker(id: string) {
+    if (!confirm(t(locale, "notebookRemoveSpeaker"))) return;
+    const current = latest();
+    const idx = current.blocks.findIndex((block) => block.id === id);
+    const prev = idx > 0 ? current.blocks[idx - 1] : current.blocks[idx + 1];
+    updateBlocks((blocks) => {
+      const out = blocks.filter((block) => block.id !== id);
+      return out.length ? out : [emptyLine()];
+    });
+    if (prev?.type === "speaker") {
+      setFocusId(prev.children[0]?.id ?? null);
+      setActive(prev.speakerId);
+    } else {
+      setFocusId(prev?.id ?? null);
+      setActive(null);
+    }
   }
 
   const used = noteSpeakerIds(draft)
@@ -453,7 +493,22 @@ export function NotebookEditor({
                     }
                   }}
                 >
-                  <p className="text-[11px] font-medium tracking-wide text-muted uppercase">{speaker?.name ?? "—"}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[11px] font-medium tracking-wide text-muted uppercase">{speaker?.name ?? "—"}</p>
+                    {readOnly ? null : (
+                      <button
+                        type="button"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-elevated hover:text-fg"
+                        aria-label={t(locale, "notebookRemoveSpeaker")}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          removeSpeaker(block.id);
+                        }}
+                      >
+                        <X className="size-4" />
+                      </button>
+                    )}
+                  </div>
                   {readOnly ? (
                     block.title ? <p className="mt-1 font-display text-lg italic">{block.title}</p> : null
                   ) : (
