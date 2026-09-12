@@ -68,6 +68,34 @@ html.light {
     -webkit-font-smoothing: auto;
   }
 
+  .header-title-marquee {
+    animation: header-title-marquee var(--title-duration, 8s) ease-in-out infinite;
+  }
+
+  @keyframes header-title-marquee {
+    0%,
+    16% {
+      transform: translateX(0);
+    }
+    48%,
+    64% {
+      transform: translateX(var(--title-shift, 0));
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header-title-marquee {
+      animation: none;
+    }
+    .header-title h1 {
+      max-width: 100%;
+      white-space: normal;
+    }
+  }
+
   .tab-bar {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
