@@ -94,7 +94,7 @@ export function NotebookPickerSheet({
   if (!open) return null;
 
   return (
-    <div className="sheet-invert flex max-h-[min(42dvh,240px)] flex-col rounded-b-lg px-2 pb-2 pt-2">
+    <div className="sheet-invert flex max-h-[min(42dvh,240px)] flex-col rounded-b-lg bg-fg px-2 pt-2 pb-2 text-bg">
       <div className="mb-1.5 flex items-center gap-1 text-[13px]">
         <button
           type="button"

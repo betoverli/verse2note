@@ -138,13 +138,17 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       mark.dataset.caretMark = "1";
       mark.append("\u200B");
       const line = lineElFromSel();
-      const sel = window.getSelection();
-      if (sel && sel.rangeCount && line && sel.anchorNode && line.contains(sel.anchorNode)) {
-        const range = sel.getRangeAt(0);
-        range.collapse(true);
-        range.insertNode(mark);
-      } else if (line) line.append(mark);
-      else root.append(mark);
+      try {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount && line && sel.anchorNode && line.contains(sel.anchorNode)) {
+          const range = sel.getRangeAt(0).cloneRange();
+          range.collapse(true);
+          range.insertNode(mark);
+        } else if (line) line.append(mark);
+        else root.append(mark);
+      } catch {
+        line?.append(mark);
+      }
       hold.current = true;
       lastLineId.current = line?.dataset.lineId ?? lastLineId.current;
     },

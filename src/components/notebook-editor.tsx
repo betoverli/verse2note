@@ -439,10 +439,17 @@ export function NotebookEditor({
           size="icon"
           className="size-11"
           aria-label={t(locale, "notebookAddRef")}
-          onPointerDown={() => docApi.current?.markCaret()}
-          onClick={() => {
-            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+          onPointerDown={(event) => {
+            event.preventDefault();
+            try {
+              docApi.current?.markCaret();
+            } catch {
+              /* keep opening */
+            }
             setPicker(true);
+            requestAnimationFrame(() => {
+              if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            });
           }}
         >
           <BookOpen />
@@ -548,9 +555,15 @@ export function NotebookEditor({
               setPeople(true);
               return;
             }
-            docApi.current?.markCaret();
-            if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            try {
+              docApi.current?.markCaret();
+            } catch {
+              /* keep opening */
+            }
             setPicker(true);
+            requestAnimationFrame(() => {
+              if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            });
           }}
           onRemoveSpeaker={removeSpeaker}
         />
