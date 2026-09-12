@@ -22,6 +22,7 @@ export type SpeakerBlock = {
   speakerId: string;
   title: string;
   children: LineBlock[];
+  collapsed?: boolean;
 };
 
 export type NoteBlock = LineBlock | SpeakerBlock;
@@ -263,6 +264,7 @@ export function cleanBlocks(input: unknown): NoteBlock[] {
         speakerId,
         title: typeof row.title === "string" ? row.title.trim().slice(0, 80) : "",
         children: children.length ? children : [emptyLine()],
+        collapsed: Boolean(row.collapsed),
       });
     } else {
       const line = cleanLine(row);

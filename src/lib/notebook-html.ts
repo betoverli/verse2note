@@ -193,7 +193,16 @@ export function blocksToHtml(
       const speaker = speakers.find((item) => item.id === block.speakerId);
       const color = speaker?.color ?? "#c4a574";
       const children = block.children.map((child) => lineToHtml(child, locale, style)).join("");
-      return `<section class="note-speaker" data-speaker-block="${block.id}" data-speaker-id="${block.speakerId}" style="border-color:${escapeHtml(color)}"><div class="note-speaker-head" contenteditable="false"><span class="note-speaker-name">${escapeHtml(speaker?.name ?? "—")}</span><button type="button" class="note-speaker-remove" data-remove-speaker="${block.id}">×</button></div>${children}</section>`;
+      const preview = block.children
+        .map((child) =>
+          child.inlines
+            .map((part) => (part.type === "text" ? part.text : ""))
+            .join("")
+            .trim(),
+        )
+        .find(Boolean) ?? "";
+      const collapsed = block.collapsed ? "true" : "false";
+      return `<section class="note-speaker" data-speaker-block="${block.id}" data-speaker-id="${block.speakerId}" data-collapsed="${collapsed}" style="border-color:${escapeHtml(color)}"><div class="note-speaker-head" contenteditable="false" data-toggle-speaker="${block.id}"><span class="note-speaker-chevron" aria-hidden="true"></span><span class="note-speaker-name">${escapeHtml(speaker?.name ?? "—")}</span><span class="note-speaker-preview">${escapeHtml(preview)}</span><button type="button" class="note-speaker-remove" data-remove-speaker="${block.id}">×</button></div>${children}</section>`;
     })
     .join("");
 }
@@ -224,6 +233,7 @@ export function htmlToBlocks(root: HTMLElement): NoteBlock[] {
         speakerId: node.dataset.speakerId || newNoteId(),
         title: "",
         children: children.length ? children : [emptyLine()],
+        collapsed: node.dataset.collapsed === "true",
       });
       continue;
     }

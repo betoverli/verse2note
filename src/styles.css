@@ -305,6 +305,47 @@ html.light {
     align-items: center;
     gap: 0.5rem;
     margin-bottom: 0;
+    cursor: pointer;
+  }
+
+  .note-speaker-chevron {
+    width: 0.4rem;
+    height: 0.4rem;
+    flex-shrink: 0;
+    border-right: 1.5px solid var(--color-muted);
+    border-bottom: 1.5px solid var(--color-muted);
+    transform: rotate(45deg);
+    margin: 0 0.15rem 0.15rem 0.2rem;
+  }
+
+  .note-speaker[data-collapsed="true"] .note-speaker-chevron {
+    transform: rotate(-45deg);
+    margin-bottom: 0;
+  }
+
+  .note-speaker[data-collapsed="true"] > .note-line {
+    display: none;
+  }
+
+  .note-speaker-preview {
+    display: none;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--color-muted);
+  }
+
+  .note-speaker[data-collapsed="true"] .note-speaker-preview {
+    display: block;
+  }
+
+  .note-speaker[data-collapsed="true"] .note-speaker-name {
+    flex: none;
+    max-width: 40%;
   }
 
   .note-speaker-name {

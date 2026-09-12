@@ -379,6 +379,23 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
           onRemoveSpeaker(remove.dataset.removeSpeaker);
           return;
         }
+        const toggle = (event.target as HTMLElement).closest<HTMLElement>("[data-toggle-speaker]");
+        if (toggle) {
+          event.preventDefault();
+          const section = toggle.closest<HTMLElement>("[data-speaker-block]");
+          if (!section) return;
+          const next = section.dataset.collapsed !== "true";
+          section.dataset.collapsed = next ? "true" : "false";
+          const preview = section.querySelector(".note-speaker-preview");
+          if (preview instanceof HTMLElement && next) {
+            preview.textContent =
+              [...section.querySelectorAll<HTMLElement>(":scope > .note-line")]
+                .map((line) => (line.textContent ?? "").replace(/\u200B/g, "").trim())
+                .find(Boolean) ?? "";
+          }
+          parse(false);
+          return;
+        }
         if (!window.getSelection()?.isCollapsed) return;
         const pill = (event.target as HTMLElement).closest<HTMLElement>(".ref-pill");
         if (!pill?.dataset.ref) return;
