@@ -259,22 +259,39 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
           </div>
           {peopleOpen ? (
             <ul className="mt-2 flex flex-col">
-              {participants.map((member) => (
-                <li key={member.userId} className="flex items-center gap-2 py-1.5">
-                  <ProfileAvatar
-                    id={member.avatarId}
-                    url={member.avatarUrl}
-                    className="size-6 bg-elevated"
-                    iconClassName="size-3"
-                  />
-                  <span className="min-w-0 flex-1 truncate text-sm text-fg">
-                    {memberLabel(member, t(locale, "planYou"))}
-                  </span>
-                  <span className="shrink-0 text-xs tabular-nums text-muted">
-                    {member.me ? done : member.days.length}/{total}
-                  </span>
-                </li>
-              ))}
+              {participants.map((member) => {
+                const inner = (
+                  <>
+                    <ProfileAvatar
+                      id={member.avatarId}
+                      url={member.avatarUrl}
+                      className="size-6 bg-elevated"
+                      iconClassName="size-3"
+                    />
+                    <span className="min-w-0 flex-1 truncate text-sm text-fg">
+                      {memberLabel(member, t(locale, "planYou"))}
+                    </span>
+                    <span className="shrink-0 text-xs tabular-nums text-muted">
+                      {member.me ? done : member.days.length}/{total}
+                    </span>
+                  </>
+                );
+                return (
+                  <li key={member.userId}>
+                    {member.me || !member.handle ? (
+                      <div className="flex min-h-11 items-center gap-2">{inner}</div>
+                    ) : (
+                      <Link
+                        to="/u/$handle"
+                        params={{ handle: member.handle }}
+                        className="flex min-h-11 items-center gap-2 text-fg"
+                      >
+                        {inner}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
         </section>
