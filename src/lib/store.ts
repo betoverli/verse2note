@@ -133,7 +133,7 @@ export const useAppStore = create<AppState>()(
       notes: [],
       speakers: [],
       notebookActiveSpeakerId: null,
-      notebookPreview: false,
+      notebookPreview: true,
       cloudHydrated: false,
       cloudProfileOk: false,
       setLocale: (locale) => {
@@ -291,7 +291,7 @@ export const useAppStore = create<AppState>()(
           lastName: "",
           profileEmail: "",
           myCollections: [],
-          notebookPreview: false,
+          notebookPreview: true,
           cloudProfileOk: false,
         }),
       resetSelection: () =>

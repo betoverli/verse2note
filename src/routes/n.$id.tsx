@@ -1,9 +1,8 @@
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { NotebookEditor } from "@/components/notebook-editor";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { isOwnerHandle } from "@/lib/admin";
 import { t } from "@/lib/i18n";
 import { getGrantedNote, getSharedNote } from "@/lib/notebook-cloud";
 import { remixNote } from "@/lib/notebook-local";
@@ -28,7 +27,6 @@ function SharedNoteRoute() {
   const { id } = Route.useParams();
   const locale = useAppStore((s) => s.locale);
   const hydrated = useAppStore((s) => s.cloudHydrated);
-  const preview = useAppStore((s) => s.notebookPreview);
   const mine = useAppStore((s) => s.notes.find((item) => item.id === id));
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
@@ -63,7 +61,6 @@ function SharedNoteRoute() {
   }, [id, user, isPending]);
 
   if (!hydrated) return null;
-  if (!preview && !isOwnerHandle(useAppStore.getState().handle)) return <Navigate to="/app" />;
 
   if (mine) {
     return (

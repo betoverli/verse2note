@@ -11,7 +11,6 @@ import {
   shareReferences,
   type CopyItem,
 } from "@/lib/copy-rich";
-import { isOwnerHandle } from "@/lib/admin";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -40,9 +39,6 @@ function toCopyItem(
 export function LinkPreview() {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
-  const notebookPreview = useAppStore((s) => s.notebookPreview);
-  const handle = useAppStore((s) => s.handle);
-  const showNotebook = notebookPreview || isOwnerHandle(handle);
   const citeBook = useAppStore((s) => s.citeBook);
   const citeSep = useAppStore((s) => s.citeSep);
   const appId = useAppStore((s) => s.appId);
@@ -223,7 +219,7 @@ export function LinkPreview() {
                 </p>
                 <div className="-mr-1 flex shrink-0 items-center">
                   {passage ? <SaveToCollectionButton passages={[passage]} iconOnly /> : null}
-                  {passage && showNotebook ? (
+                  {passage ? (
                     <Button
                       size="icon"
                       variant="ghost"

@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { BookOpen, CalendarDays, Library, Notebook, User } from "lucide-react";
 import { t } from "@/lib/i18n";
-import { isOwnerHandle } from "@/lib/admin";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -54,9 +53,7 @@ export function showTabBar(pathname: string) {
 export function TabBar() {
   const locale = useAppStore((s) => s.locale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const notebookPreview = useAppStore((s) => s.notebookPreview);
-  const handle = useAppStore((s) => s.handle);
-  const tabs = TABS.filter((tab) => tab.to !== "/notebook" || notebookPreview || isOwnerHandle(handle));
+  const tabs = TABS;
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
