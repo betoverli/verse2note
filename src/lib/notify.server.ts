@@ -169,6 +169,21 @@ async function actorName(sql: Sql, userId: string, locale: Locale) {
   return t(locale, "notifySomeone");
 }
 
+export async function notifySocial(
+  actorId: string,
+  targetId: string,
+  kind: NotifyKind,
+  titleKey: I18nKey,
+  bodyKey: I18nKey,
+  extra: Record<string, string> = {},
+) {
+  if (!actorId || !targetId || actorId === targetId) return;
+  const sql = await getSql();
+  const locale = await userLocale(sql, targetId);
+  const name = await actorName(sql, actorId, locale);
+  await deliver(targetId, kind, locale, titleKey, bodyKey, { name, ...extra });
+}
+
 export async function notifyPlanMarked(actorId: string, planId: string, day: number) {
   const plan = planById(planId);
   if (!plan) return;

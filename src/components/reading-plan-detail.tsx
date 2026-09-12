@@ -15,6 +15,7 @@ import { createPlanInvite, listPlanGroups, type GroupMember, type PlanGroup } fr
 import { markPlanDay, resetPlanMarks } from "@/lib/plan-marks";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { SendToFriendButton } from "@/components/send-to-friend";
 import { cn } from "@/lib/utils";
 
 function toCopyItem(
@@ -224,7 +225,7 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
           />
         </div>
         <section>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => setPeopleOpen((open) => !open)}
@@ -248,10 +249,13 @@ function PlanTracker({ plan }: { plan: ReadingPlan }) {
               </span>
               <span className="text-sm font-medium tabular-nums text-fg">{participants.length}</span>
             </button>
-            <Button size="sm" variant="outline" className="ml-auto shrink-0" onClick={() => void onInvite()}>
-              <Share2 className="size-4" />
-              {t(locale, "collectionShare")}
-            </Button>
+            <span className="ml-auto flex shrink-0 items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => void onInvite()}>
+                <Share2 className="size-4" />
+                {t(locale, "collectionShare")}
+              </Button>
+              <SendToFriendButton kind="plan" targetId={plan.id} />
+            </span>
           </div>
           {peopleOpen ? (
             <ul className="mt-2 flex flex-col">

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { SharedCollectionView, UserCollectionDetail } from "@/components/user-collection-detail";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getMyCollection, getSharedCollection, type UserCollection } from "@/lib/user-collections";
+import { getGrantedCollection, getMyCollection, getSharedCollection, type UserCollection } from "@/lib/user-collections";
 import { t } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
@@ -38,6 +38,13 @@ function UserCollectionRoute() {
         if (own) {
           setCollection(own);
           setMine(true);
+          return;
+        }
+        const granted = await getGrantedCollection({ data: { id } });
+        if (cancelled) return;
+        if (granted) {
+          setCollection(granted);
+          setMine(false);
           return;
         }
       }

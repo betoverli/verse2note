@@ -12,6 +12,7 @@ const HELP_KEYS = [
   "helpCollections",
   "helpPlans",
   "helpAccount",
+  "helpFriends",
   "helpNotifications",
   "helpSettings",
   "helpInstall",

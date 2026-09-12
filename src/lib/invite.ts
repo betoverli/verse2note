@@ -22,7 +22,7 @@ export function takeInvite() {
 export function safeNext(path: unknown): string | undefined {
   if (typeof path !== "string") return undefined;
   if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return undefined;
-  if (path.startsWith("/g/") || path.startsWith("/c/") || path.startsWith("/reading/")) return path;
-  if (path === "/profile" || path === "/app" || path.startsWith("/collections")) return path;
+  if (path.startsWith("/g/") || path.startsWith("/c/") || path.startsWith("/reading/") || path.startsWith("/u/")) return path;
+  if (path === "/profile" || path === "/app" || path.startsWith("/collections") || path.startsWith("/profile/")) return path;
   return undefined;
 }

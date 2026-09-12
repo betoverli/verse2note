@@ -20,6 +20,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SendToFriendButton } from "@/components/send-to-friend";
 
 function toCopyItem(
   passage: Passage,
@@ -294,6 +295,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
           <Link2 className="size-4" />
           {copied ? t(locale, "collectionLinkCopied") : t(locale, "collectionCopyLink")}
         </Button>
+        <SendToFriendButton kind="collection" targetId={collection.id} />
         <button type="button" onClick={() => void onShare()} className="text-center text-xs text-muted">
           {visibility === "private" ? t(locale, "collectionPrivate") : t(locale, "collectionShared")}
         </button>

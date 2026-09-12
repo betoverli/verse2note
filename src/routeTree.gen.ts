@@ -33,6 +33,7 @@ import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ProfileBadgesRouteImport } from './routes/profile.badges'
 import { Route as ProfileBibleRouteImport } from './routes/profile.bible'
 import { Route as ProfileEditRouteImport } from './routes/profile.edit'
+import { Route as ProfileFriendsRouteImport } from './routes/profile.friends'
 import { Route as ProfileHelpRouteImport } from './routes/profile.help'
 import { Route as ProfileLanguageRouteImport } from './routes/profile.language'
 import { Route as ProfileNotificationsRouteImport } from './routes/profile.notifications'
@@ -165,6 +166,11 @@ const ProfileEditRoute = ProfileEditRouteImport.update({
   path: '/edit',
   getParentRoute: () => ProfileRoute,
 } as any)
+const ProfileFriendsRoute = ProfileFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => ProfileRoute,
+} as any)
 const ProfileHelpRoute = ProfileHelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
+  '/profile/friends': typeof ProfileFriendsRoute
   '/profile/help': typeof ProfileHelpRoute
   '/profile/language': typeof ProfileLanguageRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
+  '/profile/friends': typeof ProfileFriendsRoute
   '/profile/help': typeof ProfileHelpRoute
   '/profile/language': typeof ProfileLanguageRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
+  '/profile/friends': typeof ProfileFriendsRoute
   '/profile/help': typeof ProfileHelpRoute
   '/profile/language': typeof ProfileLanguageRoute
   '/profile/notifications': typeof ProfileNotificationsRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
+    | '/profile/friends'
     | '/profile/help'
     | '/profile/language'
     | '/profile/notifications'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
+    | '/profile/friends'
     | '/profile/help'
     | '/profile/language'
     | '/profile/notifications'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
+    | '/profile/friends'
     | '/profile/help'
     | '/profile/language'
     | '/profile/notifications'
@@ -635,6 +647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileEditRouteImport
       parentRoute: typeof ProfileRoute
     }
+    '/profile/friends': {
+      id: '/profile/friends'
+      path: '/friends'
+      fullPath: '/profile/friends'
+      preLoaderRoute: typeof ProfileFriendsRouteImport
+      parentRoute: typeof ProfileRoute
+    }
     '/profile/help': {
       id: '/profile/help'
       path: '/help'
@@ -737,6 +756,7 @@ interface ProfileRouteChildren {
   ProfileBadgesRoute: typeof ProfileBadgesRoute
   ProfileBibleRoute: typeof ProfileBibleRoute
   ProfileEditRoute: typeof ProfileEditRoute
+  ProfileFriendsRoute: typeof ProfileFriendsRoute
   ProfileHelpRoute: typeof ProfileHelpRoute
   ProfileLanguageRoute: typeof ProfileLanguageRoute
   ProfileNotificationsRoute: typeof ProfileNotificationsRoute
@@ -748,6 +768,7 @@ const ProfileRouteChildren: ProfileRouteChildren = {
   ProfileBadgesRoute: ProfileBadgesRoute,
   ProfileBibleRoute: ProfileBibleRoute,
   ProfileEditRoute: ProfileEditRoute,
+  ProfileFriendsRoute: ProfileFriendsRoute,
   ProfileHelpRoute: ProfileHelpRoute,
   ProfileLanguageRoute: ProfileLanguageRoute,
   ProfileNotificationsRoute: ProfileNotificationsRoute,
