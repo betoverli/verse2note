@@ -1,11 +1,39 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { OT_BOOKS, NT_BOOKS, bookById, type Book } from "@/lib/bible/books";
 import type { Passage } from "@/lib/bible/passage";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
-import { NumberGrid } from "@/components/number-grid";
-import { Button } from "@/components/ui/button";
-import { ViewportSheet } from "@/components/viewport-sheet";
+import { useVisualViewportBox } from "@/components/viewport-sheet";
+
+function Cell({
+  label,
+  active,
+  dim,
+  onClick,
+}: {
+  label: string;
+  active?: boolean;
+  dim?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      className={
+        active
+          ? "h-8 rounded-md bg-accent text-[11px] font-medium tabular-nums text-accent-fg"
+          : dim
+            ? "h-8 rounded-md bg-accent/15 text-[11px] font-medium tabular-nums text-fg"
+            : "h-8 rounded-md bg-surface text-[11px] font-medium tabular-nums text-fg"
+      }
+    >
+      {label}
+    </button>
+  );
+}
 
 export function NotebookPickerSheet({
   open,
@@ -18,14 +46,20 @@ export function NotebookPickerSheet({
 }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
+  const box = useVisualViewportBox();
+  const [testament, setTestament] = useState<"ot" | "nt">("ot");
   const [bookId, setBookId] = useState<string | null>(null);
   const [chapter, setChapter] = useState<number | null>(null);
   const [verseStart, setVerseStart] = useState<number | null>(null);
   const [verseEnd, setVerseEnd] = useState<number | null>(null);
   const book = bookId ? bookById(bookId) : undefined;
+  const books = testament === "ot" ? OT_BOOKS : NT_BOOKS;
+  const lo = verseStart != null && verseEnd != null ? Math.min(verseStart, verseEnd) : verseStart;
+  const hi = verseStart != null && verseEnd != null ? Math.max(verseStart, verseEnd) : verseEnd;
 
   useEffect(() => {
     if (!open) return;
+    setTestament("ot");
     setBookId(null);
     setChapter(null);
     setVerseStart(null);
@@ -46,22 +80,12 @@ export function NotebookPickerSheet({
   }
 
   function pickVerse(verse: number) {
-    if (verseStart == null) {
+    if (verseStart == null || (verseStart !== verseEnd && verseEnd != null)) {
       setVerseStart(verse);
       setVerseEnd(verse);
       return;
     }
-    if (verseEnd == null || verseStart === verseEnd) {
-      setVerseEnd(verse);
-      return;
-    }
-    setVerseStart(verse);
     setVerseEnd(verse);
-  }
-
-  function pickWhole() {
-    setVerseStart(null);
-    setVerseEnd(null);
   }
 
   function confirm() {
@@ -70,70 +94,106 @@ export function NotebookPickerSheet({
     onClose();
   }
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
-    <ViewportSheet onClose={onClose}>
+  const height = Math.min(Math.round(box.height * 0.38), 268);
+
+  return createPortal(
+    <div
+      className="fixed inset-x-0 z-[80] flex flex-col justify-end"
+      style={{ top: box.top, height: box.height }}
+    >
+      <button type="button" className="min-h-0 flex-1" aria-label={t(locale, "back")} onMouseDown={(event) => event.preventDefault()} onClick={onClose} />
       <div
-        className="max-h-full w-full max-w-lg overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
+        className="mx-auto flex w-full max-w-lg flex-col rounded-t-2xl border-t border-border bg-elevated px-3 pt-1.5 shadow-[var(--shadow-border)]"
+        style={{ height }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-medium text-fg">{t(locale, "notebookAddRef")}</p>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            {t(locale, "back")}
-          </Button>
-        </div>
-        {!book ? (
-          <div className="grid grid-cols-6 gap-1.5">
-            {[...OT_BOOKS, ...NT_BOOKS].map((item: Book) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => pickBook(item.id)}
-                className="min-h-11 rounded-sm bg-surface px-1 text-xs font-medium text-fg shadow-[var(--shadow-border)]"
-              >
-                {item.abbr[copyLocale]}
-              </button>
-            ))}
-          </div>
-        ) : chapter == null ? (
-          <NumberGrid count={book.verses.length} onSelect={pickChapter} />
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-subtle">{t(locale, "verseHint")}</p>
-              <button
-                type="button"
-                onClick={pickWhole}
-                className={`min-h-9 rounded-full px-3 text-xs ${
-                  verseStart == null ? "bg-accent text-accent-fg" : "text-muted"
-                }`}
-              >
-                {t(locale, "wholeChapter")}
-              </button>
-            </div>
-            <NumberGrid
-              count={book.verses[chapter - 1] ?? 1}
-              rangeStart={verseStart}
-              rangeEnd={verseEnd}
-              onSelect={pickVerse}
-            />
-            <Button className="w-full" onClick={confirm}>
-              {t(locale, "notebookInsert")}
-            </Button>
-          </div>
-        )}
-        {book ? (
+        <div className="mx-auto mb-1.5 h-1 w-8 rounded-full bg-border" />
+        <div className="mb-2 flex items-center gap-1 text-[13px]">
           <button
             type="button"
-            className="mt-3 text-sm text-muted"
-            onClick={() => (chapter ? setChapter(null) : setBookId(null))}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => (book ? (chapter ? setChapter(null) : setBookId(null)) : onClose())}
+            className="text-muted"
           >
             {t(locale, "back")}
           </button>
-        ) : null}
+          <span className="min-w-0 flex-1 truncate text-center font-medium text-fg">
+            {book ? (chapter ? `${book.abbr[copyLocale]} ${chapter}` : book.names[copyLocale]) : t(locale, "notebookAddRef")}
+          </span>
+          {book && chapter ? (
+            <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={confirm} className="font-semibold text-accent">
+              {t(locale, "notebookInsert")}
+            </button>
+          ) : (
+            <span className="w-10" />
+          )}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto pb-1">
+          {!book ? (
+            <>
+              <div className="mb-2 grid grid-cols-2 gap-1 rounded-lg bg-surface p-0.5">
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setTestament("ot")}
+                  className={testament === "ot" ? "h-7 rounded-md bg-elevated text-[11px] font-medium text-fg" : "h-7 rounded-md text-[11px] text-muted"}
+                >
+                  {t(locale, "ot")}
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setTestament("nt")}
+                  className={testament === "nt" ? "h-7 rounded-md bg-elevated text-[11px] font-medium text-fg" : "h-7 rounded-md text-[11px] text-muted"}
+                >
+                  {t(locale, "nt")}
+                </button>
+              </div>
+              <div className="grid grid-cols-8 gap-1">
+                {books.map((item: Book) => (
+                  <Cell key={item.id} label={item.abbr[copyLocale]} onClick={() => pickBook(item.id)} />
+                ))}
+              </div>
+            </>
+          ) : chapter == null ? (
+            <div className="grid grid-cols-8 gap-1">
+              {Array.from({ length: book.verses.length }, (_, i) => i + 1).map((n) => (
+                <Cell key={n} label={String(n)} onClick={() => pickChapter(n)} />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div className="mb-1.5 flex justify-end">
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    setVerseStart(null);
+                    setVerseEnd(null);
+                  }}
+                  className={`h-7 rounded-full px-2.5 text-[11px] ${verseStart == null ? "bg-accent text-accent-fg" : "text-muted"}`}
+                >
+                  {t(locale, "wholeChapter")}
+                </button>
+              </div>
+              <div className="grid grid-cols-8 gap-1">
+                {Array.from({ length: book.verses[chapter - 1] ?? 1 }, (_, i) => i + 1).map((n) => (
+                  <Cell
+                    key={n}
+                    label={String(n)}
+                    active={n === lo || n === hi}
+                    dim={lo != null && hi != null && n > lo && n < hi}
+                    onClick={() => pickVerse(n)}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </ViewportSheet>
+    </div>,
+    document.body,
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
-function useVisualViewportBox() {
+export function useVisualViewportBox() {
   const [box, setBox] = useState({ top: 0, height: typeof window === "undefined" ? 0 : window.innerHeight });
   useEffect(() => {
     const vv = window.visualViewport;
