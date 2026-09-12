@@ -233,19 +233,93 @@ html.light {
   .note-doc {
     -webkit-user-select: text;
     user-select: text;
+    -webkit-touch-callout: default;
     caret-color: var(--color-fg);
+    counter-reset: note-ol;
+    font-size: 17px;
+    line-height: 1.55;
   }
 
   .note-line {
+    position: relative;
+    min-height: 1.75rem;
     text-align: left;
     caret-color: var(--color-fg);
     scroll-margin-top: 9rem;
     scroll-margin-bottom: 6rem;
-    font-size: 17px;
-    line-height: 1.55;
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
+  }
+
+  .note-line-h {
+    font-family: var(--font-display, inherit);
+    font-size: 1.25rem;
+    font-style: italic;
+  }
+
+  .note-line[data-kind="ul"],
+  .note-line[data-kind="ol"] {
+    padding-left: 1.35rem;
+  }
+
+  .note-line[data-kind="ul"]::before,
+  .note-line[data-kind="ol"]::before {
+    position: absolute;
+    left: 0;
+    color: var(--color-muted);
+  }
+
+  .note-line[data-kind="ul"]::before {
+    content: "•";
+  }
+
+  .note-line[data-kind="ol"] {
+    counter-increment: note-ol;
+  }
+
+  .note-line:not([data-kind="ol"]) {
+    counter-reset: note-ol;
+  }
+
+  .note-line[data-kind="ol"]::before {
+    content: counter(note-ol) ".";
+    font-variant-numeric: tabular-nums;
+  }
+
+  .note-speaker {
+    margin: 1rem 0 1.25rem;
+    padding-left: 0.75rem;
+    border-left: 2px solid;
+  }
+
+  .note-speaker-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .note-speaker-name {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .note-speaker-remove {
+    display: flex;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+    font-size: 1.25rem;
+    line-height: 1;
   }
 
   .note-line-empty:empty::before,

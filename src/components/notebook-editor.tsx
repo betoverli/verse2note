@@ -4,7 +4,8 @@ import { t } from "@/lib/i18n";
 import { detectTrailingRef, emptyLine, newNoteId, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
-import { formatSelection, NotebookLine, placeCaret } from "@/components/notebook-line";
+import { formatSelection } from "@/components/notebook-line";
+import { NotebookDoc, type NotebookDocHandle } from "@/components/notebook-doc";
 import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { AppHeader } from "@/components/app-header";
@@ -181,64 +182,6 @@ function rootOlNumber(blocks: NoteBlock[], id: string) {
   return n;
 }
 
-function LineRow({
-  block,
-  locale,
-  copyLocale,
-  style,
-  placeholder,
-  active,
-  editable,
-  index,
-  onChange,
-  onEnter,
-  onEmptyBackspace,
-  onFocus,
-  onDetect,
-  onTrigger,
-  onPasteMany,
-}: {
-  block: LineBlock;
-  locale: Parameters<typeof t>[0];
-  copyLocale: Parameters<typeof t>[0];
-  style: { book: "name" | "abbr"; sep: "colon" | "dot" | "comma" };
-  placeholder?: string;
-  active?: boolean;
-  editable?: boolean;
-  index?: number;
-  onChange: (inlines: LineBlock["inlines"]) => void;
-  onEnter: () => void;
-  onEmptyBackspace: () => void;
-  onFocus: () => void;
-  onDetect: (value: ReturnType<typeof detectTrailingRef>) => void;
-  onTrigger?: (kind: "at" | "slash") => void;
-  onPasteMany?: (passages: Passage[]) => void;
-}) {
-  return (
-    <div className="flex gap-2">
-      {block.type === "ul" ? <span className="mt-0.5 w-5 shrink-0 text-[17px] leading-relaxed text-muted">•</span> : null}
-      {block.type === "ol" && index ? (
-        <span className="mt-0.5 w-6 shrink-0 text-[17px] leading-relaxed tabular-nums text-muted">{index}.</span>
-      ) : null}
-      <NotebookLine
-        block={block}
-        locale={copyLocale}
-        style={style}
-        placeholder={placeholder}
-        active={active}
-        editable={editable}
-        onChange={onChange}
-        onEnter={onEnter}
-        onEmptyBackspace={onEmptyBackspace}
-        onFocus={onFocus}
-        onDetect={onDetect}
-        onTrigger={onTrigger}
-        onPasteMany={onPasteMany}
-      />
-    </div>
-  );
-}
-
 export function NotebookEditor({
   note,
   readOnly,
@@ -258,7 +201,7 @@ export function NotebookEditor({
   const vv = useVisualViewport();
   const compact = useHideOnScroll(!vv.keyboard);
   const chromeRef = useRef<HTMLDivElement>(null);
-  const docRef = useRef<HTMLDivElement>(null);
+  const docApi = useRef<NotebookDocHandle>(null);
   const [chromeH, setChromeH] = useState(108);
   const [draft, setDraft] = useState(note);
   const [picker, setPicker] = useState(false);
@@ -318,66 +261,6 @@ export function NotebookEditor({
     patch((current) => ({ ...current, blocks: updater(current.blocks) }));
   }
 
-  function focusLine(id: string, atStart = true) {
-    setFocusId(id);
-    requestAnimationFrame(() => {
-      const el = docRef.current?.querySelector<HTMLElement>(`[data-line-id="${id}"]`);
-      if (el) placeCaret(el, atStart);
-    });
-  }
-
-  function insertPassages(passages: Passage[]) {
-    if (!passages.length) return;
-    const id = focusIdRef.current;
-    const lines = passages.map((passage) => ({ ...emptyLine("p"), inlines: [passageToRef(passage)] }));
-    const current = id ? findLine(latest().blocks, id) : null;
-    const replace = Boolean(current && current.inlines.length === 0 && id);
-    updateBlocks((blocks) => {
-      if (replace && id) {
-        const [first, ...rest] = lines;
-        if (!first) return blocks;
-        let next = mapLine(blocks, id, (row) => ({ ...row, inlines: first.inlines }));
-        let after = id;
-        for (const line of rest) {
-          next = insertAfter(next, after, line);
-          after = line.id;
-        }
-        return next;
-      }
-      let next = blocks;
-      let after = id;
-      for (const line of lines) {
-        next = after ? insertAfter(next, after, line) : [...next, line];
-        after = line.id;
-      }
-      return next;
-    });
-    const last = lines[lines.length - 1];
-    if (last) focusLine(last.id, false);
-  }
-
-  function onEnter(id: string) {
-    const current = latest();
-    const line = findLine(current.blocks, id);
-    if (!line) return;
-    const speaker = speakerBlockOf(current.blocks, id);
-    if (line.inlines.length === 0 && (line.type === "ul" || line.type === "ol")) {
-      updateBlocks((blocks) => mapLine(blocks, id, (row) => ({ ...row, type: "p" })));
-      return;
-    }
-    const lastChild = speaker?.children[speaker.children.length - 1];
-    if (speaker && lastChild?.id === id && line.inlines.length === 0) {
-      const next = ensureLineAfter(current.blocks, speaker.id);
-      updateBlocks(() => next.blocks);
-      if (next.lineId) focusLine(next.lineId);
-      setActive(null);
-      return;
-    }
-    const next = emptyLine(line.type === "h" ? "p" : line.type);
-    updateBlocks((blocks) => insertAfter(blocks, id, next));
-    focusLine(next.id);
-  }
-
   function exitSpeaker() {
     const current = latest();
     const speaker =
@@ -389,17 +272,15 @@ export function NotebookEditor({
     }
     const next = ensureLineAfter(current.blocks, speaker.id);
     updateBlocks(() => next.blocks);
-    if (next.lineId) focusLine(next.lineId);
+    setFocusId(next.lineId);
     setActive(null);
   }
 
-  function onMergeBack(id: string) {
-    const prev = prevLineId(latest().blocks, id);
-    updateBlocks((blocks) => removeLine(blocks, id));
-    if (prev) focusLine(prev, false);
-  }
-
   function onPickRef(passage: Passage) {
+    if (docApi.current) {
+      docApi.current.insertPassage(passage);
+      return;
+    }
     if (!focusId) {
       updateBlocks((blocks) => [...blocks, { id: newNoteId(), type: "p", inlines: [passageToRef(passage)] }]);
       return;
@@ -617,114 +498,23 @@ export function NotebookEditor({
       </div>
       <div style={{ height: chromeH }} aria-hidden />
       <div className="flex flex-col gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div ref={docRef} className="note-doc flex flex-col gap-1 outline-none">
-          {draft.blocks.map((block, blockIndex) => {
-            if (block.type === "speaker") {
-              const speaker = speakers.find((item) => item.id === block.speakerId);
-              return (
-                <section
-                  key={block.id}
-                  className="mt-4 mb-5 border-l-2 pl-3"
-                  style={{ borderColor: speaker?.color ?? "#c4a574" }}
-                  onClick={(event) => {
-                    if (event.target !== event.currentTarget) return;
-                    const child = block.children[0];
-                    if (child) {
-                      setFocusId(child.id);
-                      setActive(block.speakerId);
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2" contentEditable={false}>
-                    <p className="min-w-0 flex-1 truncate text-sm font-semibold text-fg">{speaker?.name ?? "—"}</p>
-                    {readOnly ? null : (
-                      <button
-                        type="button"
-                        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted hover:text-fg"
-                        aria-label={t(locale, "notebookRemoveSpeaker")}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          removeSpeaker(block.id);
-                        }}
-                      >
-                        <X className="size-4" />
-                      </button>
-                    )}
-                  </div>
-                  {block.title ? (
-                    readOnly ? (
-                      <p className="mt-0.5 text-base text-muted">{block.title}</p>
-                    ) : (
-                    <input
-                      value={block.title}
-                      tabIndex={-1}
-                      enterKeyHint="done"
-                      onChange={(event) =>
-                        updateBlocks((blocks) =>
-                          blocks.map((row) =>
-                            row.id === block.id && row.type === "speaker"
-                              ? { ...row, title: event.target.value.slice(0, 80) }
-                              : row,
-                          ),
-                        )
-                      }
-                      className="mt-0.5 w-full bg-transparent text-base text-muted outline-none"
-                    />
-                    )
-                  ) : null}
-                  <div className="mt-1 flex flex-col gap-1">
-                    {block.children.map((child) => (
-                      <LineRow
-                        key={child.id}
-                        block={child}
-                        locale={locale}
-                        copyLocale={copyLocale}
-                        style={cite}
-                        active={!readOnly && focusId === child.id}
-                        editable={!readOnly}
-                        index={olNumber(block.children, child.id)}
-                        onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, child.id, (row) => ({ ...row, inlines })))}
-                        onEnter={() => onEnter(child.id)}
-                        onEmptyBackspace={() => onMergeBack(child.id)}
-                        onFocus={() => {
-                          setFocusId(child.id);
-                          setActive(block.speakerId);
-                        }}
-                        onDetect={setPending}
-                        onTrigger={(kind) => (kind === "at" ? setPeople(true) : setPicker(true))}
-                        onPasteMany={insertPassages}
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
-            }
-            const first = draft.blocks.find((row) => row.type !== "speaker");
-            return (
-              <LineRow
-                key={block.id}
-                block={block}
-                locale={locale}
-                copyLocale={copyLocale}
-                style={cite}
-                active={!readOnly && focusId === block.id}
-                editable={!readOnly}
-                index={rootOlNumber(draft.blocks, block.id)}
-                placeholder={block.id === first?.id && block.type === "p" ? t(locale, "notebookWrite") : undefined}
-                onChange={(inlines) => updateBlocks((blocks) => mapLine(blocks, block.id, (row) => ({ ...row, inlines })))}
-                onEnter={() => onEnter(block.id)}
-                onEmptyBackspace={() => onMergeBack(block.id)}
-                onFocus={() => {
-                  setFocusId(block.id);
-                  setActive(speakerBlockOf(draft.blocks, block.id)?.speakerId ?? null);
-                }}
-                onDetect={setPending}
-                onTrigger={(kind) => (kind === "at" ? setPeople(true) : setPicker(true))}
-                onPasteMany={insertPassages}
-              />
-            );
-          })}
-        </div>
+        <NotebookDoc
+          ref={docApi}
+          blocks={draft.blocks}
+          locale={copyLocale}
+          style={cite}
+          speakers={speakers}
+          readOnly={readOnly}
+          placeholder={t(locale, "notebookWrite")}
+          onBlocks={setBlocks}
+          onFocusLine={(id) => {
+            setFocusId(id);
+            setActive(id ? speakerBlockOf(latest().blocks, id)?.speakerId ?? null : null);
+          }}
+          onDetect={setPending}
+          onTrigger={(kind) => (kind === "at" ? setPeople(true) : setPicker(true))}
+          onRemoveSpeaker={removeSpeaker}
+        />
       </div>
 
       {tagSheet ? (

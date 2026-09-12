@@ -218,7 +218,7 @@ function placeAfterContent(el: HTMLElement) {
 
 export function isLineHtmlEmpty(el: HTMLElement) {
   if (el.querySelector(".ref-pill")) return false;
-  const text = (el.innerText ?? "").replace(/\u200B/g, "").replace(/\s/g, "");
+  const text = (el.textContent ?? "").replace(/\u200B/g, "").replace(/\s/g, "");
   return text.length === 0;
 }
 
