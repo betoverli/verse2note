@@ -39,7 +39,10 @@ export function Landing() {
   const setLocale = useAppStore((s) => s.setLocale);
 
   return (
-    <main className="mx-auto flex h-dvh w-full max-w-lg flex-col overflow-hidden px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6">
+    <main
+      className="mx-auto flex h-dvh w-full max-w-lg flex-col overflow-hidden px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6"
+      suppressHydrationWarning
+    >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <div className="flex items-center justify-between gap-3">
         <Wordmark size="sm" />
@@ -50,6 +53,7 @@ export function Landing() {
               <button
                 key={item}
                 type="button"
+                suppressHydrationWarning
                 onClick={() => setLocale(item)}
                 aria-pressed={active}
                 className={cn(

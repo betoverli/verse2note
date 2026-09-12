@@ -7,7 +7,7 @@ import { samePassage } from "@/lib/bible/passage";
 import type { CiteBook, CiteSep } from "@/lib/bible/passage";
 import { DEFAULT_TRANSLATION, translationsFor } from "@/lib/bible/translations";
 import type { CopyFormat } from "@/lib/copy-rich";
-import { detectLocale } from "@/lib/i18n";
+import { detectLocale, writeLocaleCookie } from "@/lib/i18n";
 import type { CloudPrefs } from "@/lib/cloud";
 import type { UserCollection } from "@/lib/user-collection";
 import type { Note, Speaker } from "@/lib/notebook";
@@ -102,10 +102,10 @@ type AppState = {
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
-      locale: detectLocale(),
-      copyLocale: detectLocale(),
+      locale: "pt",
+      copyLocale: "pt",
       appId: "youversion",
-      translationId: DEFAULT_TRANSLATION[detectLocale()],
+      translationId: DEFAULT_TRANSLATION.pt,
       preferNative: false,
       copyFormat: "rich",
       citeBook: "name",
@@ -138,7 +138,11 @@ export const useAppStore = create<AppState>()(
       cloudProfileOk: false,
       setLocale: (locale) => {
         set({ locale });
-        if (typeof document !== "undefined") document.documentElement.lang = locale;
+        if (typeof document !== "undefined") {
+          document.documentElement.lang = locale;
+          document.documentElement.setAttribute("data-locale", locale);
+          writeLocaleCookie(locale);
+        }
       },
       setCopyLocale: (copyLocale) => {
         const available = translationsFor(copyLocale);
@@ -377,10 +381,29 @@ export const useAppStore = create<AppState>()(
           state.list = unique;
         }
         if (typeof document !== "undefined") {
+          let savedLocale: string | undefined;
+          try {
+            savedLocale = JSON.parse(localStorage.getItem("cita-settings") || "{}")?.state?.locale;
+          } catch {
+            savedLocale = undefined;
+          }
+          if (savedLocale !== "pt" && savedLocale !== "en" && savedLocale !== "es") {
+            const detected = detectLocale();
+            state.locale = detected;
+            if (state.copyLocale !== "en" && state.copyLocale !== "es" && state.copyLocale !== "pt") {
+              state.copyLocale = detected;
+            }
+          }
           document.documentElement.lang = state.locale;
+          document.documentElement.setAttribute("data-locale", state.locale);
+          writeLocaleCookie(state.locale);
           applyTheme(state.theme);
         }
       },
     },
   ),
 );
+
+if (import.meta.env.DEV && typeof window !== "undefined") {
+  (window as Window & { __v2n?: typeof useAppStore }).__v2n = useAppStore;
+}

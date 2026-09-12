@@ -1104,7 +1104,22 @@ export function t(locale: Locale, key: I18nKey): string {
   return strings[locale][key];
 }
 
+export function asLocale(value: unknown): Locale | null {
+  return value === "en" || value === "es" || value === "pt" ? value : null;
+}
+
+export function writeLocaleCookie(locale: Locale) {
+  if (typeof document === "undefined") return;
+  document.cookie = `v2n-locale=${locale};path=/;max-age=31536000;samesite=lax`;
+}
+
 export function detectLocale(): Locale {
+  if (typeof document !== "undefined") {
+    const marked = asLocale(document.documentElement.getAttribute("data-locale"));
+    if (marked) return marked;
+    const cookie = document.cookie.match(/(?:^|; )v2n-locale=(pt|en|es)/);
+    if (cookie) return cookie[1] as Locale;
+  }
   if (typeof navigator === "undefined") return "pt";
   const lang = (navigator.language || "pt").toLowerCase();
   if (lang.startsWith("en")) return "en";

@@ -557,15 +557,15 @@ export function NotebookEditor({
           trailing={
             readOnly ? null : (
               <div className="flex items-center">
-                <label className="relative flex size-12 cursor-pointer items-center justify-center text-fg">
-                  <CalendarDays className="size-6" />
+                <label className="relative flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden text-fg">
+                  <CalendarDays className="pointer-events-none size-6" />
                   <span className="sr-only">{t(locale, "notebookDate")}</span>
                   <input
                     type="date"
                     value={draft.happenedAt}
                     onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
-                    className="absolute inset-0 cursor-pointer opacity-0"
                     aria-label={t(locale, "notebookDate")}
+                    className="absolute inset-0 z-10 size-full cursor-pointer appearance-none border-0 bg-transparent p-0 text-transparent opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-datetime-edit]:hidden"
                   />
                 </label>
                 <Button
