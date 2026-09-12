@@ -49,11 +49,13 @@ export function NotebookLine({
   useEffect(() => {
     if (!active) return;
     const el = ref.current;
-    if (!el || document.activeElement === el) return;
+    if (!el) return;
+    if (document.activeElement === el) return;
     el.focus();
     focused.current = true;
-    placeCaret(el, block.inlines.length === 0);
-  }, [active, block.id, block.inlines.length]);
+    if (block.inlines.length === 0) placeCaret(el, true);
+    else placeAfterContent(el);
+  }, [active, block.id]);
 
   function emit() {
     const el = ref.current;
@@ -87,18 +89,29 @@ export function NotebookLine({
       }}
       onClick={(event) => {
         const target = (event.target as HTMLElement).closest<HTMLElement>(".ref-pill");
-        if (!target?.dataset.ref) return;
-        const passage = passageFromDataset(target.dataset.ref);
-        if (!passage) return;
-        event.preventDefault();
-        const state = useAppStore.getState();
-        const url = buildDeepLink(state.appId, passage, translationById(state.translationId), state.preferNative);
-        if (url) window.open(url, "_blank", "noopener");
+        if (target?.dataset.ref) {
+          const passage = passageFromDataset(target.dataset.ref);
+          if (!passage) return;
+          event.preventDefault();
+          const state = useAppStore.getState();
+          const url = buildDeepLink(state.appId, passage, translationById(state.translationId), state.preferNative);
+          if (url) window.open(url, "_blank", "noopener");
+          return;
+        }
+        if (event.target === ref.current && block.inlines.some((part) => part.type === "ref")) {
+          event.preventDefault();
+          placeAfterContent(ref.current);
+        }
       }}
       onFocus={() => {
         focused.current = true;
         const el = ref.current;
-        if (el && block.inlines.length === 0) placeCaret(el, true);
+        if (!el) {
+          onFocus();
+          return;
+        }
+        if (block.inlines.length === 0) placeCaret(el, true);
+        else if (block.inlines.some((part) => part.type === "ref")) placeAfterContent(el);
         onFocus();
       }}
       onKeyDown={(event) => {
@@ -126,6 +139,21 @@ function placeCaret(el: HTMLElement, atStart: boolean) {
   const range = document.createRange();
   range.selectNodeContents(el);
   range.collapse(atStart);
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+}
+
+function placeAfterContent(el: HTMLElement) {
+  let node = el.lastChild;
+  if (!node || node.nodeType !== Node.TEXT_NODE) {
+    node = document.createTextNode("\u200B");
+    el.appendChild(node);
+  }
+  const sel = window.getSelection();
+  const range = document.createRange();
+  const len = node.textContent?.length ?? 0;
+  range.setStart(node, len);
+  range.collapse(true);
   sel?.removeAllRanges();
   sel?.addRange(range);
 }

@@ -19,7 +19,7 @@ export function inlinesToHtml(inlines: NoteInline[], locale: Locale, style?: Par
         const kind = refKind(part.bookId);
         const start = part.verseStart ?? "";
         const end = part.verseEnd ?? "";
-        return `<span class="ref-pill" data-kind="${kind}" data-ref="${part.bookId}|${part.chapter}|${start}|${end}" contenteditable="false">${escapeHtml(label)}</span>`;
+        return `<span class="ref-pill" data-kind="${kind}" data-ref="${part.bookId}|${part.chapter}|${start}|${end}" contenteditable="false">${escapeHtml(label)}</span>\u200B`;
       }
       let html = escapeHtml(part.text).replaceAll("\n", "<br>");
       if (part.bold) html = `<b>${html}</b>`;
@@ -45,7 +45,7 @@ function parseRef(value: string | null): Extract<NoteInline, { type: "ref" }> | 
 
 function walk(node: Node, marks: { bold?: boolean; italic?: boolean }, out: NoteInline[]) {
   if (node.nodeType === Node.TEXT_NODE) {
-    const text = node.textContent ?? "";
+    const text = (node.textContent ?? "").replaceAll("\u200B", "");
     if (!text) return;
     out.push({ type: "text", text, bold: marks.bold, italic: marks.italic });
     return;
