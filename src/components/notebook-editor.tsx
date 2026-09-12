@@ -223,7 +223,10 @@ export function NotebookEditor({
   }, [note.id]);
 
   useEffect(() => {
-    return () => setActive(null);
+    return () => {
+      setActive(null);
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    };
   }, [setActive]);
 
   useEffect(() => {

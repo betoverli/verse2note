@@ -97,7 +97,14 @@ html.light {
   }
 
   .tab-bar {
+    bottom: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @supports (height: 100lvh) {
+    .tab-bar {
+      bottom: calc(100dvh - 100lvh);
+    }
   }
 
   .badge-seal {

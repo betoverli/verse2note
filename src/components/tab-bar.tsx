@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { BookOpen, CalendarDays, Library, Notebook, User } from "lucide-react";
 import { t } from "@/lib/i18n";
@@ -56,10 +57,29 @@ export function TabBar() {
   const notebookPreview = useAppStore((s) => s.notebookPreview);
   const handle = useAppStore((s) => s.handle);
   const tabs = TABS.filter((tab) => tab.to !== "/notebook" || notebookPreview || isOwnerHandle(handle));
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    const reset = () => {
+      const y = window.scrollY;
+      window.scrollTo(0, y + 1);
+      window.scrollTo(0, y);
+    };
+    const t1 = window.setTimeout(reset, 50);
+    const t2 = window.setTimeout(reset, 320);
+    window.visualViewport?.addEventListener("resize", reset);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      window.visualViewport?.removeEventListener("resize", reset);
+    };
+  }, [pathname]);
 
   return (
     <nav
-      className="tab-bar fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-bg/88 backdrop-blur-xl"
+      ref={ref}
+      className="tab-bar fixed inset-x-0 z-40 border-t border-border/70 bg-bg/88 backdrop-blur-xl"
       aria-label={t(locale, "appName")}
     >
       <ul className="mx-auto flex max-w-4xl">
