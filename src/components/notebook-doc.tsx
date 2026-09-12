@@ -76,6 +76,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   const ref = useRef<HTMLDivElement>(null);
   const focused = useRef(false);
   const timer = useRef(0);
+  const enterLock = useRef(false);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const sig = `${blocksSignature(blocks)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
@@ -119,6 +120,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       if (parsed && !line.dataset.lineId) line.dataset.lineId = parsed.id;
     });
     onBlocks(next);
+    sigRef.current = `${blocksSignature(next)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
     const line = lineElFromSel();
     const id = line?.dataset.lineId ?? null;
     onFocusLine(id);
@@ -145,18 +147,28 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     else timer.current = window.setTimeout(() => parse(), 280);
   }
 
-  function insertLineAfter(target: HTMLElement, kind: string) {
+  function makeLine(kind: string) {
     const next = document.createElement("div");
-    next.className = "note-line note-line-empty";
+    next.className = "note-line";
     next.dataset.lineId = newNoteId();
     next.dataset.kind = kind === "h" ? "p" : kind || "p";
-    next.innerHTML = "<br>";
+    next.append(document.createElement("br"));
+    return next;
+  }
+
+  function insertLineAfter(target: HTMLElement, kind: string) {
+    const next = makeLine(kind);
     target.after(next);
     placeCaret(next, true);
     parse();
   }
 
   function onEnter() {
+    if (enterLock.current) return;
+    enterLock.current = true;
+    window.setTimeout(() => {
+      enterLock.current = false;
+    }, 40);
     const line = lineElFromSel();
     if (!line) return;
     const empty = isLineHtmlEmpty(line);
@@ -170,11 +182,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     const speaker = line.closest<HTMLElement>("[data-speaker-block]");
     const last = speaker?.querySelector<HTMLElement>(":scope > .note-line:last-of-type");
     if (empty && speaker && last === line) {
-      const next = document.createElement("div");
-      next.className = "note-line note-line-empty";
-      next.dataset.lineId = newNoteId();
-      next.dataset.kind = "p";
-      next.innerHTML = "<br>";
+      const next = makeLine("p");
       speaker.after(next);
       placeCaret(next, true);
       parse();
@@ -216,6 +224,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") return;
         if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
           event.preventDefault();
+          if (enterLock.current) return;
           emit(true);
           onEnter();
         }
@@ -230,6 +239,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
         const inputType = (event.nativeEvent as InputEvent).inputType;
         if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
           event.preventDefault();
+          if (enterLock.current) return;
           emit(true);
           onEnter();
           return;

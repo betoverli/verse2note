@@ -242,7 +242,7 @@ html.light {
 
   .note-line {
     position: relative;
-    min-height: 1.75rem;
+    min-height: 1.55em;
     text-align: left;
     caret-color: var(--color-fg);
     scroll-margin-top: 9rem;
