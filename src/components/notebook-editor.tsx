@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, BookOpen, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Bold, BookOpen, CalendarDays, Hash, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import {
   detectTrailingRef,
   emptyLine,
   newNoteId,
-  noteSpeakerIds,
   passageToRef,
   replaceTrailingWithRef,
   type LineBlock,
@@ -178,6 +178,7 @@ function LineRow({
   onEmptyBackspace,
   onFocus,
   onDetect,
+  onTrigger,
 }: {
   block: LineBlock;
   locale: Parameters<typeof t>[0];
@@ -191,6 +192,7 @@ function LineRow({
   onEmptyBackspace: () => void;
   onFocus: () => void;
   onDetect: (value: ReturnType<typeof detectTrailingRef>) => void;
+  onTrigger?: (kind: "at" | "slash") => void;
 }) {
   return (
     <div className="flex gap-2">
@@ -209,6 +211,7 @@ function LineRow({
         onEmptyBackspace={onEmptyBackspace}
         onFocus={onFocus}
         onDetect={onDetect}
+        onTrigger={onTrigger}
       />
     </div>
   );
@@ -239,8 +242,9 @@ export function NotebookEditor({
   const [people, setPeople] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [tagSheet, setTagSheet] = useState(false);
   const [tag, setTag] = useState("");
-  const [tagOpen, setTagOpen] = useState(false);
   const tagRef = useRef<HTMLInputElement>(null);
   const cite = { book: citeBook, sep: citeSep };
   const draftRef = useRef(draft);
@@ -256,8 +260,8 @@ export function NotebookEditor({
   }, [setActive]);
 
   useEffect(() => {
-    if (tagOpen) tagRef.current?.focus();
-  }, [tagOpen]);
+    if (tagSheet) tagRef.current?.focus();
+  }, [tagSheet]);
 
   useEffect(() => {
     const el = chromeRef.current;
@@ -389,10 +393,6 @@ export function NotebookEditor({
     }
   }
 
-  const used = noteSpeakerIds(draft)
-    .map((id) => speakers.find((item) => item.id === id))
-    .filter(Boolean);
-
   const toolbar = readOnly ? null : (
     <div className="border-t border-border/60 px-1 pb-1" onMouseDown={(event) => event.preventDefault()}>
       {pending ? (
@@ -478,91 +478,40 @@ export function NotebookEditor({
               />
             )
           }
-          trailing={null}
+          trailing={
+            readOnly ? null : (
+              <div className="flex items-center">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-12 text-fg [&_svg]:size-6"
+                  aria-label={t(locale, "notebookDate")}
+                  onClick={() => {
+                    setTagSheet(false);
+                    setDateOpen(true);
+                  }}
+                >
+                  <CalendarDays />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-12 text-fg [&_svg]:size-6"
+                  aria-label={t(locale, "notebookTags")}
+                  onClick={() => {
+                    setDateOpen(false);
+                    setTagSheet(true);
+                  }}
+                >
+                  <Hash />
+                </Button>
+              </div>
+            )
+          }
         />
       </div>
       <div style={{ height: chromeH }} aria-hidden />
       <div className="flex flex-col gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-          <input
-            type="date"
-            tabIndex={-1}
-            value={draft.happenedAt}
-            disabled={readOnly}
-            onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
-            className="rounded-md bg-surface px-2 py-1 text-fg"
-            aria-label={t(locale, "notebookDate")}
-          />
-          {draft.tags.map((item) => (
-            <button
-              key={item}
-              type="button"
-              disabled={readOnly}
-              onClick={() =>
-                patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))
-              }
-              className="rounded-full bg-surface px-2 py-1"
-            >
-              #{item}
-            </button>
-          ))}
-          {readOnly ? null : tagOpen ? (
-            <input
-              ref={tagRef}
-              value={tag}
-              onChange={(event) => setTag(event.target.value)}
-              onBlur={() => {
-                const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                if (next) {
-                  patch((current) =>
-                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                  );
-                }
-                setTag("");
-                setTagOpen(false);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  setTag("");
-                  setTagOpen(false);
-                  return;
-                }
-                if (event.key !== "Enter") return;
-                event.preventDefault();
-                const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                if (next) {
-                  patch((current) =>
-                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                  );
-                }
-                setTag("");
-                setTagOpen(false);
-              }}
-              placeholder={t(locale, "notebookTagAdd")}
-              tabIndex={-1}
-              enterKeyHint="done"
-              className="w-24 rounded-full bg-surface px-2 py-1 text-fg outline-none"
-            />
-          ) : (
-            <button
-              type="button"
-              className="flex size-7 items-center justify-center rounded-full bg-surface text-muted hover:text-fg"
-              aria-label={t(locale, "notebookTagAdd")}
-              onClick={() => setTagOpen(true)}
-            >
-              <Plus className="size-3.5" />
-            </button>
-          )}
-          {used.map((speaker) =>
-            speaker ? (
-              <span key={speaker.id} className="flex items-center gap-1">
-                <span className="size-2 rounded-full" style={{ background: speaker.color }} />
-                {speaker.name}
-              </span>
-            ) : null,
-          )}
-        </div>
-
         <div className="flex flex-col gap-1">
           {draft.blocks.map((block, blockIndex) => {
             if (block.type === "speaker") {
@@ -638,6 +587,7 @@ export function NotebookEditor({
                           setActive(block.speakerId);
                         }}
                         onDetect={setPending}
+                        onTrigger={(kind) => (kind === "at" ? setPeople(true) : setPicker(true))}
                       />
                     ))}
                   </div>
@@ -663,11 +613,99 @@ export function NotebookEditor({
                   setActive(speakerBlockOf(draft.blocks, block.id)?.speakerId ?? null);
                 }}
                 onDetect={setPending}
+                onTrigger={(kind) => (kind === "at" ? setPeople(true) : setPicker(true))}
               />
             );
           })}
         </div>
       </div>
+
+      {dateOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center" onClick={() => setDateOpen(false)}>
+              <div
+                className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookDate")}</p>
+                <input
+                  type="date"
+                  value={draft.happenedAt}
+                  onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
+                  className="h-12 w-full rounded-md bg-surface px-3 text-base text-fg"
+                />
+                <Button className="mt-3 w-full" onClick={() => setDateOpen(false)}>
+                  {t(locale, "back")}
+                </Button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {tagSheet && typeof document !== "undefined"
+        ? createPortal(
+            <div className="fixed inset-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center" onClick={() => setTagSheet(false)}>
+              <div
+                className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookTags")}</p>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {draft.tags.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      onClick={() => patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))}
+                      className="rounded-full bg-surface px-3 py-1 text-sm text-fg"
+                    >
+                      #{item} ×
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    ref={tagRef}
+                    value={tag}
+                    onChange={(event) => setTag(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                      if (!next) return;
+                      patch((current) =>
+                        current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                      );
+                      setTag("");
+                    }}
+                    placeholder={t(locale, "notebookTagAdd")}
+                    enterKeyHint="done"
+                    className="h-12 min-w-0 flex-1 rounded-md bg-surface px-3 text-base text-fg outline-none"
+                  />
+                  <Button
+                    size="icon"
+                    className="size-12"
+                    aria-label={t(locale, "notebookTagAdd")}
+                    onClick={() => {
+                      const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                      if (!next) return;
+                      patch((current) =>
+                        current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                      );
+                      setTag("");
+                    }}
+                  >
+                    <Plus />
+                  </Button>
+                </div>
+                <Button className="mt-3 w-full" variant="ghost" onClick={() => setTagSheet(false)}>
+                  {t(locale, "back")}
+                </Button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       <NotebookPickerSheet open={picker} onClose={() => setPicker(false)} onPick={onPickRef} />
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />

@@ -19,6 +19,7 @@ export function NotebookLine({
   onEmptyBackspace,
   onFocus,
   onDetect,
+  onTrigger,
 }: {
   block: LineBlock;
   locale: Locale;
@@ -30,6 +31,7 @@ export function NotebookLine({
   onEmptyBackspace: () => void;
   onFocus: () => void;
   onDetect: (value: ReturnType<typeof detectTrailingRef>) => void;
+  onTrigger?: (kind: "at" | "slash") => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const skip = useRef(false);
@@ -73,8 +75,15 @@ export function NotebookLine({
     skip.current = true;
     let inlines = htmlToInlines(el);
     if (inlines.length === 1 && inlines[0]?.type === "text" && inlines[0].text === "\n") inlines = [];
+    const trigger = consumeTrigger(inlines);
+    if (trigger) {
+      inlines = trigger.inlines;
+      el.innerHTML = inlinesToHtml(inlines, locale, style);
+      placeAfterContent(el);
+    }
     onChange(inlines);
     onDetect(detectTrailingRef(inlines, locale));
+    if (trigger) onTrigger?.(trigger.kind);
   }
 
   const empty = block.inlines.length === 0;
@@ -185,4 +194,18 @@ function isLineHtmlEmpty(el: HTMLElement) {
   if (el.querySelector(".ref-pill")) return false;
   const text = (el.innerText ?? "").replace(/\u200B/g, "").replace(/\s/g, "");
   return text.length === 0;
+}
+
+function consumeTrigger(inlines: NoteInline[]): { inlines: NoteInline[]; kind: "at" | "slash" } | null {
+  if (!inlines.length) return null;
+  const last = inlines[inlines.length - 1];
+  if (last.type !== "text") return null;
+  const mark = last.text.slice(-1);
+  if (mark !== "@" && mark !== "/") return null;
+  const before = last.text.slice(0, -1);
+  if (before && !/\s$/.test(before)) return null;
+  const next = [...inlines];
+  if (before) next[next.length - 1] = { ...last, text: before };
+  else next.pop();
+  return { inlines: next, kind: mark === "@" ? "at" : "slash" };
 }
