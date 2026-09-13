@@ -49,10 +49,23 @@ export function NotebookGroupsHome({ query }: { query: string }) {
 
   useEffect(() => {
     if (!user) return;
+    let live = true;
+    const fail = window.setTimeout(() => {
+      if (live) setMine((current) => current ?? []);
+    }, 4000);
     void listMyGroups()
-      .then(setMine)
-      .catch(() => setMine([]));
-  }, [user]);
+      .then((rows) => {
+        if (live) setMine(rows);
+      })
+      .catch(() => {
+        if (live) setMine([]);
+      })
+      .finally(() => window.clearTimeout(fail));
+    return () => {
+      live = false;
+      window.clearTimeout(fail);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user || query.trim().length < 2) {
@@ -103,19 +116,21 @@ export function NotebookGroupsHome({ query }: { query: string }) {
   return (
     <div className="flex flex-col gap-6">
       {create ? (
-        <form
-          className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void make();
-          }}
-        >
+        <div className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
           <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookGroupNew")}</p>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void make();
+              }
+            }}
             placeholder={t(locale, "notebookGroupName")}
             maxLength={60}
+            name="group-title"
+            inputMode="text"
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="sentences"
@@ -131,11 +146,11 @@ export function NotebookGroupsHome({ query }: { query: string }) {
             <Button type="button" variant="ghost" className="flex-1" onClick={() => setCreate(false)}>
               {t(locale, "linkCancel")}
             </Button>
-            <Button type="submit" className="flex-1" disabled={busy || name.trim().length < 2}>
+            <Button type="button" className="flex-1" disabled={busy || name.trim().length < 2} onClick={() => void make()}>
               {t(locale, "notebookGroupCreate")}
             </Button>
           </div>
-        </form>
+        </div>
       ) : null}
       {mine == null ? <div className="h-20 rounded-lg bg-surface" aria-hidden /> : null}
       {accepted.length === 0 && pending.length === 0 && mine && !create ? (

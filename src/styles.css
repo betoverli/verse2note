@@ -139,6 +139,11 @@ html.dark .sheet-invert {
     }
   }
 
+  html.keyboard-open .tab-bar {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .badge-seal {
     display: grid;
     width: 5.25rem;

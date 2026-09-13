@@ -60,20 +60,21 @@ export function TabBar() {
 
   useEffect(() => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    const reset = () => {
-      const y = window.scrollY;
-      window.scrollTo(0, y + 1);
-      window.scrollTo(0, y);
-    };
-    const t1 = window.setTimeout(reset, 50);
-    const t2 = window.setTimeout(reset, 320);
-    window.visualViewport?.addEventListener("resize", reset);
-    return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.visualViewport?.removeEventListener("resize", reset);
-    };
   }, [pathname]);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const sync = () => {
+      const open = Boolean(vv && window.innerHeight - vv.height > 120);
+      document.documentElement.classList.toggle("keyboard-open", open);
+    };
+    sync();
+    vv?.addEventListener("resize", sync);
+    return () => {
+      vv?.removeEventListener("resize", sync);
+      document.documentElement.classList.remove("keyboard-open");
+    };
+  }, []);
 
   return (
     <nav
