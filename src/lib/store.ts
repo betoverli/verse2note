@@ -29,6 +29,7 @@ type AppState = {
   theme: Theme;
   onboarded: boolean;
   tourDone: boolean;
+  notifyPromptDone: boolean;
   bookId: string | null;
   chapter: number | null;
   verseStart: number | null;
@@ -63,6 +64,7 @@ type AppState = {
   setTheme: (theme: Theme) => void;
   completeOnboarding: () => void;
   completeTour: () => void;
+  completeNotifyPrompt: () => void;
   setStep: (step: Step) => void;
   selectBook: (bookId: string) => void;
   selectChapter: (chapter: number) => void;
@@ -114,6 +116,7 @@ export const useAppStore = create<AppState>()(
       theme: "system",
       onboarded: false,
       tourDone: false,
+      notifyPromptDone: false,
       bookId: null,
       chapter: null,
       verseStart: null,
@@ -164,6 +167,7 @@ export const useAppStore = create<AppState>()(
       },
       completeOnboarding: () => set({ onboarded: true }),
       completeTour: () => set({ tourDone: true }),
+      completeNotifyPrompt: () => set({ notifyPromptDone: true }),
       setStep: (step) => set({ step }),
       selectBook: (bookId) =>
         set({
@@ -323,6 +327,7 @@ export const useAppStore = create<AppState>()(
         theme: state.theme,
         onboarded: state.onboarded,
         tourDone: state.tourDone,
+        notifyPromptDone: state.notifyPromptDone,
         recent: state.recent,
         list: state.list,
         planProgress: state.planProgress,
@@ -345,6 +350,7 @@ export const useAppStore = create<AppState>()(
           ...saved,
           onboarded: typeof saved.onboarded === "boolean" ? saved.onboarded : Boolean(persisted),
           tourDone: saved.tourDone === true,
+          notifyPromptDone: saved.notifyPromptDone === true,
           planProgress:
             saved.planProgress && typeof saved.planProgress === "object" ? saved.planProgress : {},
           activePlans: Array.isArray(saved.activePlans) ? saved.activePlans : [],

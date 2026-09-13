@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { AccountSync } from "@/components/account-sync";
 import { Coachmarks } from "@/components/coachmarks";
+import { NotifyPrompt } from "@/components/notify-prompt";
 import { CompleteProfile } from "@/components/complete-profile";
 import { Onboarding } from "@/components/onboarding";
 import { SplashScreen } from "@/components/splash-screen";
@@ -90,6 +91,7 @@ export function AppShell() {
         <Outlet />
         {tabs ? <TabBar /> : null}
         <Coachmarks />
+        <NotifyPrompt />
       </>
     );
   }
