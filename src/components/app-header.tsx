@@ -39,7 +39,12 @@ function HeaderTitle({ title }: { title?: string }) {
       return;
     }
     const measure = () => {
-      const overflow = text.scrollWidth - wrap.clientWidth;
+      const width = wrap.clientWidth;
+      if (width < 8) {
+        setShift(0);
+        return;
+      }
+      const overflow = text.scrollWidth - width;
       setShift(overflow > 8 ? overflow : 0);
     };
     measure();

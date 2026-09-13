@@ -47,7 +47,8 @@ export function showTabBar(pathname: string) {
     pathname.startsWith("/c/") ||
     pathname.startsWith("/g/") ||
     pathname.startsWith("/reading") ||
-    pathname === "/notebook"
+    pathname === "/notebook" ||
+    pathname.startsWith("/notebook/g")
   );
 }
 

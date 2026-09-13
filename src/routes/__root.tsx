@@ -8,6 +8,41 @@ import appCss from "../styles.css?url";
 
 const THEME_BOOT = `(function(){try{var p=JSON.parse(localStorage.getItem("cita-settings")||"{}");var s=p.state||{};var t=s.theme||"system";var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);var r=d?"dark":"light";document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",d?"#121110":"#f4efe6");var loc=s.locale;if(loc!=="pt"&&loc!=="en"&&loc!=="es"){var c=(document.cookie.match(/(?:^|; )v2n-locale=(pt|en|es)/)||[])[1];if(c)loc=c;else{var lang=(navigator.language||"pt").toLowerCase();loc=lang.indexOf("en")===0?"en":lang.indexOf("es")===0?"es":"pt";}}document.documentElement.lang=loc;document.documentElement.setAttribute("data-locale",loc);}catch(e){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";document.documentElement.lang="pt";}})();`;
 
+function Recover({ title, action }: { title: string; action: string }) {
+  return (
+    <div
+      style={{
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 16,
+        background: "#121110",
+        color: "#f3eee6",
+        padding: 24,
+        fontFamily: "system-ui, sans-serif",
+      }}
+    >
+      <p style={{ textAlign: "center", fontSize: 15 }}>{title}</p>
+      <a
+        href="/app"
+        style={{
+          borderRadius: 999,
+          background: "#e8dcc8",
+          color: "#1a1714",
+          padding: "10px 16px",
+          fontSize: 14,
+          fontWeight: 600,
+          textDecoration: "none",
+        }}
+      >
+        {action}
+      </a>
+    </div>
+  );
+}
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -33,6 +68,8 @@ export const Route = createRootRoute({
     ],
   }),
   component: RootDocument,
+  errorComponent: () => <Recover title="Algo deu errado." action="Abrir o app" />,
+  notFoundComponent: () => <Recover title="Página não encontrada." action="Abrir o app" />,
 });
 
 function RootDocument() {

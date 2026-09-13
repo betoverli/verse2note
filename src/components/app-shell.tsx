@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode, Component } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { AccountSync } from "@/components/account-sync";
 import { Coachmarks } from "@/components/coachmarks";
@@ -14,6 +14,26 @@ import { joinPlanGroup } from "@/lib/plan-groups";
 import { useAppStore } from "@/lib/store";
 
 const PUBLIC = new Set(["/", "/about", "/for-ai", "/login"]);
+
+class ShellCatch extends Component<{ children: ReactNode }, { error: boolean }> {
+  state = { error: false };
+  static getDerivedStateFromError() {
+    return { error: true };
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-bg px-6 text-fg">
+          <p className="text-center text-sm">Algo deu errado.</p>
+          <a href="/app" className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-fg">
+            Abrir o app
+          </a>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export function AppShell() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -98,7 +118,7 @@ export function AppShell() {
 
   return (
     <>
-      {body}
+      <ShellCatch>{body}</ShellCatch>
       <AccountSync />
       {publicPage || (!showSplash && !showOnboarding && !showProfile) ? <UsagePing /> : null}
     </>

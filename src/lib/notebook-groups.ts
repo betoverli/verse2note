@@ -113,7 +113,7 @@ function fromGroup(row: GroupRow): NotebookGroup {
     visibility: asVisibility(row.visibility),
     postPolicy: asPolicy(row.post_policy),
     createdBy: row.created_by,
-    memberCount: Number(row.member_count ?? 0),
+    memberCount: Number(row.member_count ?? 0) || 0,
     myRole: asRole(row.my_role),
     myStatus: asStatus(row.my_status),
     updatedAt: String(row.updated_at ?? ""),
@@ -149,21 +149,16 @@ function fromNoteRow(row: {
   };
 }
 
-const GROUP_SELECT = `
-  g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
-  (select count(*)::int from notebook_group_members m where m.group_id = g.id and m.status = 'accepted') as member_count
-`;
-
 async function loadGroup(sql: Sql, id: string, userId: string) {
-  const found = await sql.query<GroupRow>(
-    `select ${GROUP_SELECT},
-      (select role from notebook_group_members where group_id = g.id and user_id = $2) as my_role,
-      (select status from notebook_group_members where group_id = g.id and user_id = $2) as my_status
-     from notebook_groups g
-     where g.id = $1
-     limit 1`,
-    [id, userId],
-  );
+  const found = await sql<GroupRow>`
+    select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
+      (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
+      (select role from notebook_group_members where group_id = g.id and user_id = ${userId}) as my_role,
+      (select status from notebook_group_members where group_id = g.id and user_id = ${userId}) as my_status
+    from notebook_groups g
+    where g.id = ${id}
+    limit 1
+  `;
   return found[0] ? fromGroup(found[0]) : null;
 }
 
@@ -188,15 +183,16 @@ export const listMyGroups = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
-    const rows = await sql.query<GroupRow>(
-      `select ${GROUP_SELECT}, m.role as my_role, m.status as my_status
-       from notebook_group_members m
-       join notebook_groups g on g.id = m.group_id
-       where m.user_id = $1
-       order by m.status asc, g.updated_at desc
-       limit 100`,
-      [context.userId],
-    );
+    const rows = await sql<GroupRow>`
+      select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
+        (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
+        m.role as my_role, m.status as my_status
+      from notebook_group_members m
+      join notebook_groups g on g.id = m.group_id
+      where m.user_id = ${context.userId}
+      order by m.status asc, g.updated_at desc
+      limit 100
+    `;
     return rows.map(fromGroup);
   });
 
@@ -207,16 +203,16 @@ export const searchListedGroups = createServerFn({ method: "GET" })
     const q = data.query.trim().replace(/[%_\\]/g, "").slice(0, 40);
     if (q.length < 2) return [] as NotebookGroup[];
     const sql = await getSql();
-    const rows = await sql.query<GroupRow>(
-      `select ${GROUP_SELECT},
-        (select role from notebook_group_members where group_id = g.id and user_id = $2) as my_role,
-        (select status from notebook_group_members where group_id = g.id and user_id = $2) as my_status
-       from notebook_groups g
-       where g.visibility = 'listed' and g.name ilike $1
-       order by g.updated_at desc
-       limit 30`,
-      [`%${q}%`, context.userId],
-    );
+    const rows = await sql<GroupRow>`
+      select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
+        (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
+        (select role from notebook_group_members where group_id = g.id and user_id = ${context.userId}) as my_role,
+        (select status from notebook_group_members where group_id = g.id and user_id = ${context.userId}) as my_status
+      from notebook_groups g
+      where g.visibility = 'listed' and g.name ilike ${"%" + q + "%"}
+      order by g.updated_at desc
+      limit 30
+    `;
     return rows.map(fromGroup);
   });
 
@@ -472,15 +468,16 @@ export const listNoteGroups = createServerFn({ method: "GET" })
       select group_id from notebook_group_notes where note_id = ${data.noteId}
     `;
     const published = new Set(rows.map((row) => row.group_id));
-    const mine = await sql.query<GroupRow>(
-      `select ${GROUP_SELECT}, m.role as my_role, m.status as my_status
-       from notebook_group_members m
-       join notebook_groups g on g.id = m.group_id
-       where m.user_id = $1 and m.status = 'accepted'
-       order by g.updated_at desc
-       limit 100`,
-      [context.userId],
-    );
+    const mine = await sql<GroupRow>`
+      select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
+        (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
+        m.role as my_role, m.status as my_status
+      from notebook_group_members m
+      join notebook_groups g on g.id = m.group_id
+      where m.user_id = ${context.userId} and m.status = 'accepted'
+      order by g.updated_at desc
+      limit 100
+    `;
     return mine
       .map(fromGroup)
       .map((item) => ({ ...item, published: published.has(item.id) }));

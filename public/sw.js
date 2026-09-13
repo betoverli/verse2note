@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v3";
+const CACHE = "verse2note-v4";
 
 const PRECACHE = [
   "/",
@@ -6,7 +6,7 @@ const PRECACHE = [
   "/collections",
   "/reading",
   "/profile",
-  "/inbox",
+  "/notebook",
   "/about",
   "/for-ai",
   "/llms.txt",

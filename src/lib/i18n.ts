@@ -1209,7 +1209,7 @@ const strings = {
 export type I18nKey = keyof typeof strings.pt;
 
 export function t(locale: Locale, key: I18nKey): string {
-  return strings[locale][key];
+  return strings[locale]?.[key] ?? strings.pt[key] ?? String(key);
 }
 
 export function asLocale(value: unknown): Locale | null {

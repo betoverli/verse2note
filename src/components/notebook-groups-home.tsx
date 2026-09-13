@@ -71,14 +71,19 @@ export function NotebookGroupsHome({ query }: { query: string }) {
     const title = name.trim();
     if (title.length < 2) return;
     setBusy(true);
-    const result = await createNotebookGroup({
-      data: { name: title, visibility: listed ? "listed" : "private" },
-    });
-    setBusy(false);
-    if (!result?.ok || !result.id) return;
-    setCreate(false);
-    setName("");
-    void navigate({ to: "/notebook/g/$id", params: { id: result.id } });
+    try {
+      const result = await createNotebookGroup({
+        data: { name: title, visibility: listed ? "listed" : "private" },
+      });
+      if (!result?.ok || !result.id) return;
+      setCreate(false);
+      setName("");
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+      window.scrollTo(0, 0);
+      void navigate({ to: "/notebook/g/$id", params: { id: result.id } });
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!user) {

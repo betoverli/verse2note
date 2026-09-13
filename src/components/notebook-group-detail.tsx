@@ -39,7 +39,7 @@ function formatDay(iso: string, locale: string) {
 export function NotebookGroupDetail({ id }: { id: string }) {
   const locale = useAppStore((s) => s.locale);
   const handle = useAppStore((s) => s.handle);
-  const { user } = useCurrentUserState();
+  const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [group, setGroup] = useState<NotebookGroup | null | undefined>(undefined);
   const [notes, setNotes] = useState<GroupNoteCard[]>([]);
@@ -47,23 +47,34 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   const [settings, setSettings] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo(0, 0);
+  }, [id]);
+
   const reload = useCallback(async () => {
-    const next = await getNotebookGroup({ data: { id } });
-    setGroup(next);
-    if (next?.myStatus === "accepted") {
-      const [noteRows, people] = await Promise.all([listGroupNotes({ data: { id } }), listGroupMembers({ data: { id } })]);
-      setNotes(noteRows);
-      setMembers(people);
-    } else {
-      setNotes([]);
-      setMembers([]);
+    try {
+      const next = await getNotebookGroup({ data: { id } });
+      setGroup(next);
+      if (next?.myStatus === "accepted") {
+        const [noteRows, people] = await Promise.all([listGroupNotes({ data: { id } }), listGroupMembers({ data: { id } })]);
+        setNotes(noteRows);
+        setMembers(people);
+      } else {
+        setNotes([]);
+        setMembers([]);
+      }
+    } catch {
+      setGroup(null);
     }
   }, [id]);
 
   useEffect(() => {
+    if (isPending) return;
     if (!user) return;
-    void reload().catch(() => setGroup(null));
-  }, [user, reload]);
+    void reload();
+  }, [user, isPending, reload]);
 
   const admin = group?.myRole === "admin" && group.myStatus === "accepted";
   const member = group?.myStatus === "accepted";
@@ -80,16 +91,29 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   }
 
   async function openNew() {
-    if (!canPost) return;
-    const note = createLocalNote();
-    await flushOutbox();
-    await publishNoteToGroup({ data: { groupId: id, note } });
-    void navigate({ to: "/notebook/$id", params: { id: note.id } });
+    if (!canPost || busy) return;
+    setBusy(true);
+    try {
+      const note = createLocalNote();
+      await flushOutbox();
+      await publishNoteToGroup({ data: { groupId: id, note } });
+      void navigate({ to: "/notebook/$id", params: { id: note.id } });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (isPending && !user) {
+    return (
+      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
+        <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
+      </main>
+    );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-[calc(var(--tab-bar-height)+2rem)] sm:px-6">
+      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-[calc(var(--tab-bar-height)+2rem)] sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
         <p className="text-sm text-muted">{t(locale, "notebookGroupLogin")}</p>
       </main>
@@ -98,7 +122,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
 
   if (group === undefined) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
+      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
       </main>
     );
@@ -106,7 +130,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
 
   if (!group) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
+      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
         <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p>
       </main>
@@ -114,7 +138,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+5rem)] sm:px-6">
+    <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+5rem)] sm:px-6">
       <AppHeader
         title={group.name}
         backTo="/notebook"
@@ -129,7 +153,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
       <p className="text-sm text-muted">
         {group.visibility === "listed" ? t(locale, "notebookGroupListed") : t(locale, "notebookGroupPrivate")}
         {" · "}
-        {group.memberCount} {t(locale, "notebookGroupMembers").toLowerCase()}
+        {group.memberCount} {t(locale, "notebookGroupMembers")}
       </p>
       {group.description ? <p className="text-sm text-fg">{group.description}</p> : null}
 
