@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 
-export type NotifyKind = "reading" | "friends" | "shares";
+export type NotifyKind = "reading" | "friends" | "shares" | "groups";
 
 export type NotifyPrefs = {
   reading: boolean;
   friends: boolean;
   shares: boolean;
+  groups: boolean;
 };
 
 export type InboxItem = {

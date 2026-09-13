@@ -57,6 +57,7 @@ Plan ids: bible-year, bible-90, nt-90, nt-30, gospels-30, john-21, matthew-28, l
 - Plan category: /reading/category/{id}
 - Plan: /reading/{id}  (e.g. /reading/gospels-30)
 - About and help: /about
+- Privacy (LGPD): /privacy
 - For AI (API, skill, MCP): /for-ai
 - Skill file: /skill.md
 - This file: /llms.txt

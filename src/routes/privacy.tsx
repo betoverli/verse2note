@@ -1,0 +1,34 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { AppHeader } from "@/components/app-header";
+import { privacyCopy } from "@/lib/privacy";
+import { pageHead } from "@/lib/seo";
+import { useAppStore } from "@/lib/store";
+
+export const Route = createFileRoute("/privacy")({
+  component: PrivacyRoute,
+  head: () =>
+    pageHead({
+      title: "Verse2Note — Privacidade",
+      description: "Como o Verse2Note trata seus dados, perfil público, avisos e o direito de excluir a conta (LGPD).",
+      path: "/privacy",
+    }),
+});
+
+function PrivacyRoute() {
+  const locale = useAppStore((s) => s.locale);
+  const copy = privacyCopy(locale);
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
+      <AppHeader title={copy.title} backTo="/" />
+      <p className="text-xs tracking-wide text-muted uppercase">{copy.updated}</p>
+      <div className="flex flex-col gap-8">
+        {copy.sections.map((section) => (
+          <section key={section.title} className="space-y-2">
+            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{section.title}</h2>
+            <p className="max-w-xl text-pretty text-sm leading-relaxed text-fg">{section.body}</p>
+          </section>
+        ))}
+      </div>
+    </main>
+  );
+}

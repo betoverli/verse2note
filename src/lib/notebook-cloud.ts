@@ -7,6 +7,7 @@ import {
   asSpeaker,
   cleanBlocks,
   cleanTags,
+  noteSpeakerIds,
   type Note,
   type Speaker,
 } from "@/lib/notebook";
@@ -122,6 +123,10 @@ export const deleteMyNote = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    const owned = await sql<{ id: string }>`
+      select id from notebook_notes where id = ${data.id} and user_id = ${context.userId} limit 1
+    `;
+    if (!owned[0]) return { ok: false as const };
     await sql`delete from notebook_group_notes where note_id = ${data.id}`;
     await sql`delete from note_grants where note_id = ${data.id}`;
     await sql`delete from notebook_notes where id = ${data.id} and user_id = ${context.userId}`;
@@ -160,10 +165,14 @@ export const getSharedNote = createServerFn({ method: "GET" })
     const row = rows[0];
     if (!row) return null;
     if (row.visibility !== "unlisted") return null;
-    const speakers = await sql<SpeakerRow>`
-      select id, name, color, updated_at from notebook_speakers where user_id = ${row.user_id}
-    `;
-    return { note: fromNoteRow(row), speakers: speakers.map(fromSpeakerRow) };
+    const note = fromNoteRow(row);
+    const used = new Set(noteSpeakerIds(note));
+    const speakers = used.size
+      ? await sql<SpeakerRow>`
+          select id, name, color, updated_at from notebook_speakers where user_id = ${row.user_id}
+        `
+      : [];
+    return { note, speakers: speakers.filter((item) => used.has(item.id)).map(fromSpeakerRow) };
   });
 
 export const getGrantedNote = createServerFn({ method: "GET" })
@@ -191,11 +200,13 @@ export const getGrantedNote = createServerFn({ method: "GET" })
       row = viaGroup[0];
     }
     if (!row) return null;
+    const note = fromNoteRow(row);
     const owner = await sql<{ user_id: string }>`select user_id from notebook_notes where id = ${data.id}`;
-    const speakers = owner[0]
+    const used = new Set(noteSpeakerIds(note));
+    const speakers = owner[0] && used.size
       ? await sql<SpeakerRow>`select id, name, color, updated_at from notebook_speakers where user_id = ${owner[0].user_id}`
       : [];
-    return { note: fromNoteRow(row), speakers: speakers.map(fromSpeakerRow) };
+    return { note, speakers: speakers.filter((item) => used.has(item.id)).map(fromSpeakerRow) };
   });
 
 export const listGrantedNotes = createServerFn({ method: "GET" })

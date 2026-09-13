@@ -44,6 +44,17 @@ export function AboutPage() {
       </section>
 
       <Link
+        to="/privacy"
+        className="flex min-h-11 items-center justify-between gap-3 rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+      >
+        <span>
+          <span className="block text-sm font-medium">{t(locale, "privacyTitle")}</span>
+          <span className="mt-1 block text-xs text-muted">LGPD</span>
+        </span>
+        <ChevronRight className="size-4 shrink-0 text-muted" />
+      </Link>
+
+      <Link
         to="/for-ai"
         className="flex min-h-11 items-center justify-between gap-3 rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
       >

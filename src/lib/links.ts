@@ -267,6 +267,11 @@ export const declineLink = createServerFn({ method: "POST" })
       where (from_id = ${context.userId} and user_id = ${other.user_id})
          or (from_id = ${other.user_id} and user_id = ${context.userId})
     `;
+    await sql`
+      delete from note_grants
+      where (from_id = ${context.userId} and user_id = ${other.user_id})
+         or (from_id = ${other.user_id} and user_id = ${context.userId})
+    `;
     return { ok: true as const };
   });
 

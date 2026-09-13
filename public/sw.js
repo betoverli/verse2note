@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v11";
+const CACHE = "verse2note-v12";
 
 const PRECACHE = [
   "/",
@@ -62,10 +62,13 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+  const accept = request.headers.get("accept") ?? "";
+  if (accept.includes("application/json")) return;
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (response.ok) {
+        const cacheControl = response.headers.get("cache-control") ?? "";
+        if (response.ok && !cacheControl.includes("no-store") && !cacheControl.includes("private")) {
           const copy = response.clone();
           void caches.open(CACHE).then((cache) => cache.put(request, copy));
         }

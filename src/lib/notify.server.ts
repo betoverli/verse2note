@@ -5,13 +5,15 @@ import { formatPassage } from "@/lib/bible/passage";
 import { planById, readingToPassage } from "@/lib/bible/reading-plans";
 import { getSql, type Sql } from "@/lib/db";
 import { t, type I18nKey } from "@/lib/i18n";
+import { allowRequest } from "@/lib/rate-limit";
 
-export type NotifyKind = "reading" | "friends" | "shares";
+export type NotifyKind = "reading" | "friends" | "shares" | "groups";
 
 export type NotifyPrefs = {
   reading: boolean;
   friends: boolean;
   shares: boolean;
+  groups: boolean;
 };
 
 export type InboxItem = {
@@ -32,7 +34,7 @@ function asLocale(value: string): Locale {
 }
 
 function asKind(value: string): NotifyKind {
-  return value === "friends" || value === "shares" || value === "reading" ? value : "reading";
+  return value === "friends" || value === "shares" || value === "groups" || value === "reading" ? value : "reading";
 }
 
 function newId() {
@@ -128,20 +130,23 @@ async function deliver(
   titleKey: I18nKey,
   bodyKey: I18nKey,
   vars: Record<string, string>,
+  opts?: { push?: boolean },
 ) {
   const sql = await getSql();
   const prefs = await sql<{
     notify_reading: boolean;
     notify_friends: boolean;
     notify_shares: boolean;
+    notify_groups: boolean | null;
   }>`
-    select notify_reading, notify_friends, notify_shares from user_prefs where user_id = ${userId}
+    select notify_reading, notify_friends, notify_shares, notify_groups from user_prefs where user_id = ${userId}
   `;
   const pref = prefs[0];
   if (!pref) return;
   if (kind === "reading" && !pref.notify_reading) return;
   if (kind === "friends" && !pref.notify_friends) return;
   if (kind === "shares" && !pref.notify_shares) return;
+  if (kind === "groups" && pref.notify_groups === false) return;
 
   const title = fill(t(locale, titleKey), vars).slice(0, 120);
   const body = fill(t(locale, bodyKey), vars).slice(0, 240);
@@ -152,7 +157,7 @@ async function deliver(
     values (${id}, ${userId}, ${kind}, ${title}, ${body}, ${href})
   `;
   await trimInbox(sql, userId);
-  await pushToUser(sql, userId, { title, body, href });
+  if (opts?.push !== false) await pushToUser(sql, userId, { title, body, href });
 }
 
 async function userLocale(sql: Sql, userId: string): Promise<Locale> {
@@ -182,6 +187,32 @@ export async function notifySocial(
   const locale = await userLocale(sql, targetId);
   const name = await actorName(sql, actorId, locale);
   await deliver(targetId, kind, locale, titleKey, bodyKey, { name, ...extra });
+}
+
+export async function notifyGroupNote(actorId: string, groupId: string, groupName: string, noteId: string) {
+  if (!actorId || !groupId) return;
+  const sql = await getSql();
+  const members = await sql<{ user_id: string }>`
+    select user_id from notebook_group_members
+    where group_id = ${groupId} and status = 'accepted' and user_id <> ${actorId}
+  `;
+  if (!members.length) return;
+  const locale = await userLocale(sql, members[0]!.user_id);
+  const name = await actorName(sql, actorId, locale);
+  const push = allowRequest(`gnote-push:${groupId}`, 1, 15 * 60 * 1000);
+  for (const member of members) {
+    const loc = await userLocale(sql, member.user_id);
+    const who = loc === locale ? name : await actorName(sql, actorId, loc);
+    await deliver(
+      member.user_id,
+      "groups",
+      loc,
+      "notifyGroupNoteTitle",
+      "notifyGroupNoteBody",
+      { name: who, plan: groupName, href: `/n/${noteId}?g=${groupId}` },
+      { push },
+    );
+  }
 }
 
 export async function notifyPlanMarked(actorId: string, planId: string, day: number) {
@@ -358,14 +389,16 @@ export async function loadPrefs(userId: string): Promise<NotifyPrefs> {
     notify_reading: boolean;
     notify_friends: boolean;
     notify_shares: boolean;
+    notify_groups: boolean | null;
   }>`
-    select notify_reading, notify_friends, notify_shares from user_prefs where user_id = ${userId}
+    select notify_reading, notify_friends, notify_shares, notify_groups from user_prefs where user_id = ${userId}
   `;
   const row = rows[0];
   return {
     reading: row?.notify_reading !== false,
     friends: row?.notify_friends !== false,
     shares: row?.notify_shares !== false,
+    groups: row?.notify_groups !== false,
   };
 }
 
@@ -374,13 +407,15 @@ export async function savePrefs(userId: string, patch: Partial<NotifyPrefs>) {
   const reading = patch.reading ?? current.reading;
   const friends = patch.friends ?? current.friends;
   const shares = patch.shares ?? current.shares;
+  const groups = patch.groups ?? current.groups;
   const sql = await getSql();
   await sql`
     update user_prefs
-    set notify_reading = ${reading}, notify_friends = ${friends}, notify_shares = ${shares}, updated_at = now()
+    set notify_reading = ${reading}, notify_friends = ${friends}, notify_shares = ${shares},
+        notify_groups = ${groups}, updated_at = now()
     where user_id = ${userId}
   `;
-  return { reading, friends, shares };
+  return { reading, friends, shares, groups };
 }
 
 export async function listInbox(userId: string): Promise<InboxItem[]> {

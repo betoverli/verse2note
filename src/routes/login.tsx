@@ -251,9 +251,15 @@ export function Login() {
       ) : null}
 
       <p className="mt-6 text-xs leading-relaxed text-subtle">{t(locale, "accountHint")}</p>
-      <Link to="/" className="mt-auto pt-8 text-center text-sm text-muted hover:text-fg">
-        {t(locale, "back")}
-      </Link>
+      <p className="mt-auto flex justify-center gap-3 pt-8 text-center text-sm text-muted">
+        <Link to="/" className="hover:text-fg">
+          {t(locale, "back")}
+        </Link>
+        <span aria-hidden>·</span>
+        <Link to="/privacy" className="hover:text-fg">
+          {t(locale, "privacyTitle")}
+        </Link>
+      </p>
     </main>
   );
 }

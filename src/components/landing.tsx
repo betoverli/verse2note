@@ -123,6 +123,10 @@ export function Landing() {
             {t(locale, "aboutTitle")}
           </Link>
           <span className="text-subtle"> · </span>
+          <Link to="/privacy" className="underline-offset-2 hover:text-fg hover:underline">
+            {t(locale, "privacyTitle")}
+          </Link>
+          <span className="text-subtle"> · </span>
           <Link to="/groups" className="underline-offset-2 hover:text-fg hover:underline">
             {t(locale, "notebookGroups")}
           </Link>

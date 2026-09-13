@@ -19,6 +19,7 @@ import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotebookRouteImport } from './routes/notebook'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReadingRouteImport } from './routes/reading'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -102,6 +103,11 @@ const LoginRoute = LoginRouteImport.update({
 const NotebookRoute = NotebookRouteImport.update({
   id: '/notebook',
   path: '/notebook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -288,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/notebook': typeof NotebookRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -331,6 +338,7 @@ export interface FileRoutesByTo {
   '/for-ai': typeof ForAiRoute
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
@@ -376,6 +384,7 @@ export interface FileRoutesById {
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/notebook': typeof NotebookRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
@@ -424,6 +433,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/login'
     | '/notebook'
+    | '/privacy'
     | '/profile'
     | '/reading'
     | '/settings'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/for-ai'
     | '/inbox'
     | '/login'
+    | '/privacy'
     | '/settings'
     | '/api/collections'
     | '/api/link'
@@ -511,6 +522,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/login'
     | '/notebook'
+    | '/privacy'
     | '/profile'
     | '/reading'
     | '/settings'
@@ -558,6 +570,7 @@ export interface RootRouteChildren {
   InboxRoute: typeof InboxRoute
   LoginRoute: typeof LoginRoute
   NotebookRoute: typeof NotebookRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRouteWithChildren
   ReadingRoute: typeof ReadingRouteWithChildren
   SettingsRoute: typeof SettingsRoute
@@ -642,6 +655,13 @@ declare module '@tanstack/react-router' {
       path: '/notebook'
       fullPath: '/notebook'
       preLoaderRoute: typeof NotebookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -987,6 +1007,7 @@ const rootRouteChildren: RootRouteChildren = {
   InboxRoute: InboxRoute,
   LoginRoute: LoginRoute,
   NotebookRoute: NotebookRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRouteWithChildren,
   ReadingRoute: ReadingRouteWithChildren,
   SettingsRoute: SettingsRoute,

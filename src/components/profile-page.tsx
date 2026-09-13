@@ -18,6 +18,8 @@ import { languagesLabel, themeLabel } from "@/components/settings-panel";
 import { LinkedMethods } from "@/components/linked-methods";
 import { useAppStore } from "@/lib/store";
 import { getIsAdmin } from "@/lib/usage";
+import { deleteMyAccount, exportMyData } from "@/lib/account";
+import { clearMyGroupsCache } from "@/lib/groups-cache";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -281,18 +283,67 @@ export function ProfileView() {
       ) : null}
 
       {user && authEnabled && !gateSession ? (
-        <Button
-          variant="ghost"
-          className="w-full text-muted"
-          disabled={signingOut}
-          onClick={() => {
-            setSigningOut(true);
-            useAppStore.getState().clearAccount();
-            void signOut("/app").catch(() => setSigningOut(false));
-          }}
-        >
-          {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
-        </Button>
+        <div className="flex flex-col gap-2">
+          <Button
+            variant="ghost"
+            className="w-full text-muted"
+            disabled={signingOut}
+            onClick={() => {
+              setSigningOut(true);
+              useAppStore.getState().clearAccount();
+              void signOut("/app").catch(() => setSigningOut(false));
+            }}
+          >
+            {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-muted"
+            disabled={signingOut}
+            onClick={() => {
+              void exportMyData()
+                .then((data) => {
+                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "verse2note-data.json";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                })
+                .catch(() => toast.error(t(locale, "linkSendFail")));
+            }}
+          >
+            {t(locale, "exportData")}
+          </Button>
+          <Button
+            variant="ghost"
+            className="w-full text-[#8b3a32]"
+            disabled={signingOut}
+            onClick={() => {
+              if (!confirm(t(locale, "deleteAccountAsk"))) return;
+              setSigningOut(true);
+              void deleteMyAccount()
+                .then((result) => {
+                  if (!result?.ok) {
+                    setSigningOut(false);
+                    toast.error(t(locale, "linkSendFail"));
+                    return;
+                  }
+                  clearMyGroupsCache();
+                  useAppStore.getState().clearAccount();
+                  toast.success(t(locale, "accountDeleted"));
+                  void signOut("/").catch(() => setSigningOut(false));
+                })
+                .catch(() => {
+                  setSigningOut(false);
+                  toast.error(t(locale, "linkSendFail"));
+                });
+            }}
+          >
+            {t(locale, "deleteAccount")}
+          </Button>
+        </div>
       ) : null}
     </div>
   );

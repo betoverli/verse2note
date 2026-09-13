@@ -317,7 +317,7 @@ export const requestGroupJoin = createServerFn({ method: "POST" })
     `;
     void import("@/lib/notify.server").then((mod) => {
       for (const admin of admins) {
-        void mod.notifySocial(context.userId, admin.user_id, "shares", "notifyGroupJoinTitle", "notifyGroupJoinBody", {
+        mod.notifySocial(context.userId, admin.user_id, "groups", "notifyGroupJoinTitle", "notifyGroupJoinBody", {
           plan: group.name,
           href: `/groups/${data.id}`,
         });
@@ -342,7 +342,7 @@ export const decideGroupMember = createServerFn({ method: "POST" })
       `;
       const group = await loadGroup(sql, data.id, context.userId);
       void import("@/lib/notify.server").then((mod) =>
-        mod.notifySocial(context.userId, data.userId, "shares", "notifyGroupAcceptTitle", "notifyGroupAcceptBody", {
+        mod.notifySocial(context.userId, data.userId, "groups", "notifyGroupAcceptTitle", "notifyGroupAcceptBody", {
           plan: group?.name ?? "",
           href: `/groups/${data.id}`,
         }),
@@ -369,6 +369,15 @@ export const setGroupMemberRole = createServerFn({ method: "POST" })
       update notebook_group_members set "role" = ${data.role}
       where group_id = ${data.id} and user_id = ${data.userId}
     `;
+    if (data.role === "admin" && other.role !== "admin") {
+      const group = await loadGroup(sql, data.id, context.userId);
+      void import("@/lib/notify.server").then((mod) =>
+        mod.notifySocial(context.userId, data.userId, "groups", "notifyGroupAdminTitle", "notifyGroupAdminBody", {
+          plan: group?.name ?? "",
+          href: `/groups/${data.id}`,
+        }),
+      );
+    }
     return { ok: true as const };
   });
 
@@ -515,24 +524,27 @@ export const publishNoteToGroup = createServerFn({ method: "POST" })
     const group = await loadGroup(sql, data.groupId, context.userId);
     if (!group) return { ok: false as const, error: "missing" as const };
     if (group.postPolicy === "admins" && mine.role !== "admin") return { ok: false as const, error: "forbidden" as const };
-    const owned = await sql<{ id: string }>`
-      select id from notebook_notes where id = ${note.id} and user_id = ${context.userId}
+    const existing = await sql<{ user_id: string }>`
+      select user_id from notebook_notes where id = ${note.id} limit 1
     `;
-    if (!owned[0]) {
+    if (existing[0] && existing[0].user_id !== context.userId) {
+      return { ok: false as const, error: "forbidden" as const };
+    }
+    if (!existing[0]) {
       await sql`
         insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at)
         values (
           ${note.id}, ${context.userId}, ${note.title}, ${note.happenedAt}::date,
           ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz
         )
-        on conflict (id) do update set
-          title = excluded.title,
-          happened_at = excluded.happened_at,
-          tags = excluded.tags,
-          blocks = excluded.blocks,
-          visibility = excluded.visibility,
-          updated_at = excluded.updated_at
-        where notebook_notes.user_id = ${context.userId}
+      `;
+    } else {
+      await sql`
+        update notebook_notes
+        set title = ${note.title}, happened_at = ${note.happenedAt}::date,
+            tags = ${JSON.stringify(note.tags)}, blocks = ${JSON.stringify(note.blocks)},
+            visibility = ${note.visibility}, updated_at = ${note.updatedAt}::timestamptz
+        where id = ${note.id} and user_id = ${context.userId}
       `;
     }
     const count = await sql<{ n: number }>`
@@ -547,7 +559,11 @@ export const publishNoteToGroup = createServerFn({ method: "POST" })
       values (${data.groupId}, ${note.id}, ${context.userId})
       on conflict (group_id, note_id) do nothing
     `;
-    await sql`update notebook_notes set visibility = 'unlisted' where id = ${note.id} and user_id = ${context.userId}`;
+    if (!already[0]) {
+      void import("@/lib/notify.server").then((mod) =>
+        mod.notifyGroupNote(context.userId, data.groupId, group.name, note.id),
+      );
+    }
     return { ok: true as const };
   });
 

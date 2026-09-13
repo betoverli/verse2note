@@ -52,7 +52,7 @@ function Toggle({
 export function NotifySettings() {
   const locale = useAppStore((s) => s.locale);
   const { user } = useCurrentUserState();
-  const [prefs, setPrefs] = useState<NotifyPrefs>({ reading: true, friends: true, shares: true });
+  const [prefs, setPrefs] = useState<NotifyPrefs>({ reading: true, friends: true, shares: true, groups: true });
   const [deviceOn, setDeviceOn] = useState(false);
   const [busy, setBusy] = useState(false);
   const apple = isAppleUa();
@@ -64,7 +64,7 @@ export function NotifySettings() {
     if (!user) return;
     void getNotifyPrefs()
       .then((data) => {
-        setPrefs({ reading: data.reading, friends: data.friends, shares: data.shares });
+        setPrefs({ reading: data.reading, friends: data.friends, shares: data.shares, groups: data.groups });
         setDeviceOn(data.subscribed);
       })
       .catch(() => undefined);
@@ -134,6 +134,12 @@ export function NotifySettings() {
           subtitle={t(locale, "notifySharesHint")}
           onClick={() => patch("shares")}
         />
+        <Toggle
+          on={prefs.groups}
+          title={t(locale, "notifyGroups")}
+          subtitle={t(locale, "notifyGroupsHint")}
+          onClick={() => patch("groups")}
+        />
       </section>
     </div>
   );
@@ -144,6 +150,7 @@ export function notifySummary(locale: Locale, prefs: NotifyPrefs) {
     prefs.reading ? t(locale, "notifyReading") : "",
     prefs.friends ? t(locale, "notifyFriends") : "",
     prefs.shares ? t(locale, "notifyShares") : "",
+    prefs.groups ? t(locale, "notifyGroups") : "",
   ].filter(Boolean);
   return on.length ? on.join(" · ") : t(locale, "notifyOff");
 }

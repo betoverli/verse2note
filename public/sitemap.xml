@@ -44,7 +44,13 @@
   </url>
   <url>
     <loc>https://verse2note.com/about</loc>
-    <lastmod>2026-09-08</lastmod>
+    <lastmod>2026-09-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://verse2note.com/privacy</loc>
+    <lastmod>2026-09-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
