@@ -69,11 +69,9 @@ function appSummary(
   return parts.join(" · ");
 }
 
-export function LanguageSettings() {
+function CiteFormatSection() {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
-  const setLocale = useAppStore((s) => s.setLocale);
-  const setCopyLocale = useAppStore((s) => s.setCopyLocale);
   const citeBook = useAppStore((s) => s.citeBook);
   const citeSep = useAppStore((s) => s.citeSep);
   const setCiteBook = useAppStore((s) => s.setCiteBook);
@@ -87,6 +85,37 @@ export function LanguageSettings() {
         { book: citeBook, sep: citeSep },
       )
     : "";
+  return (
+    <Section title={t(locale, "citeFormat")} lead={sample || t(locale, "citeFormatLead")}>
+      <div className="grid grid-cols-2 gap-2">
+        {(["name", "abbr"] as CiteBook[]).map((item) => (
+          <Choice
+            key={item}
+            active={citeBook === item}
+            title={t(locale, item === "name" ? "citeName" : "citeAbbr")}
+            onClick={() => setCiteBook(item)}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {(["colon", "dot", "comma"] as CiteSep[]).map((item) => (
+          <Choice
+            key={item}
+            active={citeSep === item}
+            title={item === "colon" ? "3:16" : item === "dot" ? "3.16" : "3,16"}
+            onClick={() => setCiteSep(item)}
+          />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+export function LanguageSettings() {
+  const locale = useAppStore((s) => s.locale);
+  const copyLocale = useAppStore((s) => s.copyLocale);
+  const setLocale = useAppStore((s) => s.setLocale);
+  const setCopyLocale = useAppStore((s) => s.setCopyLocale);
   return (
     <div className="flex flex-col gap-6">
       <Section title={t(locale, "uiLanguage")} lead={t(locale, "uiLanguageLead")}>
@@ -111,28 +140,6 @@ export function LanguageSettings() {
               title={item.toUpperCase()}
               subtitle={t(locale, LOCALE_LABEL[item])}
               onClick={() => setCopyLocale(item)}
-            />
-          ))}
-        </div>
-      </Section>
-      <Section title={t(locale, "citeFormat")} lead={sample || t(locale, "citeFormatLead")}>
-        <div className="grid grid-cols-2 gap-2">
-          {(["name", "abbr"] as CiteBook[]).map((item) => (
-            <Choice
-              key={item}
-              active={citeBook === item}
-              title={t(locale, item === "name" ? "citeName" : "citeAbbr")}
-              onClick={() => setCiteBook(item)}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {(["colon", "dot", "comma"] as CiteSep[]).map((item) => (
-            <Choice
-              key={item}
-              active={citeSep === item}
-              title={item === "colon" ? "3:16" : item === "dot" ? "3.16" : "3,16"}
-              onClick={() => setCiteSep(item)}
             />
           ))}
         </div>
@@ -182,16 +189,23 @@ export function BibleSettings() {
   const preferNative = useAppStore((s) => s.preferNative);
   const copyFormat = useAppStore((s) => s.copyFormat);
   const setCopyFormat = useAppStore((s) => s.setCopyFormat);
-  const [appView, setAppView] = useState<"list" | "options">("list");
+  const [appView, setAppView] = useState<"main" | "list" | "options">("main");
+  const [optionsFrom, setOptionsFrom] = useState<"main" | "list">("main");
   const app = appById(appId);
+  const summary = appSummary(locale, appId, translationId, preferNative);
 
   useEffect(() => {
-    if (appView === "options") window.scrollTo({ top: 0, behavior: "auto" });
+    if (appView !== "main") window.scrollTo({ top: 0, behavior: "auto" });
   }, [appView]);
 
   function pickApp(id: string) {
     setAppId(id);
-    if (appHasOptions(appById(id))) setAppView("options");
+    if (appHasOptions(appById(id))) {
+      setOptionsFrom("list");
+      setAppView("options");
+      return;
+    }
+    setAppView("main");
   }
 
   if (appView === "options" && appHasOptions(app)) {
@@ -199,7 +213,7 @@ export function BibleSettings() {
       <div className="flex flex-col gap-8">
         <button
           type="button"
-          onClick={() => setAppView("list")}
+          onClick={() => setAppView(optionsFrom)}
           className="flex min-h-11 w-fit items-center gap-2 text-sm text-muted transition-colors hover:text-fg"
         >
           <ArrowLeft className="size-4" />
@@ -223,16 +237,68 @@ export function BibleSettings() {
     );
   }
 
+  if (appView === "list") {
+    return (
+      <div className="flex flex-col gap-6">
+        <button
+          type="button"
+          onClick={() => setAppView("main")}
+          className="flex min-h-11 w-fit items-center gap-2 text-sm text-muted transition-colors hover:text-fg"
+        >
+          <ArrowLeft className="size-4" />
+          {t(locale, "bibleApp")}
+        </button>
+        <Section title={t(locale, "changeBible")}>
+          <BibleAppList locale={locale} appId={appId} onSelect={pickApp} summary={summary} />
+        </Section>
+      </div>
+    );
+  }
+
+  const extra = appHasOptions(app);
+
   return (
     <div className="flex flex-col gap-8">
       <Section title={t(locale, "bibleApp")}>
-        <BibleAppList
-          locale={locale}
-          appId={appId}
-          onSelect={pickApp}
-          summary={appSummary(locale, appId, translationId, preferNative)}
-        />
+        <button
+          type="button"
+          onClick={() => {
+            if (!extra) return;
+            setOptionsFrom("main");
+            setAppView("options");
+          }}
+          className="flex w-full items-start gap-3 rounded-md bg-accent px-4 py-3 text-left text-accent-fg"
+        >
+          <img
+            src={appIcon(app.id)}
+            alt=""
+            width={36}
+            height={36}
+            draggable={false}
+            className="mt-0.5 size-9 shrink-0 rounded-sm bg-elevated object-cover"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium">{app.names[locale]}</span>
+              <span className="text-xs uppercase opacity-70">
+                {app.hasWeb ? t(locale, "webBadge") : null}
+                {app.hasWeb && app.hasNative ? " · " : null}
+                {app.hasNative ? t(locale, "nativeBadge") : null}
+              </span>
+            </span>
+            <span className="mt-0.5 block text-xs opacity-70">{summary ?? app.blurb[locale]}</span>
+          </span>
+          {extra ? <span className="mt-1 text-xs opacity-80">{t(locale, "appOptions")}</span> : null}
+        </button>
+        <button
+          type="button"
+          onClick={() => setAppView("list")}
+          className="flex min-h-11 w-full items-center justify-center rounded-md bg-surface text-sm font-medium text-fg shadow-[var(--shadow-border)]"
+        >
+          {t(locale, "changeBible")}
+        </button>
       </Section>
+      <CiteFormatSection />
       <Section title={t(locale, "copyFormat")} lead={clipboardDropsHtmlLinks() ? t(locale, "copyAndroidHint") : undefined}>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {COPY_FORMATS.map((item) => (
