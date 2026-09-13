@@ -461,6 +461,24 @@ export const listGroupNotes = createServerFn({ method: "GET" })
     }));
   });
 
+export const listMyNoteGroups = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql<{ note_id: string; group_id: string; name: string }>`
+      select gn.note_id, g.id as group_id, g.name
+      from notebook_notes n
+      join notebook_group_notes gn on gn.note_id = n.id
+      join notebook_groups g on g.id = gn.group_id
+      where n.user_id = ${context.userId}
+    `;
+    const map: Record<string, { id: string; name: string }[]> = {};
+    for (const row of rows) {
+      (map[row.note_id] ??= []).push({ id: row.group_id, name: row.name });
+    }
+    return map;
+  });
+
 export const listNoteGroups = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((data: { noteId: string }) => data)

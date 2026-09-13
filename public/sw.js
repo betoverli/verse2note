@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v10";
+const CACHE = "verse2note-v11";
 
 const PRECACHE = [
   "/",

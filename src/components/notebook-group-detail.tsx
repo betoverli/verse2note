@@ -25,6 +25,7 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
 import { flushOutbox } from "@/lib/outbox";
+import { cn } from "@/lib/utils";
 
 function formatDay(iso: string, locale: string) {
   const [y, m, d] = iso.split("-").map(Number);
@@ -44,6 +45,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   const [notes, setNotes] = useState<GroupNoteCard[]>([]);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [settings, setSettings] = useState(false);
+  const [tab, setTab] = useState<"notes" | "members">("notes");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -177,31 +179,34 @@ export function NotebookGroupDetail({ id }: { id: string }) {
 
       {member && !settings ? (
         <>
-          {admin && pending.length > 0 ? (
-            <section className="space-y-2">
-              <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookGroupRequests")}</h2>
-              <ul className="flex flex-col gap-2">
-                {pending.map((item) => (
-                  <li key={item.userId} className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2">
-                    <ProfileAvatar id={item.avatarId} url={item.avatarUrl} className="size-8" />
-                    <span className="min-w-0 flex-1 truncate text-sm">
-                      {item.firstName || item.handle} {item.lastName}
-                    </span>
-                    <button type="button" className="text-xs text-accent" onClick={() => void decideGroupMember({ data: { id, userId: item.userId, accept: true } }).then(reload)}>
-                      {t(locale, "notebookGroupAccept")}
-                    </button>
-                    <button type="button" className="text-xs text-muted" onClick={() => void decideGroupMember({ data: { id, userId: item.userId, accept: false } }).then(reload)}>
-                      {t(locale, "notebookGroupDecline")}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTab("notes")}
+              className={cn(
+                "min-h-9 rounded-full px-3 text-xs font-medium",
+                tab === "notes" ? "bg-accent text-accent-fg" : "bg-surface text-muted",
+              )}
+            >
+              {t(locale, "notebookGroupNotes")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("members")}
+              className={cn(
+                "inline-flex min-h-9 items-center rounded-full px-3 text-xs font-medium",
+                tab === "members" ? "bg-accent text-accent-fg" : "bg-surface text-muted",
+              )}
+            >
+              {t(locale, "notebookGroupMembers")}
+              {admin && pending.length > 0 ? (
+                <span className={cn("ml-1.5 size-1.5 rounded-full", tab === "members" ? "bg-accent-fg" : "bg-accent")} />
+              ) : null}
+            </button>
+          </div>
 
-          <section className="space-y-2">
-            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookGroupNotes")}</h2>
-            {notes.length === 0 ? (
+          {tab === "notes" ? (
+            notes.length === 0 ? (
               <p className="text-sm text-muted">{t(locale, "notebookEmpty")}</p>
             ) : (
               <ul className="flex flex-col gap-2">
@@ -226,40 +231,60 @@ export function NotebookGroupDetail({ id }: { id: string }) {
                   );
                 })}
               </ul>
-            )}
-          </section>
-
-          <section className="space-y-2">
-            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookGroupMembers")}</h2>
-            <ul className="flex flex-col gap-2">
-              {accepted.map((item) => (
-                <li key={item.userId} className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2">
-                  <ProfileAvatar id={item.avatarId} url={item.avatarUrl} className="size-8" />
-                  <span className="min-w-0 flex-1 truncate text-sm">
-                    {item.firstName || item.handle} {item.lastName}
-                    {item.role === "admin" ? <span className="ml-2 text-[11px] uppercase text-muted">admin</span> : null}
-                  </span>
-                  {admin && item.handle !== handle ? (
-                    <button
-                      type="button"
-                      className="text-xs text-muted"
-                      onClick={() =>
-                        void setGroupMemberRole({
-                          data: { id, userId: item.userId, role: item.role === "admin" ? "member" : "admin" },
-                        }).then(reload)
-                      }
-                    >
-                      {item.role === "admin" ? t(locale, "notebookGroupMakeMember") : t(locale, "notebookGroupMakeAdmin")}
-                    </button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </section>
+            )
+          ) : (
+            <div className="flex flex-col gap-6">
+              {admin && pending.length > 0 ? (
+                <section className="space-y-2">
+                  <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookGroupRequests")}</h2>
+                  <ul className="flex flex-col gap-2">
+                    {pending.map((item) => (
+                      <li key={item.userId} className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2">
+                        <ProfileAvatar id={item.avatarId} url={item.avatarUrl} className="size-8" />
+                        <span className="min-w-0 flex-1 truncate text-sm">
+                          {item.firstName || item.handle} {item.lastName}
+                        </span>
+                        <button type="button" className="text-xs text-accent" onClick={() => void decideGroupMember({ data: { id, userId: item.userId, accept: true } }).then(reload)}>
+                          {t(locale, "notebookGroupAccept")}
+                        </button>
+                        <button type="button" className="text-xs text-muted" onClick={() => void decideGroupMember({ data: { id, userId: item.userId, accept: false } }).then(reload)}>
+                          {t(locale, "notebookGroupDecline")}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+              <ul className="flex flex-col gap-2">
+                {accepted.map((item) => (
+                  <li key={item.userId} className="flex items-center gap-3 rounded-lg bg-surface px-3 py-2">
+                    <ProfileAvatar id={item.avatarId} url={item.avatarUrl} className="size-8" />
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {item.firstName || item.handle} {item.lastName}
+                      {item.role === "admin" ? <span className="ml-2 text-[11px] uppercase text-muted">admin</span> : null}
+                    </span>
+                    {admin && item.handle !== handle ? (
+                      <button
+                        type="button"
+                        className="text-xs text-muted"
+                        onClick={() =>
+                          void setGroupMemberRole({
+                            data: { id, userId: item.userId, role: item.role === "admin" ? "member" : "admin" },
+                          }).then(reload)
+                        }
+                      >
+                        {item.role === "admin" ? t(locale, "notebookGroupMakeMember") : t(locale, "notebookGroupMakeAdmin")}
+                      </button>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       ) : null}
 
-      {canPost && !settings ? (
+      {canPost && !settings && tab === "notes" ? (
         <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={() => void openNew()} aria-label={t(locale, "notebookNew")}>
           <Plus />
         </Button>

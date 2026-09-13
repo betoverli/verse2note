@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Trash2, UserPlus } from "lucide-react";
+import { Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
 import { createLocalNote, deleteLocalNote } from "@/lib/notebook-local";
 import { listGrantedNotes } from "@/lib/notebook-cloud";
+import { listMyNoteGroups } from "@/lib/notebook-groups";
 import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
@@ -24,14 +25,9 @@ function formatDay(iso: string, locale: string) {
   });
 }
 
-function NoteCard({ note }: { note: Note }) {
+function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: string }[] }) {
   const locale = useAppStore((s) => s.locale);
-  const speakers = useAppStore((s) => s.speakers);
   const navigate = useNavigate();
-  const people = noteSpeakerIds(note)
-    .map((id) => speakers.find((item) => item.id === id))
-    .filter(Boolean)
-    .slice(0, 3);
   const preview = notePreview(note);
   const [share, setShare] = useState(false);
   const [askDelete, setAskDelete] = useState(false);
@@ -191,17 +187,13 @@ function NoteCard({ note }: { note: Note }) {
             <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
             {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
           </span>
-          {people.length ? (
-            <span className="flex">
-              {people.map((speaker, index) =>
-                speaker ? (
-                  <span
-                    key={speaker.id}
-                    className={cn("size-6 rounded-full ring-2 ring-bg", index ? "-ml-1.5" : "")}
-                    style={{ background: speaker.color }}
-                  />
-                ) : null,
-              )}
+          {groups.length ? (
+            <span className="flex max-w-[7.5rem] items-center gap-1 text-[11px] text-muted">
+              <Users className="size-3.5 shrink-0" />
+              <span className="truncate">
+                {groups[0].name}
+                {groups.length > 1 ? ` +${groups.length - 1}` : ""}
+              </span>
             </span>
           ) : null}
         </div>
@@ -247,13 +239,17 @@ export function NotebookHome({ query }: { query: string }) {
   const [tag, setTag] = useState<string | null>(null);
   const [speakerId, setSpeakerId] = useState<string | null>(null);
   const [granted, setGranted] = useState<Note[]>([]);
+  const [noteGroups, setNoteGroups] = useState<Record<string, { id: string; name: string }[]>>({});
 
   useEffect(() => {
     if (!user) return;
     void listGrantedNotes()
       .then(setGranted)
       .catch(() => setGranted([]));
-  }, [user]);
+    void listMyNoteGroups()
+      .then(setNoteGroups)
+      .catch(() => setNoteGroups({}));
+  }, [user, notes.length]);
 
   const tags = useMemo(() => [...new Set(notes.flatMap((item) => item.tags))].sort(), [notes]);
 
@@ -353,7 +349,7 @@ export function NotebookHome({ query }: { query: string }) {
                   <span className="truncate text-sm font-medium">{item.title || t(locale, "notebookMeeting")}</span>
                 </Link>
               ) : (
-                <NoteCard note={item} />
+                <NoteCard note={item} groups={noteGroups[item.id] ?? []} />
               )}
             </li>
           ))}
