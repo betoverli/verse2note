@@ -24,7 +24,6 @@ import {
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
-import { ViewportSheet } from "@/components/viewport-sheet";
 import { flushOutbox } from "@/lib/outbox";
 
 function formatDay(iso: string, locale: string) {
@@ -144,7 +143,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
         backTo="/notebook"
         trailing={
           admin ? (
-            <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "settings")} onClick={() => setSettings(true)}>
+            <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "settings")} onClick={() => setSettings((value) => !value)}>
               <Settings />
             </Button>
           ) : null
@@ -155,9 +154,18 @@ export function NotebookGroupDetail({ id }: { id: string }) {
         {" · "}
         {group.memberCount} {t(locale, "notebookGroupMembers")}
       </p>
-      {group.description ? <p className="text-sm text-fg">{group.description}</p> : null}
+      {group.description && !settings ? <p className="text-sm text-fg">{group.description}</p> : null}
 
-      {!member ? (
+      {settings ? (
+        <GroupSettings
+          group={group}
+          onClose={() => setSettings(false)}
+          onSaved={reload}
+          onLeft={() => void navigate({ to: "/notebook" })}
+        />
+      ) : null}
+
+      {!settings && !member ? (
         group.myStatus === "pending" ? (
           <p className="text-sm text-muted">{t(locale, "notebookGroupPending")}</p>
         ) : (
@@ -167,7 +175,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
         )
       ) : null}
 
-      {member ? (
+      {member && !settings ? (
         <>
           {admin && pending.length > 0 ? (
             <section className="space-y-2">
@@ -251,19 +259,10 @@ export function NotebookGroupDetail({ id }: { id: string }) {
         </>
       ) : null}
 
-      {canPost ? (
+      {canPost && !settings ? (
         <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={() => void openNew()} aria-label={t(locale, "notebookNew")}>
           <Plus />
         </Button>
-      ) : null}
-
-      {settings && group ? (
-        <GroupSettings
-          group={group}
-          onClose={() => setSettings(false)}
-          onSaved={reload}
-          onLeft={() => void navigate({ to: "/notebook" })}
-        />
       ) : null}
     </main>
   );
@@ -305,23 +304,20 @@ function GroupSettings({
   }
 
   return (
-    <ViewportSheet onClose={onClose}>
-      <div
-        className="max-h-full w-full max-w-sm overflow-y-auto rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
         <p className="mb-3 text-sm font-medium text-fg">{t(locale, "settings")}</p>
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
-          className="mb-2 h-12 w-full rounded-md bg-surface px-3 text-base text-fg outline-none"
+          autoComplete="off"
+          className="mb-2 h-12 w-full rounded-md bg-bg px-3 text-base text-fg outline-none"
         />
         <textarea
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           placeholder={t(locale, "notebookGroupAbout")}
           rows={3}
-          className="mb-3 w-full rounded-md bg-surface px-3 py-2 text-base text-fg outline-none"
+          className="mb-3 w-full rounded-md bg-bg px-3 py-2 text-base text-fg outline-none"
         />
         <div className="mb-3 grid grid-cols-2 gap-2">
           <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
@@ -358,7 +354,9 @@ function GroupSettings({
         >
           {t(locale, "notebookGroupDelete")}
         </Button>
-      </div>
-    </ViewportSheet>
+        <Button className="mt-2 w-full" variant="ghost" onClick={onClose}>
+          {t(locale, "linkCancel")}
+        </Button>
+    </div>
   );
 }

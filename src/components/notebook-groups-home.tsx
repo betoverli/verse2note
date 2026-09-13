@@ -13,7 +13,6 @@ import {
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
-import { ViewportSheet } from "@/components/viewport-sheet";
 
 function GroupRow({ item }: { item: NotebookGroup }) {
   const locale = useAppStore((s) => s.locale);
@@ -84,10 +83,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       setCreate(false);
       setName("");
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      const id = result.id;
-      window.setTimeout(() => {
-        void navigate({ to: "/notebook/g/$id", params: { id } });
-      }, 50);
+      void navigate({ to: "/notebook/g/$id", params: { id: result.id } });
     } catch {
       toast.error(t(locale, "linkSendFail"));
     } finally {
@@ -106,8 +102,43 @@ export function NotebookGroupsHome({ query }: { query: string }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {create ? (
+        <form
+          className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void make();
+          }}
+        >
+          <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookGroupNew")}</p>
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder={t(locale, "notebookGroupName")}
+            maxLength={60}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="sentences"
+            spellCheck={false}
+            enterKeyHint="done"
+            className="h-12 w-full rounded-md bg-bg px-3 text-base text-fg outline-none"
+          />
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
+            <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
+          </div>
+          <div className="mt-4 flex gap-2">
+            <Button type="button" variant="ghost" className="flex-1" onClick={() => setCreate(false)}>
+              {t(locale, "linkCancel")}
+            </Button>
+            <Button type="submit" className="flex-1" disabled={busy || name.trim().length < 2}>
+              {t(locale, "notebookGroupCreate")}
+            </Button>
+          </div>
+        </form>
+      ) : null}
       {mine == null ? <div className="h-20 rounded-lg bg-surface" aria-hidden /> : null}
-      {accepted.length === 0 && pending.length === 0 && mine ? (
+      {accepted.length === 0 && pending.length === 0 && mine && !create ? (
         <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p>
       ) : null}
       {accepted.length > 0 ? (
@@ -137,40 +168,16 @@ export function NotebookGroupsHome({ query }: { query: string }) {
           ))}
         </ul>
       ) : null}
-      <Button
-        className="fixed right-4 z-20 size-12 rounded-full"
-        style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-        onClick={() => setCreate(true)}
-        aria-label={t(locale, "notebookGroupNew")}
-      >
-        <Plus />
-      </Button>
-      {create ? (
-        <ViewportSheet onClose={() => !busy && setCreate(false)}>
-          <div className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-            <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookGroupNew")}</p>
-            <input
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder={t(locale, "notebookGroupName")}
-              maxLength={60}
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="sentences"
-              spellCheck={false}
-              enterKeyHint="done"
-              className="h-12 w-full rounded-md bg-surface px-3 text-base text-fg outline-none"
-            />
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
-              <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
-            </div>
-            <Button className="mt-4 w-full" disabled={busy || name.trim().length < 2} onClick={() => void make()}>
-              {t(locale, "notebookGroupNew")}
-            </Button>
-          </div>
-        </ViewportSheet>
-      ) : null}
+      {create ? null : (
+        <Button
+          className="fixed right-4 z-20 size-12 rounded-full"
+          style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
+          onClick={() => setCreate(true)}
+          aria-label={t(locale, "notebookGroupNew")}
+        >
+          <Plus />
+        </Button>
+      )}
     </div>
   );
 }
