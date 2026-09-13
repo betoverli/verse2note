@@ -8,6 +8,8 @@ import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { enqueue, flushOutbox, startOutbox, clearOutbox } from "@/lib/outbox";
 import { profileIsComplete } from "@/lib/profile";
 import { listMyCollections } from "@/lib/user-collections";
+import { listMyGroups } from "@/lib/notebook-groups";
+import { clearMyGroupsCache, setMyGroupsCache } from "@/lib/groups-cache";
 import { useAppStore } from "@/lib/store";
 
 function snapshot(): CloudPrefs {
@@ -51,6 +53,7 @@ export function AccountSync() {
       syncedFor.current = null;
       useAppStore.getState().clearAccount();
       clearOutbox();
+      clearMyGroupsCache();
       useAppStore.getState().setCloudHydrated(true);
       ready.current = false;
       return;
@@ -81,6 +84,11 @@ export function AccountSync() {
         useAppStore.getState().setMyCollections(mergeCollections(localCollections, collections));
         useAppStore.getState().setNotes(mergeNotes(useAppStore.getState().notes, notes));
         useAppStore.getState().setSpeakers(mergeSpeakers(useAppStore.getState().speakers, speakers));
+        void listMyGroups()
+          .then((rows) => {
+            if (!cancelled) setMyGroupsCache(userId, rows);
+          })
+          .catch(() => {});
         if (cloud) {
           const merged = mergePrefs(snapshot(), cloud);
           useAppStore.getState().applyCloud(merged);

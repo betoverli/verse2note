@@ -10,6 +10,7 @@ import {
   searchListedGroups,
   type NotebookGroup,
 } from "@/lib/notebook-groups";
+import { peekMyGroups, setMyGroupsCache, upsertMyGroup } from "@/lib/groups-cache";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
@@ -43,7 +44,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
   const locale = useAppStore((s) => s.locale);
   const { user } = useCurrentUserState();
   const navigate = useNavigate();
-  const [mine, setMine] = useState<NotebookGroup[] | null>(null);
+  const [mine, setMine] = useState<NotebookGroup[] | null>(() => (user?.id ? peekMyGroups(user.id) : null));
   const [found, setFound] = useState<NotebookGroup[]>([]);
   const [create, setCreate] = useState(false);
   const [name, setName] = useState("");
@@ -51,22 +52,24 @@ export function NotebookGroupsHome({ query }: { query: string }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setMine(null);
+      return;
+    }
+    const cached = peekMyGroups(user.id);
+    if (cached) setMine(cached);
     let live = true;
-    const fail = window.setTimeout(() => {
-      if (live) setMine((current) => current ?? []);
-    }, 4000);
     void listMyGroups()
       .then((rows) => {
-        if (live) setMine(rows);
+        if (!live) return;
+        setMyGroupsCache(user.id, rows);
+        setMine(rows);
       })
       .catch(() => {
-        if (live) setMine([]);
-      })
-      .finally(() => window.clearTimeout(fail));
+        if (live && peekMyGroups(user.id) == null) setMine([]);
+      });
     return () => {
       live = false;
-      window.clearTimeout(fail);
     };
   }, [user?.id]);
 
@@ -95,6 +98,20 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       if (!result?.ok || !result.id) {
         toast.error(t(locale, "linkSendFail"));
         return;
+      }
+      if (user) {
+        upsertMyGroup(user.id, {
+          id: result.id,
+          name: title,
+          description: "",
+          visibility: listed ? "listed" : "private",
+          postPolicy: "members",
+          createdBy: user.id,
+          memberCount: 1,
+          myRole: "admin",
+          myStatus: "accepted",
+          updatedAt: new Date().toISOString(),
+        });
       }
       setCreate(false);
       setName("");

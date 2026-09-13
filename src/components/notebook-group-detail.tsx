@@ -25,6 +25,7 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
 import { flushOutbox } from "@/lib/outbox";
+import { removeMyGroup } from "@/lib/groups-cache";
 import { cn } from "@/lib/utils";
 
 function formatDay(iso: string, locale: string) {
@@ -362,7 +363,10 @@ function GroupSettings({
           variant="ghost"
           onClick={() =>
             void leaveNotebookGroup({ data: { id: group.id } }).then((result) => {
-              if (result?.ok) onLeft();
+              if (result?.ok) {
+                removeMyGroup(group.id);
+                onLeft();
+              }
             })
           }
         >
@@ -374,7 +378,10 @@ function GroupSettings({
           onClick={() => {
             if (!confirm(t(locale, "notebookGroupDeleteAsk"))) return;
             void deleteNotebookGroup({ data: { id: group.id } }).then((result) => {
-              if (result?.ok) onLeft();
+              if (result?.ok) {
+                removeMyGroup(group.id);
+                onLeft();
+              }
             });
           }}
         >
