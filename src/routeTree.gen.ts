@@ -48,6 +48,7 @@ import { Route as ReadingAllRouteImport } from './routes/reading.all'
 import { Route as UHandleRouteImport } from './routes/u.$handle'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as CollectionsCategoryCategoryIdRouteImport } from './routes/collections.category.$categoryId'
+import { Route as NotebookGIdRouteImport } from './routes/notebook.g.$id'
 import { Route as ReadingCategoryCategoryIdRouteImport } from './routes/reading.category.$categoryId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -246,6 +247,11 @@ const CollectionsCategoryCategoryIdRoute =
     path: '/category/$categoryId',
     getParentRoute: () => CollectionsRoute,
   } as any)
+const NotebookGIdRoute = NotebookGIdRouteImport.update({
+  id: '/g/$id',
+  path: '/g/$id',
+  getParentRoute: () => NotebookRoute,
+} as any)
 const ReadingCategoryCategoryIdRoute =
   ReadingCategoryCategoryIdRouteImport.update({
     id: '/category/$categoryId',
@@ -293,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/reading/': typeof ReadingIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
+  '/notebook/g/$id': typeof NotebookGIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
 export interface FileRoutesByTo {
@@ -331,6 +338,7 @@ export interface FileRoutesByTo {
   '/reading': typeof ReadingIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
+  '/notebook/g/$id': typeof NotebookGIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
 export interface FileRoutesById {
@@ -374,6 +382,7 @@ export interface FileRoutesById {
   '/reading/': typeof ReadingIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
+  '/notebook/g/$id': typeof NotebookGIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
 }
 export interface FileRouteTypes {
@@ -418,6 +427,7 @@ export interface FileRouteTypes {
     | '/reading/'
     | '/api/auth/$'
     | '/collections/category/$categoryId'
+    | '/notebook/g/$id'
     | '/reading/category/$categoryId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/reading'
     | '/api/auth/$'
     | '/collections/category/$categoryId'
+    | '/notebook/g/$id'
     | '/reading/category/$categoryId'
   id:
     | '__root__'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/reading/'
     | '/api/auth/$'
     | '/collections/category/$categoryId'
+    | '/notebook/g/$id'
     | '/reading/category/$categoryId'
   fileRoutesById: FileRoutesById
 }
@@ -800,6 +812,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CollectionsCategoryCategoryIdRouteImport
       parentRoute: typeof CollectionsRoute
     }
+    '/notebook/g/$id': {
+      id: '/notebook/g/$id'
+      path: '/g/$id'
+      fullPath: '/notebook/g/$id'
+      preLoaderRoute: typeof NotebookGIdRouteImport
+      parentRoute: typeof NotebookRoute
+    }
     '/reading/category/$categoryId': {
       id: '/reading/category/$categoryId'
       path: '/category/$categoryId'
@@ -831,11 +850,13 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
 interface NotebookRouteChildren {
   NotebookIdRoute: typeof NotebookIdRoute
   NotebookIndexRoute: typeof NotebookIndexRoute
+  NotebookGIdRoute: typeof NotebookGIdRoute
 }
 
 const NotebookRouteChildren: NotebookRouteChildren = {
   NotebookIdRoute: NotebookIdRoute,
   NotebookIndexRoute: NotebookIndexRoute,
+  NotebookGIdRoute: NotebookGIdRoute,
 }
 
 const NotebookRouteWithChildren = NotebookRoute._addFileChildren(

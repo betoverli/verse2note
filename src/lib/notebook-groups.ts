@@ -1,0 +1,549 @@
+import { createServerFn } from "@tanstack/react-start";
+import { authMiddleware } from "@/lib/auth/middleware";
+import { getSql, type Sql } from "@/lib/db";
+import { allowRequest } from "@/lib/rate-limit";
+import { asNote, cleanBlocks, cleanTags, type Note } from "@/lib/notebook";
+
+export type GroupVisibility = "listed" | "private";
+export type GroupPostPolicy = "members" | "admins";
+export type GroupRole = "admin" | "member";
+export type GroupStatus = "pending" | "accepted";
+
+export type GroupPerson = {
+  userId: string;
+  handle: string;
+  firstName: string;
+  lastName: string;
+  avatarId: string;
+  avatarUrl: string;
+};
+
+export type NotebookGroup = {
+  id: string;
+  name: string;
+  description: string;
+  visibility: GroupVisibility;
+  postPolicy: GroupPostPolicy;
+  createdBy: string;
+  memberCount: number;
+  myRole: GroupRole | null;
+  myStatus: GroupStatus | null;
+  updatedAt: string;
+};
+
+export type GroupMember = GroupPerson & { role: GroupRole; status: GroupStatus };
+
+export type GroupNoteCard = {
+  note: Note;
+  author: GroupPerson;
+};
+
+const MAX_CREATED = 50;
+const MAX_MEMBERSHIPS = 100;
+const MAX_GROUP_NOTES = 200;
+
+type GroupRow = {
+  id: string;
+  name: string;
+  description: string;
+  visibility: string;
+  post_policy: string;
+  created_by: string;
+  updated_at: string;
+  member_count: number;
+  my_role: string | null;
+  my_status: string | null;
+};
+
+type PrefRow = {
+  user_id: string;
+  handle: string;
+  first_name: string;
+  last_name: string;
+  avatar_id: string;
+  avatar_url: string;
+};
+
+function newId() {
+  return crypto.randomUUID().replaceAll("-", "");
+}
+
+function cleanName(value: string) {
+  return value.trim().replace(/\s+/g, " ").slice(0, 60);
+}
+
+function cleanDescription(value: string) {
+  return value.trim().slice(0, 240);
+}
+
+function asVisibility(value: string): GroupVisibility {
+  return value === "listed" ? "listed" : "private";
+}
+
+function asPolicy(value: string): GroupPostPolicy {
+  return value === "admins" ? "admins" : "members";
+}
+
+function asRole(value: string | null): GroupRole | null {
+  if (value === "admin" || value === "member") return value;
+  return null;
+}
+
+function asStatus(value: string | null): GroupStatus | null {
+  if (value === "pending" || value === "accepted") return value;
+  return null;
+}
+
+function person(row: PrefRow): GroupPerson {
+  return {
+    userId: row.user_id,
+    handle: row.handle ?? "",
+    firstName: row.first_name ?? "",
+    lastName: row.last_name ?? "",
+    avatarId: row.avatar_id || "book",
+    avatarUrl: row.avatar_url ?? "",
+  };
+}
+
+function fromGroup(row: GroupRow): NotebookGroup {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? "",
+    visibility: asVisibility(row.visibility),
+    postPolicy: asPolicy(row.post_policy),
+    createdBy: row.created_by,
+    memberCount: Number(row.member_count ?? 0),
+    myRole: asRole(row.my_role),
+    myStatus: asStatus(row.my_status),
+    updatedAt: String(row.updated_at ?? ""),
+  };
+}
+
+function parseJson<T>(raw: string, fallback: T): T {
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function fromNoteRow(row: {
+  id: string;
+  title: string;
+  happened_at: string;
+  tags: string;
+  blocks: string;
+  visibility: string;
+  updated_at: string;
+}): Note {
+  const happened = typeof row.happened_at === "string" ? row.happened_at.slice(0, 10) : row.happened_at;
+  return {
+    id: row.id,
+    title: row.title ?? "",
+    happenedAt: happened,
+    tags: cleanTags(parseJson(row.tags, [])),
+    blocks: cleanBlocks(parseJson(typeof row.blocks === "string" ? row.blocks : JSON.stringify(row.blocks ?? []), [])),
+    visibility: row.visibility === "unlisted" ? "unlisted" : "private",
+    updatedAt: String(row.updated_at ?? ""),
+  };
+}
+
+const GROUP_SELECT = `
+  g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
+  (select count(*)::int from notebook_group_members m where m.group_id = g.id and m.status = 'accepted') as member_count
+`;
+
+async function loadGroup(sql: Sql, id: string, userId: string) {
+  const found = await sql.query<GroupRow>(
+    `select ${GROUP_SELECT},
+      (select role from notebook_group_members where group_id = g.id and user_id = $2) as my_role,
+      (select status from notebook_group_members where group_id = g.id and user_id = $2) as my_status
+     from notebook_groups g
+     where g.id = $1
+     limit 1`,
+    [id, userId],
+  );
+  return found[0] ? fromGroup(found[0]) : null;
+}
+
+async function memberOf(sql: Sql, groupId: string, userId: string) {
+  const rows = await sql<{ role: string; status: string }>`
+    select role, status from notebook_group_members
+    where group_id = ${groupId} and user_id = ${userId}
+    limit 1
+  `;
+  return rows[0] ?? null;
+}
+
+async function adminCount(sql: Sql, groupId: string) {
+  const rows = await sql<{ n: number }>`
+    select count(*)::int as n from notebook_group_members
+    where group_id = ${groupId} and status = 'accepted' and role = 'admin'
+  `;
+  return Number(rows[0]?.n ?? 0);
+}
+
+export const listMyGroups = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const rows = await sql.query<GroupRow>(
+      `select ${GROUP_SELECT}, m.role as my_role, m.status as my_status
+       from notebook_group_members m
+       join notebook_groups g on g.id = m.group_id
+       where m.user_id = $1
+       order by m.status asc, g.updated_at desc
+       limit 100`,
+      [context.userId],
+    );
+    return rows.map(fromGroup);
+  });
+
+export const searchListedGroups = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((data: { query: string }) => data)
+  .handler(async ({ context, data }) => {
+    const q = data.query.trim().replace(/[%_\\]/g, "").slice(0, 40);
+    if (q.length < 2) return [] as NotebookGroup[];
+    const sql = await getSql();
+    const rows = await sql.query<GroupRow>(
+      `select ${GROUP_SELECT},
+        (select role from notebook_group_members where group_id = g.id and user_id = $2) as my_role,
+        (select status from notebook_group_members where group_id = g.id and user_id = $2) as my_status
+       from notebook_groups g
+       where g.visibility = 'listed' and g.name ilike $1
+       order by g.updated_at desc
+       limit 30`,
+      [`%${q}%`, context.userId],
+    );
+    return rows.map(fromGroup);
+  });
+
+export const getNotebookGroup = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const group = await loadGroup(sql, data.id, context.userId);
+    if (!group) return null;
+    return group;
+  });
+
+export const createNotebookGroup = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { name: string; description?: string; visibility?: GroupVisibility }) => data)
+  .handler(async ({ context, data }) => {
+    const name = cleanName(data.name);
+    if (name.length < 2) return { ok: false as const, error: "invalid" as const };
+    if (!allowRequest(`gcreate:${context.userId}`, 20, 86_400_000)) {
+      return { ok: false as const, error: "limit" as const };
+    }
+    const sql = await getSql();
+    const created = await sql<{ n: number }>`
+      select count(*)::int as n from notebook_groups where created_by = ${context.userId}
+    `;
+    if (Number(created[0]?.n ?? 0) >= MAX_CREATED) return { ok: false as const, error: "limit" as const };
+    const memberships = await sql<{ n: number }>`
+      select count(*)::int as n from notebook_group_members where user_id = ${context.userId} and status = 'accepted'
+    `;
+    if (Number(memberships[0]?.n ?? 0) >= MAX_MEMBERSHIPS) return { ok: false as const, error: "limit" as const };
+    const id = newId();
+    const visibility = data.visibility === "listed" ? "listed" : "private";
+    const description = cleanDescription(data.description ?? "");
+    await sql`
+      insert into notebook_groups (id, name, description, visibility, post_policy, created_by, updated_at)
+      values (${id}, ${name}, ${description}, ${visibility}, ${"members"}, ${context.userId}, now())
+    `;
+    await sql`
+      insert into notebook_group_members (group_id, user_id, role, status)
+      values (${id}, ${context.userId}, ${"admin"}, ${"accepted"})
+    `;
+    return { ok: true as const, id };
+  });
+
+export const updateNotebookGroup = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (data: {
+      id: string;
+      name?: string;
+      description?: string;
+      visibility?: GroupVisibility;
+      postPolicy?: GroupPostPolicy;
+    }) => data,
+  )
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (mine?.role !== "admin" || mine.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    const current = await loadGroup(sql, data.id, context.userId);
+    if (!current) return { ok: false as const, error: "missing" as const };
+    const name = data.name != null ? cleanName(data.name) || current.name : current.name;
+    const description = data.description != null ? cleanDescription(data.description) : current.description;
+    const visibility = data.visibility ? asVisibility(data.visibility) : current.visibility;
+    const postPolicy = data.postPolicy ? asPolicy(data.postPolicy) : current.postPolicy;
+    await sql`
+      update notebook_groups
+      set name = ${name}, description = ${description}, visibility = ${visibility},
+          post_policy = ${postPolicy}, updated_at = now()
+      where id = ${data.id}
+    `;
+    return { ok: true as const };
+  });
+
+export const requestGroupJoin = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    if (!allowRequest(`gjoin:${context.userId}`, 30, 86_400_000)) {
+      return { ok: false as const, error: "limit" as const };
+    }
+    const sql = await getSql();
+    const group = await loadGroup(sql, data.id, context.userId);
+    if (!group) return { ok: false as const, error: "missing" as const };
+    const existing = await memberOf(sql, data.id, context.userId);
+    if (existing) return { ok: true as const, error: null };
+    const memberships = await sql<{ n: number }>`
+      select count(*)::int as n from notebook_group_members where user_id = ${context.userId} and status = 'accepted'
+    `;
+    if (Number(memberships[0]?.n ?? 0) >= MAX_MEMBERSHIPS) return { ok: false as const, error: "limit" as const };
+    await sql`
+      insert into notebook_group_members (group_id, user_id, role, status)
+      values (${data.id}, ${context.userId}, ${"member"}, ${"pending"})
+      on conflict (group_id, user_id) do nothing
+    `;
+    const admins = await sql<{ user_id: string }>`
+      select user_id from notebook_group_members
+      where group_id = ${data.id} and status = 'accepted' and role = 'admin'
+    `;
+    void import("@/lib/notify.server").then((mod) => {
+      for (const admin of admins) {
+        void mod.notifySocial(context.userId, admin.user_id, "shares", "notifyGroupJoinTitle", "notifyGroupJoinBody", {
+          plan: group.name,
+          href: `/notebook/g/${data.id}`,
+        });
+      }
+    });
+    return { ok: true as const, error: null };
+  });
+
+export const decideGroupMember = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string; userId: string; accept: boolean }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (mine?.role !== "admin" || mine.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    const other = await memberOf(sql, data.id, data.userId);
+    if (!other || other.status !== "pending") return { ok: false as const, error: "missing" as const };
+    if (data.accept) {
+      await sql`
+        update notebook_group_members set status = 'accepted'
+        where group_id = ${data.id} and user_id = ${data.userId}
+      `;
+      const group = await loadGroup(sql, data.id, context.userId);
+      void import("@/lib/notify.server").then((mod) =>
+        mod.notifySocial(context.userId, data.userId, "shares", "notifyGroupAcceptTitle", "notifyGroupAcceptBody", {
+          plan: group?.name ?? "",
+          href: `/notebook/g/${data.id}`,
+        }),
+      );
+    } else {
+      await sql`delete from notebook_group_members where group_id = ${data.id} and user_id = ${data.userId}`;
+    }
+    return { ok: true as const };
+  });
+
+export const setGroupMemberRole = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string; userId: string; role: GroupRole }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (mine?.role !== "admin" || mine.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    const other = await memberOf(sql, data.id, data.userId);
+    if (!other || other.status !== "accepted") return { ok: false as const, error: "missing" as const };
+    if (other.role === "admin" && data.role !== "admin" && (await adminCount(sql, data.id)) <= 1) {
+      return { ok: false as const, error: "lastAdmin" as const };
+    }
+    await sql`
+      update notebook_group_members set role = ${data.role}
+      where group_id = ${data.id} and user_id = ${data.userId}
+    `;
+    return { ok: true as const };
+  });
+
+export const leaveNotebookGroup = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string; userId?: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const target = data.userId || context.userId;
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (!mine || mine.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    if (target !== context.userId && mine.role !== "admin") return { ok: false as const, error: "forbidden" as const };
+    const other = await memberOf(sql, data.id, target);
+    if (!other) return { ok: false as const, error: "missing" as const };
+    if (other.role === "admin" && (await adminCount(sql, data.id)) <= 1) {
+      return { ok: false as const, error: "lastAdmin" as const };
+    }
+    await sql`delete from notebook_group_members where group_id = ${data.id} and user_id = ${target}`;
+    return { ok: true as const };
+  });
+
+export const deleteNotebookGroup = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (mine?.role !== "admin" || mine.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    await sql`delete from notebook_group_notes where group_id = ${data.id}`;
+    await sql`delete from notebook_group_members where group_id = ${data.id}`;
+    await sql`delete from notebook_groups where id = ${data.id}`;
+    return { ok: true as const };
+  });
+
+export const listGroupMembers = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (mine?.status !== "accepted") return [] as GroupMember[];
+    const rows = await sql<PrefRow & { role: string; status: string }>`
+      select p.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url, m.role, m.status
+      from notebook_group_members m
+      join user_prefs p on p.user_id = m.user_id
+      where m.group_id = ${data.id}
+      order by m.role asc, m.status asc, p.first_name
+    `;
+    return rows
+      .filter((row) => mine.role === "admin" || row.status === "accepted")
+      .map((row) => ({ ...person(row), role: asRole(row.role) ?? "member", status: asStatus(row.status) ?? "pending" }));
+  });
+
+export const listGroupNotes = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.id, context.userId);
+    if (mine?.status !== "accepted") return [] as GroupNoteCard[];
+    const rows = await sql<
+      {
+        id: string;
+        title: string;
+        happened_at: string;
+        tags: string;
+        blocks: string;
+        visibility: string;
+        updated_at: string;
+        user_id: string;
+        handle: string;
+        first_name: string;
+        last_name: string;
+        avatar_id: string;
+        avatar_url: string;
+      }
+    >`
+      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at,
+             n.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url
+      from notebook_group_notes g
+      join notebook_notes n on n.id = g.note_id
+      join user_prefs p on p.user_id = n.user_id
+      where g.group_id = ${data.id}
+      order by n.happened_at desc, n.updated_at desc
+      limit 80
+    `;
+    return rows.map((row) => ({
+      note: fromNoteRow(row),
+      author: person(row),
+    }));
+  });
+
+export const listNoteGroups = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .validator((data: { noteId: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const rows = await sql<{ group_id: string }>`
+      select group_id from notebook_group_notes where note_id = ${data.noteId}
+    `;
+    const published = new Set(rows.map((row) => row.group_id));
+    const mine = await sql.query<GroupRow>(
+      `select ${GROUP_SELECT}, m.role as my_role, m.status as my_status
+       from notebook_group_members m
+       join notebook_groups g on g.id = m.group_id
+       where m.user_id = $1 and m.status = 'accepted'
+       order by g.updated_at desc
+       limit 100`,
+      [context.userId],
+    );
+    return mine
+      .map(fromGroup)
+      .map((item) => ({ ...item, published: published.has(item.id) }));
+  });
+
+export const publishNoteToGroup = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { groupId: string; note: Note }) => data)
+  .handler(async ({ context, data }) => {
+    const note = asNote(data.note);
+    if (!note) return { ok: false as const, error: "invalid" as const };
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.groupId, context.userId);
+    if (mine?.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    const group = await loadGroup(sql, data.groupId, context.userId);
+    if (!group) return { ok: false as const, error: "missing" as const };
+    if (group.postPolicy === "admins" && mine.role !== "admin") return { ok: false as const, error: "forbidden" as const };
+    const owned = await sql<{ id: string }>`
+      select id from notebook_notes where id = ${note.id} and user_id = ${context.userId}
+    `;
+    if (!owned[0]) {
+      await sql`
+        insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at)
+        values (
+          ${note.id}, ${context.userId}, ${note.title}, ${note.happenedAt}::date,
+          ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz
+        )
+        on conflict (id) do update set
+          title = excluded.title,
+          happened_at = excluded.happened_at,
+          tags = excluded.tags,
+          blocks = excluded.blocks,
+          visibility = excluded.visibility,
+          updated_at = excluded.updated_at
+        where notebook_notes.user_id = ${context.userId}
+      `;
+    }
+    const count = await sql<{ n: number }>`
+      select count(*)::int as n from notebook_group_notes where group_id = ${data.groupId}
+    `;
+    const already = await sql<{ note_id: string }>`
+      select note_id from notebook_group_notes where group_id = ${data.groupId} and note_id = ${note.id}
+    `;
+    if (!already[0] && Number(count[0]?.n ?? 0) >= MAX_GROUP_NOTES) return { ok: false as const, error: "limit" as const };
+    await sql`
+      insert into notebook_group_notes (group_id, note_id, published_by)
+      values (${data.groupId}, ${note.id}, ${context.userId})
+      on conflict (group_id, note_id) do nothing
+    `;
+    await sql`update notebook_notes set visibility = 'unlisted' where id = ${note.id} and user_id = ${context.userId}`;
+    return { ok: true as const };
+  });
+
+export const unpublishNoteFromGroup = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { groupId: string; noteId: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const mine = await memberOf(sql, data.groupId, context.userId);
+    if (mine?.status !== "accepted") return { ok: false as const, error: "forbidden" as const };
+    const owner = await sql<{ user_id: string }>`select user_id from notebook_notes where id = ${data.noteId}`;
+    const isOwner = owner[0]?.user_id === context.userId;
+    if (!isOwner && mine.role !== "admin") return { ok: false as const, error: "forbidden" as const };
+    await sql`delete from notebook_group_notes where group_id = ${data.groupId} and note_id = ${data.noteId}`;
+    return { ok: true as const };
+  });

@@ -36,7 +36,8 @@ const TABS = [
 ];
 
 export function showTabBar(pathname: string) {
-  if (pathname.startsWith("/notebook/") || pathname.startsWith("/n/")) return false;
+  if (pathname.startsWith("/n/")) return false;
+  if (pathname.startsWith("/notebook/") && !pathname.startsWith("/notebook/g")) return false;
   return (
     pathname === "/app" ||
     pathname === "/inbox" ||

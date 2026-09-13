@@ -9,11 +9,12 @@ import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { SendToFriendButton } from "@/components/send-to-friend";
+import { NotebookGroupsHome } from "@/components/notebook-groups-home";
 import { ViewportSheet } from "@/components/viewport-sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "tags" | "speakers" | "shared";
+type Filter = "all" | "tags" | "speakers" | "shared" | "groups";
 
 function formatDay(iso: string, locale: string) {
   const [y, m, d] = iso.split("-").map(Number);
@@ -274,6 +275,7 @@ export function NotebookHome({ query }: { query: string }) {
     { id: "tags", label: t(locale, "notebookTags") },
     { id: "speakers", label: t(locale, "notebookSpeakers") },
     { id: "shared", label: t(locale, "notebookShared") },
+    { id: "groups", label: t(locale, "notebookGroups") },
   ];
 
   return (
@@ -332,7 +334,9 @@ export function NotebookHome({ query }: { query: string }) {
         </div>
       ) : null}
 
-      {visible.length === 0 ? (
+      {filter === "groups" ? (
+        <NotebookGroupsHome query={query} />
+      ) : visible.length === 0 ? (
         <p className="text-sm text-muted">
           {filter === "shared" ? t(locale, "notebookSharedEmpty") : t(locale, "notebookEmpty")}
         </p>
@@ -359,9 +363,11 @@ export function NotebookHome({ query }: { query: string }) {
         </ul>
       )}
 
+      {filter !== "groups" ? (
       <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={openNew} aria-label={t(locale, "notebookNew")}>
         <Plus />
       </Button>
+      ) : null}
     </div>
   );
 }

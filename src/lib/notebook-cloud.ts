@@ -122,6 +122,7 @@ export const deleteMyNote = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    await sql`delete from notebook_group_notes where note_id = ${data.id}`;
     await sql`delete from note_grants where note_id = ${data.id}`;
     await sql`delete from notebook_notes where id = ${data.id} and user_id = ${context.userId}`;
     return { ok: true as const };
@@ -177,7 +178,18 @@ export const getGrantedNote = createServerFn({ method: "GET" })
       where n.id = ${data.id} and g.user_id = ${context.userId}
       limit 1
     `;
-    const row = rows[0];
+    let row = rows[0];
+    if (!row) {
+      const viaGroup = await sql<NoteRow>`
+        select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at
+        from notebook_notes n
+        join notebook_group_notes p on p.note_id = n.id
+        join notebook_group_members m on m.group_id = p.group_id
+        where n.id = ${data.id} and m.user_id = ${context.userId} and m.status = 'accepted'
+        limit 1
+      `;
+      row = viaGroup[0];
+    }
     if (!row) return null;
     const owner = await sql<{ user_id: string }>`select user_id from notebook_notes where id = ${data.id}`;
     const speakers = owner[0]

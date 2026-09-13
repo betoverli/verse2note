@@ -8,6 +8,7 @@ import { formatSelection } from "@/components/notebook-line";
 import { NotebookDoc, type NotebookDocHandle } from "@/components/notebook-doc";
 import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
+import { NotebookGroupPublish } from "@/components/notebook-group-publish";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { ViewportSheet } from "@/components/viewport-sheet";
@@ -529,6 +530,7 @@ export function NotebookEditor({
                 >
                   <Hash />
                 </Button>
+                <NotebookGroupPublish note={draft} />
               </div>
             )
           }
