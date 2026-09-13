@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { CollectionsPage } from "@/components/collections-page";
+import { VerseSectionTabs } from "@/components/verse-section-tabs";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 
@@ -28,6 +29,7 @@ function CollectionsIndexRoute() {
         title={t(locale, "collections")}
         search={{ value: query, onChange: setQuery, placeholder: t(locale, "collectionsSearch") }}
       />
+      <VerseSectionTabs />
       <CollectionsPage query={query} />
     </main>
   );

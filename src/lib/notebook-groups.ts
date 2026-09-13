@@ -319,7 +319,7 @@ export const requestGroupJoin = createServerFn({ method: "POST" })
       for (const admin of admins) {
         void mod.notifySocial(context.userId, admin.user_id, "shares", "notifyGroupJoinTitle", "notifyGroupJoinBody", {
           plan: group.name,
-          href: `/notebook/g/${data.id}`,
+          href: `/groups/${data.id}`,
         });
       }
     });
@@ -344,7 +344,7 @@ export const decideGroupMember = createServerFn({ method: "POST" })
       void import("@/lib/notify.server").then((mod) =>
         mod.notifySocial(context.userId, data.userId, "shares", "notifyGroupAcceptTitle", "notifyGroupAcceptBody", {
           plan: group?.name ?? "",
-          href: `/notebook/g/${data.id}`,
+          href: `/groups/${data.id}`,
         }),
       );
     } else {

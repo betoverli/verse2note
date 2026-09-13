@@ -21,7 +21,7 @@ Site: https://verse2note.com
 - 160 themed collections, 14 categories; a theme can belong to more than one category
 - Snippets are only the beginning of the verse (Bíblia Livre / WEB / Versión Biblia Libre)
 - 34 reading plans (canonical year, chronological OT/NT/Bible, theme mixes such as Hope and Holy Week, Four paths). Always whole chapters
-- Optional account (Google, X, or email) in the web app to sync Bible-app prefs, profile, and reading-plan progress across devices. Without an account the app stays on that device
+- Optional account (Google, X, or email) in the web app to sync Bible-app prefs, profile, groups, notes, and reading-plan progress across devices. Without an account the app stays on that device
 - Install as a PWA; works offline after the first open
 - No ads. The picker, collections, and plans work without signing in
 
@@ -46,7 +46,9 @@ Plan ids: bible-year, bible-90, nt-90, nt-30, gospels-30, john-21, matthew-28, l
 
 - Home / landing: /
 - App (picker): /app
-- Collections hub: /collections
+- Collections hub: /collections (also a tab inside /app: Livros | Coleções)
+- Groups (shared notebooks): /groups
+- Group: /groups/{id}
 - All themes A–Z: /collections/themes
 - Collection category: /collections/category/{id}
 - Theme: /collections/{id}  (e.g. /collections/salvation)

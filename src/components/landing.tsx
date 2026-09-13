@@ -28,7 +28,7 @@ const JSON_LD = {
     "Multiple Bible apps",
     "160 themed collections in 14 categories",
     "34 reading plans of whole chapters",
-    "Optional Google / X / email account for My plans",
+    "Optional Google / X / email account for groups, notes and My plans",
     "API, skill and MCP for AI agents (no login)",
     "Works offline after first open",
   ],
@@ -121,6 +121,10 @@ export function Landing() {
         <p className="text-center text-xs text-subtle">
           <Link to="/about" className="underline-offset-2 hover:text-fg hover:underline">
             {t(locale, "aboutTitle")}
+          </Link>
+          <span className="text-subtle"> · </span>
+          <Link to="/groups" className="underline-offset-2 hover:text-fg hover:underline">
+            {t(locale, "notebookGroups")}
           </Link>
           <span className="text-subtle"> · </span>
           <Link to="/collections" className="underline-offset-2 hover:text-fg hover:underline">

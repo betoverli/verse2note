@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
 import { LinkPreview } from "@/components/link-preview";
-import { Picker } from "@/components/picker";
 import { NotifyBell } from "@/components/notify-bell";
+import { Picker } from "@/components/picker";
+import { VerseSectionTabs } from "@/components/verse-section-tabs";
 import { bookById } from "@/lib/bible/books";
 import { t } from "@/lib/i18n";
-import { useAppStore } from "@/lib/store";
 import { pageHead } from "@/lib/seo";
+import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({
@@ -39,6 +40,7 @@ function AppPage() {
         title={book ? book.names[copyLocale] : t(locale, "navBooks")}
         trailing={<NotifyBell />}
       />
+      <VerseSectionTabs />
       <Picker />
       <LinkPreview />
     </main>

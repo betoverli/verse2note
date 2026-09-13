@@ -105,7 +105,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   if (isPending && !user) {
     return (
       <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
-        <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
+        <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
       </main>
     );
   }
@@ -113,7 +113,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   if (!user) {
     return (
       <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-[calc(var(--tab-bar-height)+2rem)] sm:px-6">
-        <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
+        <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
         <p className="text-sm text-muted">{t(locale, "notebookGroupLogin")}</p>
       </main>
     );
@@ -122,7 +122,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   if (group === undefined) {
     return (
       <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
-        <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
+        <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
       </main>
     );
   }
@@ -130,7 +130,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   if (!group) {
     return (
       <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
-        <AppHeader title={t(locale, "notebookGroups")} backTo="/notebook" />
+        <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
         <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p>
       </main>
     );
@@ -140,7 +140,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
     <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+5rem)] sm:px-6">
       <AppHeader
         title={group.name}
-        backTo="/notebook"
+        backTo="/groups"
         trailing={
           admin ? (
             <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "settings")} onClick={() => setSettings((value) => !value)}>
@@ -161,7 +161,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
           group={group}
           onClose={() => setSettings(false)}
           onSaved={reload}
-          onLeft={() => void navigate({ to: "/notebook" })}
+          onLeft={() => void navigate({ to: "/groups" })}
         />
       ) : null}
 

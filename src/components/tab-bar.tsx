@@ -1,36 +1,48 @@
 import { useEffect, useRef } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Library, Notebook, User } from "lucide-react";
+import { BookOpen, CalendarDays, Notebook, User, Users } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { to: "/app" as const, key: "navBooks" as const, icon: BookOpen, match: (path: string) => path === "/app" },
   {
-    to: "/collections" as const,
-    key: "collections" as const,
-    icon: Library,
+    to: "/app" as const,
+    key: "navBooks" as const,
+    icon: BookOpen,
+    tour: undefined,
     match: (path: string) =>
-      path === "/collections" || path.startsWith("/collections/") || path.startsWith("/c/"),
+      path === "/app" || path.startsWith("/collections") || path.startsWith("/c/"),
+  },
+  {
+    to: "/groups" as const,
+    key: "notebookGroups" as const,
+    icon: Users,
+    tour: "groups",
+    match: (path: string) => path === "/groups" || path.startsWith("/groups/") || path.startsWith("/notebook/g"),
   },
   {
     to: "/notebook" as const,
     key: "notebook" as const,
     icon: Notebook,
+    tour: undefined,
     match: (path: string) =>
-      path === "/notebook" || path.startsWith("/notebook/") || path.startsWith("/n/"),
+      path === "/notebook" ||
+      (path.startsWith("/notebook/") && !path.startsWith("/notebook/g")) ||
+      path.startsWith("/n/"),
   },
   {
     to: "/reading" as const,
     key: "reading" as const,
     icon: CalendarDays,
+    tour: "reading",
     match: (path: string) => path === "/reading" || path.startsWith("/reading/") || path.startsWith("/g/"),
   },
   {
     to: "/profile" as const,
     key: "profile" as const,
     icon: User,
+    tour: "settings",
     match: (path: string) => path === "/profile" || path.startsWith("/profile/"),
   },
 ];
@@ -48,6 +60,8 @@ export function showTabBar(pathname: string) {
     pathname.startsWith("/g/") ||
     pathname.startsWith("/reading") ||
     pathname === "/notebook" ||
+    pathname === "/groups" ||
+    pathname.startsWith("/groups/") ||
     pathname.startsWith("/notebook/g")
   );
 }
@@ -55,7 +69,6 @@ export function showTabBar(pathname: string) {
 export function TabBar() {
   const locale = useAppStore((s) => s.locale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const tabs = TABS;
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -83,7 +96,7 @@ export function TabBar() {
       aria-label={t(locale, "appName")}
     >
       <ul className="mx-auto flex max-w-4xl">
-        {tabs.map((tab) => {
+        {TABS.map((tab) => {
           const Icon = tab.icon;
           const active = tab.match(pathname);
           return (
@@ -91,15 +104,7 @@ export function TabBar() {
               <Link
                 to={tab.to}
                 aria-current={active ? "page" : undefined}
-                data-tour={
-                  tab.to === "/collections"
-                    ? "collections"
-                    : tab.to === "/reading"
-                      ? "reading"
-                      : tab.to === "/profile"
-                        ? "settings"
-                        : undefined
-                }
+                data-tour={tab.tour}
                 className={cn(
                   "flex min-h-12 flex-col items-center justify-center gap-0.5 pt-1 text-[10px] font-medium",
                   active ? "text-fg" : "text-subtle",

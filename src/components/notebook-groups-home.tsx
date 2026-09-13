@@ -19,7 +19,7 @@ function GroupRow({ item }: { item: NotebookGroup }) {
   const pending = item.myStatus === "pending";
   return (
     <Link
-      to="/notebook/g/$id"
+      to="/groups/$id"
       params={{ id: item.id }}
       className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
     >
@@ -96,7 +96,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       setCreate(false);
       setName("");
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      void navigate({ to: "/notebook/g/$id", params: { id: result.id } });
+      void navigate({ to: "/groups/$id", params: { id: result.id } });
     } catch {
       toast.error(t(locale, "linkSendFail"));
     } finally {

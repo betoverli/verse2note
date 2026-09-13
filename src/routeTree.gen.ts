@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as CollectionsRouteImport } from './routes/collections'
 import { Route as ForAiRouteImport } from './routes/for-ai'
+import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotebookRouteImport } from './routes/notebook'
@@ -30,6 +31,8 @@ import { Route as CollectionsIndexRouteImport } from './routes/collections.index
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
 import { Route as CollectionsThemesRouteImport } from './routes/collections.themes'
 import { Route as GIdRouteImport } from './routes/g.$id'
+import { Route as GroupsIndexRouteImport } from './routes/groups.index'
+import { Route as GroupsIdRouteImport } from './routes/groups.$id'
 import { Route as NIdRouteImport } from './routes/n.$id'
 import { Route as NotebookIndexRouteImport } from './routes/notebook.index'
 import { Route as NotebookIdRouteImport } from './routes/notebook.$id'
@@ -79,6 +82,11 @@ const CollectionsRoute = CollectionsRouteImport.update({
 const ForAiRoute = ForAiRouteImport.update({
   id: '/for-ai',
   path: '/for-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InboxRoute = InboxRouteImport.update({
@@ -155,6 +163,16 @@ const GIdRoute = GIdRouteImport.update({
   id: '/g/$id',
   path: '/g/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsIndexRoute = GroupsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GroupsRoute,
+} as any)
+const GroupsIdRoute = GroupsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => GroupsRoute,
 } as any)
 const NIdRoute = NIdRouteImport.update({
   id: '/n/$id',
@@ -266,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/groups': typeof GroupsRouteWithChildren
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/notebook': typeof NotebookRouteWithChildren
@@ -280,6 +299,7 @@ export interface FileRoutesByFullPath {
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/g/$id': typeof GIdRoute
+  '/groups/$id': typeof GroupsIdRoute
   '/n/$id': typeof NIdRoute
   '/notebook/$id': typeof NotebookIdRoute
   '/profile/badges': typeof ProfileBadgesRoute
@@ -294,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/reading/all': typeof ReadingAllRoute
   '/u/$handle': typeof UHandleRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/notebook/': typeof NotebookIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/reading/': typeof ReadingIndexRoute
@@ -319,6 +340,7 @@ export interface FileRoutesByTo {
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/g/$id': typeof GIdRoute
+  '/groups/$id': typeof GroupsIdRoute
   '/n/$id': typeof NIdRoute
   '/notebook/$id': typeof NotebookIdRoute
   '/profile/badges': typeof ProfileBadgesRoute
@@ -333,6 +355,7 @@ export interface FileRoutesByTo {
   '/reading/all': typeof ReadingAllRoute
   '/u/$handle': typeof UHandleRoute
   '/collections': typeof CollectionsIndexRoute
+  '/groups': typeof GroupsIndexRoute
   '/notebook': typeof NotebookIndexRoute
   '/profile': typeof ProfileIndexRoute
   '/reading': typeof ReadingIndexRoute
@@ -349,6 +372,7 @@ export interface FileRoutesById {
   '/app': typeof AppRoute
   '/collections': typeof CollectionsRouteWithChildren
   '/for-ai': typeof ForAiRoute
+  '/groups': typeof GroupsRouteWithChildren
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
   '/notebook': typeof NotebookRouteWithChildren
@@ -363,6 +387,7 @@ export interface FileRoutesById {
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
   '/g/$id': typeof GIdRoute
+  '/groups/$id': typeof GroupsIdRoute
   '/n/$id': typeof NIdRoute
   '/notebook/$id': typeof NotebookIdRoute
   '/profile/badges': typeof ProfileBadgesRoute
@@ -377,6 +402,7 @@ export interface FileRoutesById {
   '/reading/all': typeof ReadingAllRoute
   '/u/$handle': typeof UHandleRoute
   '/collections/': typeof CollectionsIndexRoute
+  '/groups/': typeof GroupsIndexRoute
   '/notebook/': typeof NotebookIndexRoute
   '/profile/': typeof ProfileIndexRoute
   '/reading/': typeof ReadingIndexRoute
@@ -394,6 +420,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/groups'
     | '/inbox'
     | '/login'
     | '/notebook'
@@ -408,6 +435,7 @@ export interface FileRouteTypes {
     | '/collections/$id'
     | '/collections/themes'
     | '/g/$id'
+    | '/groups/$id'
     | '/n/$id'
     | '/notebook/$id'
     | '/profile/badges'
@@ -422,6 +450,7 @@ export interface FileRouteTypes {
     | '/reading/all'
     | '/u/$handle'
     | '/collections/'
+    | '/groups/'
     | '/notebook/'
     | '/profile/'
     | '/reading/'
@@ -447,6 +476,7 @@ export interface FileRouteTypes {
     | '/collections/$id'
     | '/collections/themes'
     | '/g/$id'
+    | '/groups/$id'
     | '/n/$id'
     | '/notebook/$id'
     | '/profile/badges'
@@ -461,6 +491,7 @@ export interface FileRouteTypes {
     | '/reading/all'
     | '/u/$handle'
     | '/collections'
+    | '/groups'
     | '/notebook'
     | '/profile'
     | '/reading'
@@ -476,6 +507,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/collections'
     | '/for-ai'
+    | '/groups'
     | '/inbox'
     | '/login'
     | '/notebook'
@@ -490,6 +522,7 @@ export interface FileRouteTypes {
     | '/collections/$id'
     | '/collections/themes'
     | '/g/$id'
+    | '/groups/$id'
     | '/n/$id'
     | '/notebook/$id'
     | '/profile/badges'
@@ -504,6 +537,7 @@ export interface FileRouteTypes {
     | '/reading/all'
     | '/u/$handle'
     | '/collections/'
+    | '/groups/'
     | '/notebook/'
     | '/profile/'
     | '/reading/'
@@ -520,6 +554,7 @@ export interface RootRouteChildren {
   AppRoute: typeof AppRoute
   CollectionsRoute: typeof CollectionsRouteWithChildren
   ForAiRoute: typeof ForAiRoute
+  GroupsRoute: typeof GroupsRouteWithChildren
   InboxRoute: typeof InboxRoute
   LoginRoute: typeof LoginRoute
   NotebookRoute: typeof NotebookRouteWithChildren
@@ -579,6 +614,13 @@ declare module '@tanstack/react-router' {
       path: '/for-ai'
       fullPath: '/for-ai'
       preLoaderRoute: typeof ForAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/inbox': {
@@ -685,6 +727,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/g/$id'
       preLoaderRoute: typeof GIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/groups/': {
+      id: '/groups/'
+      path: '/'
+      fullPath: '/groups/'
+      preLoaderRoute: typeof GroupsIndexRouteImport
+      parentRoute: typeof GroupsRoute
+    }
+    '/groups/$id': {
+      id: '/groups/$id'
+      path: '/$id'
+      fullPath: '/groups/$id'
+      preLoaderRoute: typeof GroupsIdRouteImport
+      parentRoute: typeof GroupsRoute
     }
     '/n/$id': {
       id: '/n/$id'
@@ -847,6 +903,19 @@ const CollectionsRouteWithChildren = CollectionsRoute._addFileChildren(
   CollectionsRouteChildren,
 )
 
+interface GroupsRouteChildren {
+  GroupsIdRoute: typeof GroupsIdRoute
+  GroupsIndexRoute: typeof GroupsIndexRoute
+}
+
+const GroupsRouteChildren: GroupsRouteChildren = {
+  GroupsIdRoute: GroupsIdRoute,
+  GroupsIndexRoute: GroupsIndexRoute,
+}
+
+const GroupsRouteWithChildren =
+  GroupsRoute._addFileChildren(GroupsRouteChildren)
+
 interface NotebookRouteChildren {
   NotebookIdRoute: typeof NotebookIdRoute
   NotebookIndexRoute: typeof NotebookIndexRoute
@@ -914,6 +983,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRoute,
   CollectionsRoute: CollectionsRouteWithChildren,
   ForAiRoute: ForAiRoute,
+  GroupsRoute: GroupsRouteWithChildren,
   InboxRoute: InboxRoute,
   LoginRoute: LoginRoute,
   NotebookRoute: NotebookRouteWithChildren,

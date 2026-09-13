@@ -50,7 +50,7 @@ type AppState = {
   speakers: Speaker[];
   notebookActiveSpeakerId: string | null;
   notebookPreview: boolean;
-  notebookFilter: "all" | "tags" | "speakers" | "shared" | "groups";
+  notebookFilter: "all" | "tags" | "speakers" | "shared";
   cloudHydrated: boolean;
   cloudProfileOk: boolean;
   setLocale: (locale: Locale) => void;
@@ -95,7 +95,7 @@ type AppState = {
   setSpeakers: (items: Speaker[]) => void;
   setNotebookActiveSpeakerId: (id: string | null) => void;
   setNotebookPreview: (value: boolean) => void;
-  setNotebookFilter: (value: "all" | "tags" | "speakers" | "shared" | "groups") => void;
+  setNotebookFilter: (value: "all" | "tags" | "speakers" | "shared") => void;
   setCloudHydrated: (value: boolean) => void;
   setCloudProfileOk: (value: boolean) => void;
   clearAccount: () => void;
@@ -382,8 +382,7 @@ export const useAppStore = create<AppState>()(
           notebookFilter:
             saved.notebookFilter === "tags" ||
             saved.notebookFilter === "speakers" ||
-            saved.notebookFilter === "shared" ||
-            saved.notebookFilter === "groups"
+            saved.notebookFilter === "shared"
               ? saved.notebookFilter
               : "all",
         };

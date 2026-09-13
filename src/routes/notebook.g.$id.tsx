@@ -1,18 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { NotebookGroupDetail } from "@/components/notebook-group-detail";
-import { pageHead } from "@/lib/seo";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/notebook/g/$id")({
-  component: NotebookGroupRoute,
-  head: () =>
-    pageHead({
-      title: "Verse2Note — Grupo",
-      description: "Caderno compartilhado de um grupo.",
-      path: "/notebook",
-    }),
+  component: NotebookGroupRedirect,
 });
 
-function NotebookGroupRoute() {
+function NotebookGroupRedirect() {
   const { id } = Route.useParams();
-  return <NotebookGroupDetail id={id} />;
+  return <Navigate to="/groups/$id" params={{ id }} />;
 }
