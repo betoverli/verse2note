@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { t } from "@/lib/i18n";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/lib/notebook-groups";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { Choice } from "@/components/choice";
 import { ViewportSheet } from "@/components/viewport-sheet";
 
 function GroupRow({ item }: { item: NotebookGroup }) {
@@ -75,12 +77,19 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       const result = await createNotebookGroup({
         data: { name: title, visibility: listed ? "listed" : "private" },
       });
-      if (!result?.ok || !result.id) return;
+      if (!result?.ok || !result.id) {
+        toast.error(t(locale, "linkSendFail"));
+        return;
+      }
       setCreate(false);
       setName("");
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-      window.scrollTo(0, 0);
-      void navigate({ to: "/notebook/g/$id", params: { id: result.id } });
+      const id = result.id;
+      window.setTimeout(() => {
+        void navigate({ to: "/notebook/g/$id", params: { id } });
+      }, 50);
+    } catch {
+      toast.error(t(locale, "linkSendFail"));
     } finally {
       setBusy(false);
     }
@@ -137,27 +146,21 @@ export function NotebookGroupsHome({ query }: { query: string }) {
         <Plus />
       </Button>
       {create ? (
-        <ViewportSheet onClose={() => setCreate(false)}>
-          <div
-            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <ViewportSheet onClose={() => !busy && setCreate(false)}>
+          <div className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookGroupNew")}</p>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder={t(locale, "notebookGroupName")}
               maxLength={60}
+              enterKeyHint="done"
               className="h-12 w-full rounded-md bg-surface px-3 text-base text-fg outline-none"
             />
-            <button
-              type="button"
-              onClick={() => setListed((value) => !value)}
-              className="mt-3 flex min-h-11 w-full items-center justify-between rounded-md bg-surface px-4 text-sm text-fg"
-            >
-              <span>{t(locale, "notebookGroupListed")}</span>
-              <span className="text-xs text-muted">{listed ? "•" : ""}</span>
-            </button>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
+              <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
+            </div>
             <Button className="mt-4 w-full" disabled={busy || name.trim().length < 2} onClick={() => void make()}>
               {t(locale, "notebookGroupNew")}
             </Button>

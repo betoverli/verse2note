@@ -33,14 +33,28 @@ export function ViewportSheet({
   onClose: () => void;
 }) {
   const box = useVisualViewportBox();
+  const keyboard =
+    typeof window === "undefined" ? 0 : Math.max(0, window.innerHeight - box.height - box.top);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   if (typeof document === "undefined") return null;
   return createPortal(
-    <div
-      className="fixed inset-x-0 z-[80] flex items-end justify-center bg-fg/50 sm:items-center"
-      style={{ top: box.top, height: box.height }}
-      onClick={onClose}
-    >
-      {children}
+    <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
+      <button type="button" className="absolute inset-0 bg-fg/40" aria-label="Close" onClick={onClose} />
+      <div
+        className="relative z-10 flex w-full max-h-full justify-center overflow-y-auto"
+        style={{ paddingBottom: keyboard }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {children}
+      </div>
     </div>,
     document.body,
   );
