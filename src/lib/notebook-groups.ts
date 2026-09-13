@@ -153,7 +153,7 @@ async function loadGroup(sql: Sql, id: string, userId: string) {
   const found = await sql<GroupRow>`
     select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
       (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
-      (select role from notebook_group_members where group_id = g.id and user_id = ${userId}) as my_role,
+      (select "role" from notebook_group_members where group_id = g.id and user_id = ${userId}) as my_role,
       (select status from notebook_group_members where group_id = g.id and user_id = ${userId}) as my_status
     from notebook_groups g
     where g.id = ${id}
@@ -164,7 +164,7 @@ async function loadGroup(sql: Sql, id: string, userId: string) {
 
 async function memberOf(sql: Sql, groupId: string, userId: string) {
   const rows = await sql<{ role: string; status: string }>`
-    select role, status from notebook_group_members
+    select "role", status from notebook_group_members
     where group_id = ${groupId} and user_id = ${userId}
     limit 1
   `;
@@ -174,7 +174,7 @@ async function memberOf(sql: Sql, groupId: string, userId: string) {
 async function adminCount(sql: Sql, groupId: string) {
   const rows = await sql<{ n: number }>`
     select count(*)::int as n from notebook_group_members
-    where group_id = ${groupId} and status = 'accepted' and role = 'admin'
+    where group_id = ${groupId} and status = 'accepted' and "role" = 'admin'
   `;
   return Number(rows[0]?.n ?? 0);
 }
@@ -186,11 +186,12 @@ export const listMyGroups = createServerFn({ method: "GET" })
     const rows = await sql<GroupRow>`
       select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
         (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
-        m.role as my_role, m.status as my_status
-      from notebook_group_members m
-      join notebook_groups g on g.id = m.group_id
-      where m.user_id = ${context.userId}
-      order by m.status asc, g.updated_at desc
+        coalesce(m."role", case when g.created_by = ${context.userId} then 'admin' end) as my_role,
+        coalesce(m.status, case when g.created_by = ${context.userId} then 'accepted' end) as my_status
+      from notebook_groups g
+      left join notebook_group_members m on m.group_id = g.id and m.user_id = ${context.userId}
+      where m.user_id is not null or g.created_by = ${context.userId}
+      order by coalesce(m.status, 'accepted') asc, g.updated_at desc
       limit 100
     `;
     return rows.map(fromGroup);
@@ -206,7 +207,7 @@ export const searchListedGroups = createServerFn({ method: "GET" })
     const rows = await sql<GroupRow>`
       select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
         (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
-        (select role from notebook_group_members where group_id = g.id and user_id = ${context.userId}) as my_role,
+        (select "role" from notebook_group_members where group_id = g.id and user_id = ${context.userId}) as my_role,
         (select status from notebook_group_members where group_id = g.id and user_id = ${context.userId}) as my_status
       from notebook_groups g
       where g.visibility = 'listed' and g.name ilike ${"%" + q + "%"}
@@ -248,12 +249,13 @@ export const createNotebookGroup = createServerFn({ method: "POST" })
     const visibility = data.visibility === "listed" ? "listed" : "private";
     const description = cleanDescription(data.description ?? "");
     await sql`
-      insert into notebook_groups (id, name, description, visibility, post_policy, created_by, updated_at)
-      values (${id}, ${name}, ${description}, ${visibility}, ${"members"}, ${context.userId}, now())
-    `;
-    await sql`
-      insert into notebook_group_members (group_id, user_id, role, status)
-      values (${id}, ${context.userId}, ${"admin"}, ${"accepted"})
+      with g as (
+        insert into notebook_groups (id, name, description, visibility, post_policy, created_by, updated_at)
+        values (${id}, ${name}, ${description}, ${visibility}, ${"members"}, ${context.userId}, now())
+        returning id
+      )
+      insert into notebook_group_members (group_id, user_id, "role", status)
+      select id, ${context.userId}, ${"admin"}, ${"accepted"} from g
     `;
     return { ok: true as const, id };
   });
@@ -305,13 +307,13 @@ export const requestGroupJoin = createServerFn({ method: "POST" })
     `;
     if (Number(memberships[0]?.n ?? 0) >= MAX_MEMBERSHIPS) return { ok: false as const, error: "limit" as const };
     await sql`
-      insert into notebook_group_members (group_id, user_id, role, status)
+      insert into notebook_group_members (group_id, user_id, "role", status)
       values (${data.id}, ${context.userId}, ${"member"}, ${"pending"})
       on conflict (group_id, user_id) do nothing
     `;
     const admins = await sql<{ user_id: string }>`
       select user_id from notebook_group_members
-      where group_id = ${data.id} and status = 'accepted' and role = 'admin'
+      where group_id = ${data.id} and status = 'accepted' and "role" = 'admin'
     `;
     void import("@/lib/notify.server").then((mod) => {
       for (const admin of admins) {
@@ -364,7 +366,7 @@ export const setGroupMemberRole = createServerFn({ method: "POST" })
       return { ok: false as const, error: "lastAdmin" as const };
     }
     await sql`
-      update notebook_group_members set role = ${data.role}
+      update notebook_group_members set "role" = ${data.role}
       where group_id = ${data.id} and user_id = ${data.userId}
     `;
     return { ok: true as const };
@@ -409,11 +411,11 @@ export const listGroupMembers = createServerFn({ method: "GET" })
     const mine = await memberOf(sql, data.id, context.userId);
     if (mine?.status !== "accepted") return [] as GroupMember[];
     const rows = await sql<PrefRow & { role: string; status: string }>`
-      select p.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url, m.role, m.status
+      select p.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url, m."role", m.status
       from notebook_group_members m
       join user_prefs p on p.user_id = m.user_id
       where m.group_id = ${data.id}
-      order by m.role asc, m.status asc, p.first_name
+      order by m."role" asc, m.status asc, p.first_name
     `;
     return rows
       .filter((row) => mine.role === "admin" || row.status === "accepted")
@@ -471,7 +473,7 @@ export const listNoteGroups = createServerFn({ method: "GET" })
     const mine = await sql<GroupRow>`
       select g.id, g.name, g.description, g.visibility, g.post_policy, g.created_by, g.updated_at,
         (select count(*)::int from notebook_group_members x where x.group_id = g.id and x.status = 'accepted') as member_count,
-        m.role as my_role, m.status as my_status
+        m."role" as my_role, m.status as my_status
       from notebook_group_members m
       join notebook_groups g on g.id = m.group_id
       where m.user_id = ${context.userId} and m.status = 'accepted'

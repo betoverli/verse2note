@@ -50,6 +50,7 @@ type AppState = {
   speakers: Speaker[];
   notebookActiveSpeakerId: string | null;
   notebookPreview: boolean;
+  notebookFilter: "all" | "tags" | "speakers" | "shared" | "groups";
   cloudHydrated: boolean;
   cloudProfileOk: boolean;
   setLocale: (locale: Locale) => void;
@@ -94,6 +95,7 @@ type AppState = {
   setSpeakers: (items: Speaker[]) => void;
   setNotebookActiveSpeakerId: (id: string | null) => void;
   setNotebookPreview: (value: boolean) => void;
+  setNotebookFilter: (value: "all" | "tags" | "speakers" | "shared" | "groups") => void;
   setCloudHydrated: (value: boolean) => void;
   setCloudProfileOk: (value: boolean) => void;
   clearAccount: () => void;
@@ -137,6 +139,7 @@ export const useAppStore = create<AppState>()(
       speakers: [],
       notebookActiveSpeakerId: null,
       notebookPreview: true,
+      notebookFilter: "all",
       cloudHydrated: false,
       cloudProfileOk: false,
       setLocale: (locale) => {
@@ -282,6 +285,7 @@ export const useAppStore = create<AppState>()(
       setSpeakers: (speakers) => set({ speakers }),
       setNotebookActiveSpeakerId: (notebookActiveSpeakerId) => set({ notebookActiveSpeakerId }),
       setNotebookPreview: (notebookPreview) => set({ notebookPreview }),
+      setNotebookFilter: (notebookFilter) => set({ notebookFilter }),
       setCloudHydrated: (cloudHydrated) => set({ cloudHydrated }),
       setCloudProfileOk: (cloudProfileOk) => set({ cloudProfileOk }),
       clearAccount: () =>
@@ -341,6 +345,7 @@ export const useAppStore = create<AppState>()(
         myCollections: state.myCollections,
         notes: state.notes,
         speakers: state.speakers,
+        notebookFilter: state.notebookFilter,
         cloudProfileOk: state.cloudProfileOk,
       }),
       merge: (persisted, current) => {
@@ -374,6 +379,13 @@ export const useAppStore = create<AppState>()(
             : saved.locale ?? current.locale,
           citeBook: saved.citeBook === "abbr" ? "abbr" : "name",
           citeSep: saved.citeSep === "dot" || saved.citeSep === "comma" ? saved.citeSep : "colon",
+          notebookFilter:
+            saved.notebookFilter === "tags" ||
+            saved.notebookFilter === "speakers" ||
+            saved.notebookFilter === "shared" ||
+            saved.notebookFilter === "groups"
+              ? saved.notebookFilter
+              : "all",
         };
       },
       onRehydrateStorage: () => (state) => {

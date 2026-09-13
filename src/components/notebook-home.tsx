@@ -243,7 +243,8 @@ export function NotebookHome({ query }: { query: string }) {
   const speakers = useAppStore((s) => s.speakers);
   const navigate = useNavigate();
   const { user } = useCurrentUserState();
-  const [filter, setFilter] = useState<Filter>("all");
+  const filter = useAppStore((s) => s.notebookFilter);
+  const setFilter = useAppStore((s) => s.setNotebookFilter);
   const [tag, setTag] = useState<string | null>(null);
   const [speakerId, setSpeakerId] = useState<string | null>(null);
   const [granted, setGranted] = useState<Note[]>([]);
