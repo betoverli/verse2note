@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Globe, Lock, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -26,12 +26,15 @@ function GroupRow({ item }: { item: NotebookGroup }) {
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium">{item.name}</span>
         <span className="mt-0.5 block text-xs text-muted">
-          {item.visibility === "listed" ? t(locale, "notebookGroupListed") : t(locale, "notebookGroupPrivate")}
-          {" · "}
           {item.memberCount}
           {pending ? ` · ${t(locale, "notebookGroupPending")}` : null}
         </span>
       </span>
+      {item.visibility === "listed" ? (
+        <Globe className="size-4 shrink-0 text-muted" aria-label={t(locale, "notebookGroupListed")} />
+      ) : (
+        <Lock className="size-4 shrink-0 text-muted" aria-label={t(locale, "notebookGroupPrivate")} />
+      )}
     </Link>
   );
 }

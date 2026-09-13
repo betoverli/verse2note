@@ -188,12 +188,9 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
             {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
           </span>
           {groups.length ? (
-            <span className="flex max-w-[7.5rem] items-center gap-1 text-[11px] text-muted">
-              <Users className="size-3.5 shrink-0" />
-              <span className="truncate">
-                {groups[0].name}
-                {groups.length > 1 ? ` +${groups.length - 1}` : ""}
-              </span>
+            <span className="flex shrink-0 items-center gap-0.5 text-muted" aria-label={t(locale, "notebookGroups")}>
+              <Users className="size-4" />
+              {groups.length > 1 ? <span className="text-[11px] font-medium">+{groups.length - 1}</span> : null}
             </span>
           ) : null}
         </div>
