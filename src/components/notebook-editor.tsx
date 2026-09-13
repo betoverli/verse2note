@@ -543,7 +543,6 @@ export function NotebookEditor({
           style={cite}
           speakers={speakers}
           readOnly={readOnly}
-          placeholder={t(locale, "notebookWrite")}
           keyboard={vv.keyboard}
           onBlocks={setBlocks}
           onFocusLine={(id) => {
