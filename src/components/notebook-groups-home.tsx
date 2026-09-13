@@ -154,6 +154,10 @@ export function NotebookGroupsHome({ query }: { query: string }) {
               onChange={(event) => setName(event.target.value)}
               placeholder={t(locale, "notebookGroupName")}
               maxLength={60}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="sentences"
+              spellCheck={false}
               enterKeyHint="done"
               className="h-12 w-full rounded-md bg-surface px-3 text-base text-fg outline-none"
             />
