@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/n/$id")({
   component: SharedNoteRoute,
+  validateSearch: (search: Record<string, unknown>): { g?: string } => ({
+    g: typeof search.g === "string" && search.g.length > 0 ? search.g.slice(0, 40) : undefined,
+  }),
   head: () => {
     const seo = pageHead({
       title: "Verse2Note — Nota",
@@ -25,6 +28,7 @@ export const Route = createFileRoute("/n/$id")({
 
 function SharedNoteRoute() {
   const { id } = Route.useParams();
+  const { g } = Route.useSearch();
   const locale = useAppStore((s) => s.locale);
   const hydrated = useAppStore((s) => s.cloudHydrated);
   const mine = useAppStore((s) => s.notes.find((item) => item.id === id));
@@ -65,7 +69,7 @@ function SharedNoteRoute() {
   if (mine) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
-        <NotebookEditor note={mine} />
+        <NotebookEditor note={mine} fromGroup={g} />
       </main>
     );
   }
@@ -74,14 +78,22 @@ function SharedNoteRoute() {
   if (payload === undefined) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
-        <AppHeader title={t(locale, "notebook")} backTo="/notebook" />
+        <AppHeader
+          title={t(locale, "notebook")}
+          backTo={g ? "/groups/$id" : "/notebook"}
+          backParams={g ? { id: g } : undefined}
+        />
       </main>
     );
   }
   if (!note) {
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 sm:px-6">
-        <AppHeader title={t(locale, "notebook")} backTo="/notebook" />
+        <AppHeader
+          title={t(locale, "notebook")}
+          backTo={g ? "/groups/$id" : "/notebook"}
+          backParams={g ? { id: g } : undefined}
+        />
         <p className="text-sm text-muted">{t(locale, "notebookEmpty")}</p>
       </main>
     );
@@ -89,11 +101,11 @@ function SharedNoteRoute() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-8 sm:px-6">
-      <NotebookEditor note={note} readOnly speakerList={payload?.speakers ?? []} />
+      <NotebookEditor note={note} readOnly speakerList={payload?.speakers ?? []} fromGroup={g} />
       <Button
         onClick={() => {
           const copy = remixNote(note, payload?.speakers ?? []);
-          if (copy) void navigate({ to: "/notebook/$id", params: { id: copy.id } });
+          if (copy) void navigate({ to: "/notebook/$id", params: { id: copy.id }, search: g ? { g } : undefined });
         }}
       >
         {t(locale, "notebookRemix")}

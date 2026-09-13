@@ -98,7 +98,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
       const note = createLocalNote();
       await flushOutbox();
       await publishNoteToGroup({ data: { groupId: id, note } });
-      void navigate({ to: "/notebook/$id", params: { id: note.id } });
+      void navigate({ to: "/notebook/$id", params: { id: note.id }, search: { g: id } });
     } finally {
       setBusy(false);
     }
@@ -217,6 +217,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
                       <Link
                         to={mine ? "/notebook/$id" : "/n/$id"}
                         params={{ id: item.note.id }}
+                        search={{ g: id }}
                         className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
                       >
                         <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">

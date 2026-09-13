@@ -19,7 +19,8 @@ type BackTo =
   | "/reading/all"
   | "/reading/category/$categoryId"
   | "/notebook"
-  | "/groups";
+  | "/groups"
+  | "/groups/$id";
 
 export type HeaderSearch = {
   value: string;
@@ -95,7 +96,7 @@ export function AppHeader({
 }: {
   title?: string;
   backTo?: BackTo;
-  backParams?: { categoryId: string };
+  backParams?: { categoryId: string } | { id: string };
   backLabel?: string;
   trailing?: ReactNode;
   search?: HeaderSearch;
@@ -122,8 +123,7 @@ export function AppHeader({
         <div className="flex w-12 shrink-0 items-center justify-start">
           {backTo ? (
             <Button variant="ghost" size="icon" asChild className="size-12 -ml-1 text-fg [&_svg]:size-6">
-              {(backTo === "/collections/category/$categoryId" || backTo === "/reading/category/$categoryId") &&
-              backParams ? (
+              {backTo.includes("$") && backParams ? (
                 <Link to={backTo} params={backParams} aria-label={t(locale, "back")}>
                   <BackIcon />
                 </Link>

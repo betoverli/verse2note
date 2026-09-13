@@ -187,10 +187,12 @@ export function NotebookEditor({
   note,
   readOnly,
   speakerList,
+  fromGroup,
 }: {
   note: Note;
   readOnly?: boolean;
   speakerList?: Speaker[];
+  fromGroup?: string;
 }) {
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
@@ -477,7 +479,8 @@ export function NotebookEditor({
         <AppHeader
           pinned
           title={draft.title || t(locale, "notebookMeeting")}
-          backTo="/notebook"
+          backTo={fromGroup ? "/groups/$id" : "/notebook"}
+          backParams={fromGroup ? { id: fromGroup } : undefined}
           compact={vv.keyboard ? false : compact}
           extra={
             picker ? (
