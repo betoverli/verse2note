@@ -32,6 +32,17 @@ const strings = {
     notebookToday: "Hoje",
     notebookEmpty: "Nenhuma nota ainda.",
     notebookNew: "Nova nota",
+    notebookImport: "Importar",
+    notebookImportPaste: "Cole o texto da nota",
+    notebookImportFile: "Escolher arquivo",
+    notebookImportHint: "Notes, Google Docs, PDF, Word ou Markdown. Referências viram pílulas.",
+    notebookImportPreview: "Prévia",
+    notebookImportCreate: "Criar nota",
+    notebookImportEmpty: "Nada para importar.",
+    notebookImportRefs: "referências",
+    notebookImportFail: "Não deu para ler esse arquivo.",
+    notebookImportShare:
+      "No Android, com o app na tela inicial: Compartilhar → Verse2Note. No iPhone o sistema ainda não entrega o Compartilhar para PWA — copie o texto ou exporte o arquivo e abra aqui.",
     notebookSearch: "Buscar notas",
     notebookTags: "Tags",
     notebookSpeakers: "Speakers",
@@ -294,6 +305,8 @@ const strings = {
       "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Entre para escolher um plano; ele aparece em Meus planos. No máximo 2 dias marcados por dia.",
     helpAccount:
       "Conta é opcional (Google, X ou e-mail) para Meus planos, listas, amigos e o perfil. Ao criar, escolha nome, @ e e-mail. Sem conta o seletor fica neste aparelho. A API para IA não usa conta.",
+    helpImport:
+      "No caderno, + → Importar. Cole um texto ou um arquivo (PDF, Word, Markdown). Referências viram pílulas. No Android instalado, Compartilhar → Verse2Note. No iPhone, copie ou envie o arquivo.",
     helpNotifications:
       "No iPhone, avisos só depois de Adicionar à Tela de Início. No Perfil: leitura, amigos, envios e grupos.",
     helpSettings: "No Perfil: idioma, app da Bíblia, aparência, avisos e ajuda.",
@@ -448,6 +461,17 @@ const strings = {
     notebookToday: "Today",
     notebookEmpty: "No notes yet.",
     notebookNew: "New note",
+    notebookImport: "Import",
+    notebookImportPaste: "Paste the note text",
+    notebookImportFile: "Choose file",
+    notebookImportHint: "Notes, Google Docs, PDF, Word, or Markdown. References become pills.",
+    notebookImportPreview: "Preview",
+    notebookImportCreate: "Create note",
+    notebookImportEmpty: "Nothing to import.",
+    notebookImportRefs: "references",
+    notebookImportFail: "Could not read that file.",
+    notebookImportShare:
+      "On Android, with the app on the home screen: Share → Verse2Note. On iPhone, PWAs still do not get Share — copy the text or export the file and open it here.",
     notebookSearch: "Search notes",
     notebookTags: "Tags",
     notebookSpeakers: "Speakers",
@@ -710,6 +734,8 @@ const strings = {
       "Plans are whole-chapter readings (a year, the Gospels…). Sign in to start a plan; it shows up under My plans. At most 2 days checked per real day.",
     helpAccount:
       "An account is optional (Google, X, or email) for My plans, lists, friends, and your profile. Sign-up asks for name, @, and email. Without an account the picker stays on this device. The AI API does not use an account.",
+    helpImport:
+      "In the notebook, + → Import. Paste text or a file (PDF, Word, Markdown). References become pills. On installed Android, Share → Verse2Note. On iPhone, copy or send the file.",
     helpNotifications:
       "On iPhone, alerts only work after Add to Home Screen. In Profile: reading, friends, shares, and groups.",
     helpSettings: "In Profile: language, Bible app, appearance, alerts, and help.",
@@ -864,6 +890,17 @@ const strings = {
     notebookToday: "Hoy",
     notebookEmpty: "Todavía no hay notas.",
     notebookNew: "Nota nueva",
+    notebookImport: "Importar",
+    notebookImportPaste: "Pega el texto de la nota",
+    notebookImportFile: "Elegir archivo",
+    notebookImportHint: "Notes, Google Docs, PDF, Word o Markdown. Las referencias se vuelven pastillas.",
+    notebookImportPreview: "Vista previa",
+    notebookImportCreate: "Crear nota",
+    notebookImportEmpty: "Nada que importar.",
+    notebookImportRefs: "referencias",
+    notebookImportFail: "No se pudo leer ese archivo.",
+    notebookImportShare:
+      "En Android, con la app en la pantalla de inicio: Compartir → Verse2Note. En iPhone el sistema aún no entrega Compartir a un PWA — copia el texto o exporta el archivo y ábrelo aquí.",
     notebookSearch: "Buscar notas",
     notebookTags: "Etiquetas",
     notebookSpeakers: "Speakers",
@@ -1126,6 +1163,8 @@ const strings = {
       "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Entra para elegir un plan; aparece en Mis planes. Como máximo 2 días marcados por día.",
     helpAccount:
       "La cuenta es opcional (Google, X o correo) para Mis planes, listas, amigos y el perfil. Al crear, elige nombre, @ y correo. Sin cuenta el selector queda en este dispositivo. La API para IA no usa cuenta.",
+    helpImport:
+      "En el cuaderno, + → Importar. Pega un texto o un archivo (PDF, Word, Markdown). Las referencias se vuelven pastillas. En Android instalado, Compartir → Verse2Note. En iPhone, copia o envía el archivo.",
     helpNotifications:
       "En el iPhone, los avisos solo funcionan después de Añadir a pantalla de inicio. En Perfil: lectura, amigos, envíos y grupos.",
     helpSettings: "En Perfil: idioma, app de Biblia, apariencia, avisos y ayuda.",

@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v12";
+const CACHE = "verse2note-v13";
 
 const PRECACHE = [
   "/",
@@ -58,6 +58,30 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
+  const url = new URL(request.url);
+  if (request.method === "POST" && url.origin === self.location.origin && url.pathname === "/notebook/import") {
+    event.respondWith(
+      (async () => {
+        const form = await request.formData();
+        const title = String(form.get("title") || "");
+        const text = String(form.get("text") || form.get("url") || "");
+        const file = form.get("file");
+        const cache = await caches.open("verse2note-share");
+        const fileName = file instanceof File ? file.name : "";
+        await cache.put(
+          "/__import_share",
+          new Response(JSON.stringify({ title, text, fileName }), { headers: { "content-type": "application/json" } }),
+        );
+        if (file instanceof File && file.size) {
+          await cache.put("/__import_file", new Response(file));
+        } else {
+          await cache.delete("/__import_file");
+        }
+        return Response.redirect("/notebook/import?shared=1", 303);
+      })(),
+    );
+    return;
+  }
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;

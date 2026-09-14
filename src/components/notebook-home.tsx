@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { FileUp, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
@@ -237,6 +237,7 @@ export function NotebookHome({ query }: { query: string }) {
   const [speakerId, setSpeakerId] = useState<string | null>(null);
   const [granted, setGranted] = useState<Note[]>([]);
   const [noteGroups, setNoteGroups] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [compose, setCompose] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -353,9 +354,43 @@ export function NotebookHome({ query }: { query: string }) {
         </ul>
       )}
 
-      <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={openNew} aria-label={t(locale, "notebookNew")}>
+      <Button
+        className="fixed right-4 z-20 size-12 rounded-full"
+        style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
+        onClick={() => setCompose(true)}
+        aria-label={t(locale, "notebookNew")}
+      >
         <Plus />
       </Button>
+      {compose ? (
+        <ViewportSheet onClose={() => setCompose(false)}>
+          <div
+            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Button
+              className="w-full"
+              onClick={() => {
+                setCompose(false);
+                openNew();
+              }}
+            >
+              <Plus />
+              {t(locale, "notebookNew")}
+            </Button>
+            <Button
+              variant="secondary"
+              className="mt-2 w-full"
+              asChild
+            >
+              <Link to="/notebook/import" onClick={() => setCompose(false)}>
+                <FileUp />
+                {t(locale, "notebookImport")}
+              </Link>
+            </Button>
+          </div>
+        </ViewportSheet>
+      ) : null}
     </div>
   );
 }

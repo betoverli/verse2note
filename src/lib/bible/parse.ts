@@ -109,3 +109,38 @@ export function parseReference(input: string, locale: Locale): Passage | null {
 
   return { bookId: matched.id, chapter: 1, verseStart: null, verseEnd: null };
 }
+
+function escapeRe(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+const BOOK_PATTERN = [...BOOKS]
+  .flatMap((book) => [book.names.pt, book.names.en, book.names.es, book.abbr.pt, book.abbr.en, book.abbr.es])
+  .filter((name) => name.length >= 2)
+  .sort((a, b) => b.length - a.length)
+  .map(escapeRe)
+  .filter((name, i, all) => all.indexOf(name) === i)
+  .join("|");
+
+const SCAN_RE = new RegExp(
+  `(?<![\\p{L}\\p{N}])((?:[123]|1ª|2ª|3ª|I{1,3})\\s+)?(${BOOK_PATTERN})\\s*(\\d{1,3}\\s*[:.]\\s*\\d{1,3}(?:\\s*[–\\-]\\s*\\d{1,3})?)`,
+  "giu",
+);
+
+export function scanReferences(
+  text: string,
+  locale: Locale,
+): { index: number; length: number; passage: Passage; raw: string }[] {
+  const out: { index: number; length: number; passage: Passage; raw: string }[] = [];
+  const re = new RegExp(SCAN_RE.source, SCAN_RE.flags);
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(text))) {
+    const raw = match[0];
+    const passage =
+      parseReference(raw, locale) || parseReference(raw, "pt") || parseReference(raw, "en") || parseReference(raw, "es");
+    if (!passage || passage.verseStart == null) continue;
+    out.push({ index: match.index, length: raw.length, passage, raw });
+  }
+  return out;
+}
+

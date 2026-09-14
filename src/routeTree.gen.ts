@@ -37,6 +37,7 @@ import { Route as GroupsIdRouteImport } from './routes/groups.$id'
 import { Route as NIdRouteImport } from './routes/n.$id'
 import { Route as NotebookIndexRouteImport } from './routes/notebook.index'
 import { Route as NotebookIdRouteImport } from './routes/notebook.$id'
+import { Route as NotebookImportRouteImport } from './routes/notebook.import'
 import { Route as ProfileIndexRouteImport } from './routes/profile.index'
 import { Route as ProfileBadgesRouteImport } from './routes/profile.badges'
 import { Route as ProfileBibleRouteImport } from './routes/profile.bible'
@@ -195,6 +196,11 @@ const NotebookIdRoute = NotebookIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => NotebookRoute,
 } as any)
+const NotebookImportRoute = NotebookImportRouteImport.update({
+  id: '/import',
+  path: '/import',
+  getParentRoute: () => NotebookRoute,
+} as any)
 const ProfileIndexRoute = ProfileIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/groups/$id': typeof GroupsIdRoute
   '/n/$id': typeof NIdRoute
   '/notebook/$id': typeof NotebookIdRoute
+  '/notebook/import': typeof NotebookImportRoute
   '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
@@ -351,6 +358,7 @@ export interface FileRoutesByTo {
   '/groups/$id': typeof GroupsIdRoute
   '/n/$id': typeof NIdRoute
   '/notebook/$id': typeof NotebookIdRoute
+  '/notebook/import': typeof NotebookImportRoute
   '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
@@ -399,6 +407,7 @@ export interface FileRoutesById {
   '/groups/$id': typeof GroupsIdRoute
   '/n/$id': typeof NIdRoute
   '/notebook/$id': typeof NotebookIdRoute
+  '/notebook/import': typeof NotebookImportRoute
   '/profile/badges': typeof ProfileBadgesRoute
   '/profile/bible': typeof ProfileBibleRoute
   '/profile/edit': typeof ProfileEditRoute
@@ -448,6 +457,7 @@ export interface FileRouteTypes {
     | '/groups/$id'
     | '/n/$id'
     | '/notebook/$id'
+    | '/notebook/import'
     | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
@@ -490,6 +500,7 @@ export interface FileRouteTypes {
     | '/groups/$id'
     | '/n/$id'
     | '/notebook/$id'
+    | '/notebook/import'
     | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/groups/$id'
     | '/n/$id'
     | '/notebook/$id'
+    | '/notebook/import'
     | '/profile/badges'
     | '/profile/bible'
     | '/profile/edit'
@@ -783,6 +795,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NotebookIdRouteImport
       parentRoute: typeof NotebookRoute
     }
+    '/notebook/import': {
+      id: '/notebook/import'
+      path: '/import'
+      fullPath: '/notebook/import'
+      preLoaderRoute: typeof NotebookImportRouteImport
+      parentRoute: typeof NotebookRoute
+    }
     '/profile/': {
       id: '/profile/'
       path: '/'
@@ -938,12 +957,14 @@ const GroupsRouteWithChildren =
 
 interface NotebookRouteChildren {
   NotebookIdRoute: typeof NotebookIdRoute
+  NotebookImportRoute: typeof NotebookImportRoute
   NotebookIndexRoute: typeof NotebookIndexRoute
   NotebookGIdRoute: typeof NotebookGIdRoute
 }
 
 const NotebookRouteChildren: NotebookRouteChildren = {
   NotebookIdRoute: NotebookIdRoute,
+  NotebookImportRoute: NotebookImportRoute,
   NotebookIndexRoute: NotebookIndexRoute,
   NotebookGIdRoute: NotebookGIdRoute,
 }
