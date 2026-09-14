@@ -58,6 +58,39 @@ function placeAfterContent(el: HTMLElement) {
   sel?.addRange(range);
 }
 
+function lineCaretOffset(line: HTMLElement | null) {
+  if (!line) return 0;
+  const sel = window.getSelection();
+  if (!sel || !sel.anchorNode || !line.contains(sel.anchorNode)) return (line.textContent ?? "").replace(/\u200B/g, "").length;
+  const range = document.createRange();
+  range.selectNodeContents(line);
+  range.setEnd(sel.anchorNode, sel.anchorOffset);
+  return range.toString().length;
+}
+
+function placeLineOffset(line: HTMLElement, offset: number) {
+  const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+  let left = Math.max(0, offset);
+  let node = walker.nextNode();
+  while (node) {
+    const len = node.textContent?.length ?? 0;
+    if (left <= len) {
+      const range = document.createRange();
+      range.setStart(node, left);
+      range.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      return;
+    }
+    left -= len;
+    node = walker.nextNode();
+  }
+  placeAfterContent(line);
+}
+
+type LineSnap = { html: string; lineId: string | null; offset: number };
+
 export type NotebookDocHandle = {
   flush: () => void;
   markCaret: () => void;
@@ -105,6 +138,9 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   const selectedIds = useRef<string[]>([]);
   const lastLineId = useRef<string | null>(null);
   const hold = useRef(false);
+  const undoStack = useRef<LineSnap[]>([]);
+  const redoStack = useRef<LineSnap[]>([]);
+  const structPending = useRef(false);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const sig = `${blocksSignature(blocks)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
@@ -248,6 +284,54 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     line?.scrollIntoView({ block: "center", inline: "nearest" });
   }
 
+  function snapshot(): LineSnap {
+    const el = ref.current;
+    const line = lineElFromSel();
+    return { html: el?.innerHTML ?? "", lineId: line?.dataset.lineId ?? null, offset: lineCaretOffset(line) };
+  }
+
+  function restoreSnap(snap: LineSnap) {
+    const el = ref.current;
+    if (!el) return;
+    el.innerHTML = snap.html;
+    parse(false);
+    const line =
+      (snap.lineId ? el.querySelector<HTMLElement>(`[data-line-id="${snap.lineId}"]`) : null) ?? lineElFromSel();
+    if (line) placeLineOffset(line, snap.offset);
+    keepVisible();
+  }
+
+  function pushStruct() {
+    const snap = snapshot();
+    const last = undoStack.current[undoStack.current.length - 1];
+    if (last?.html === snap.html) return;
+    undoStack.current.push(snap);
+    if (undoStack.current.length > 40) undoStack.current.shift();
+    redoStack.current = [];
+    structPending.current = true;
+  }
+
+  function tryHistory(kind: "undo" | "redo") {
+    if (kind === "undo") {
+      if (!structPending.current || !undoStack.current.length) return false;
+      const current = snapshot();
+      const prev = undoStack.current.pop();
+      if (!prev) return false;
+      redoStack.current.push(current);
+      structPending.current = false;
+      restoreSnap(prev);
+      return true;
+    }
+    if (!redoStack.current.length) return false;
+    const current = snapshot();
+    const next = redoStack.current.pop();
+    if (!next) return false;
+    undoStack.current.push(current);
+    structPending.current = true;
+    restoreSnap(next);
+    return true;
+  }
+
   function emit(flush = false) {
     window.clearTimeout(timer.current);
     if (flush) parse();
@@ -304,6 +388,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     }, 40);
     const line = lineElFromSel();
     if (!line) return;
+    pushStruct();
     const empty = isLineHtmlEmpty(line);
     const kind = line.dataset.kind ?? "p";
     if (empty && (kind === "ul" || kind === "ol")) {
@@ -329,6 +414,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     const root = ref.current;
     if (!line || !root) return;
     if ([...root.querySelectorAll(".note-line")].length <= 1) return;
+    pushStruct();
     const prev = previousLine(line);
     line.remove();
     if (prev) placeAfterContent(prev);
@@ -354,6 +440,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
         if (!hold.current) emit(true);
       }}
       onInput={() => {
+        structPending.current = false;
         emit();
         keepVisible();
       }}
@@ -367,6 +454,14 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       }}
       onKeyDown={(event) => {
         if (readOnly) return;
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+          if (tryHistory(event.shiftKey ? "redo" : "undo")) event.preventDefault();
+          return;
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "y") {
+          if (tryHistory("redo")) event.preventDefault();
+          return;
+        }
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") return;
         if (event.key === "Enter" || event.key === "Return" || event.keyCode === 13) {
           event.preventDefault();
@@ -383,6 +478,14 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       onBeforeInput={(event) => {
         if (readOnly) return;
         const inputType = (event.nativeEvent as InputEvent).inputType;
+        if (inputType === "historyUndo") {
+          if (tryHistory("undo")) event.preventDefault();
+          return;
+        }
+        if (inputType === "historyRedo") {
+          if (tryHistory("redo")) event.preventDefault();
+          return;
+        }
         if (inputType === "insertParagraph" || inputType === "insertLineBreak") {
           event.preventDefault();
           if (enterLock.current) return;
