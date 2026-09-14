@@ -28,6 +28,7 @@ function formatDay(iso: string, locale: string) {
 
 function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: string }[] }) {
   const locale = useAppStore((s) => s.locale);
+  const speakers = useAppStore((s) => s.speakers);
   const navigate = useNavigate();
   const preview = notePreview(note);
   const [share, setShare] = useState(false);
@@ -188,6 +189,13 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
             <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
             {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
           </span>
+          {note.speakerId ? (
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ background: speakers.find((item) => item.id === note.speakerId)?.color ?? "#c4a574" }}
+              aria-hidden
+            />
+          ) : null}
           {groups.length ? (
             <span className="flex shrink-0 items-center gap-0.5 text-muted" aria-label={t(locale, "notebookGroups")}>
               <Users className="size-4" />

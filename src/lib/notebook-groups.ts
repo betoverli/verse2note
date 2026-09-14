@@ -136,6 +136,7 @@ function fromNoteRow(row: {
   blocks: string;
   visibility: string;
   updated_at: string;
+  speaker_id?: string | null;
 }): Note {
   const happened = typeof row.happened_at === "string" ? row.happened_at.slice(0, 10) : row.happened_at;
   return {
@@ -143,6 +144,7 @@ function fromNoteRow(row: {
     title: row.title ?? "",
     happenedAt: happened,
     tags: cleanTags(parseJson(row.tags, [])),
+    speakerId: row.speaker_id || null,
     blocks: cleanBlocks(parseJson(typeof row.blocks === "string" ? row.blocks : JSON.stringify(row.blocks ?? []), [])),
     visibility: row.visibility === "unlisted" ? "unlisted" : "private",
     updatedAt: String(row.updated_at ?? ""),
@@ -455,7 +457,7 @@ export const listGroupNotes = createServerFn({ method: "GET" })
         avatar_url: string;
       }
     >`
-      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at,
+      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at, n.speaker_id,
              n.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url
       from notebook_group_notes g
       join notebook_notes n on n.id = g.note_id
@@ -532,10 +534,11 @@ export const publishNoteToGroup = createServerFn({ method: "POST" })
     }
     if (!existing[0]) {
       await sql`
-        insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at)
+        insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at, speaker_id)
         values (
           ${note.id}, ${context.userId}, ${note.title}, ${note.happenedAt}::date,
-          ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz
+          ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz,
+          ${note.speakerId}
         )
       `;
     } else {
@@ -543,7 +546,8 @@ export const publishNoteToGroup = createServerFn({ method: "POST" })
         update notebook_notes
         set title = ${note.title}, happened_at = ${note.happenedAt}::date,
             tags = ${JSON.stringify(note.tags)}, blocks = ${JSON.stringify(note.blocks)},
-            visibility = ${note.visibility}, updated_at = ${note.updatedAt}::timestamptz
+            visibility = ${note.visibility}, updated_at = ${note.updatedAt}::timestamptz,
+            speaker_id = ${note.speakerId}
         where id = ${note.id} and user_id = ${context.userId}
       `;
     }

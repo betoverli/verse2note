@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bold, BookOpen, Ellipsis, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
-import { detectTrailingRef, emptyLine, newNoteId, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
+import { detectTrailingRef, emptyLine, newNoteId, noteIsBare, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
 import { formatSelection } from "@/components/notebook-line";
@@ -209,6 +209,7 @@ export function NotebookEditor({
   const [draft, setDraft] = useState(note);
   const [picker, setPicker] = useState(false);
   const [people, setPeople] = useState(false);
+  const [askSpeaker, setAskSpeaker] = useState<Speaker | null>(null);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
   const focusIdRef = useRef(focusId);
   focusIdRef.current = focusId;
@@ -306,7 +307,7 @@ export function NotebookEditor({
     setPending(null);
   }
 
-  function addSpeaker(speaker: Speaker) {
+  function insertSpeakerSection(speaker: Speaker) {
     upsertLocalSpeaker(speaker);
     const child = emptyLine();
     const block: SpeakerBlock = {
@@ -324,6 +325,15 @@ export function NotebookEditor({
     });
     setFocusId(child.id);
     setActive(speaker.id);
+  }
+
+  function addSpeaker(speaker: Speaker) {
+    upsertLocalSpeaker(speaker);
+    if (noteIsBare(latest()) && !latest().speakerId) {
+      setAskSpeaker(speaker);
+      return;
+    }
+    insertSpeakerSection(speaker);
   }
 
   function removeSpeaker(id: string) {
@@ -617,6 +627,30 @@ export function NotebookEditor({
                 <Plus />
               </Button>
             </div>
+            <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookNoteSpeaker")}</p>
+            <div className="mb-5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => patch((current) => ({ ...current, speakerId: null }))}
+                className={`rounded-full px-3 py-1 text-sm ${draft.speakerId ? "bg-surface text-muted" : "bg-accent text-accent-fg"}`}
+              >
+                {t(locale, "notebookNoteSpeakerNone")}
+              </button>
+              {speakers.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    upsertLocalSpeaker(item);
+                    patch((current) => ({ ...current, speakerId: item.id }));
+                  }}
+                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm ${draft.speakerId === item.id ? "bg-accent text-accent-fg" : "bg-surface text-fg"}`}
+                >
+                  <span className="size-2 rounded-full" style={{ background: item.color }} />
+                  {item.name}
+                </button>
+              ))}
+            </div>
             <NotebookGroupPublishList note={draft} />
             <Button className="mt-4 w-full" variant="ghost" onClick={() => setMetaSheet(false)}>
               {t(locale, "back")}
@@ -626,6 +660,37 @@ export function NotebookEditor({
       ) : null}
 
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />
+      {askSpeaker ? (
+        <ViewportSheet onClose={() => setAskSpeaker(null)}>
+          <div
+            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="text-sm font-medium text-fg">
+              {t(locale, "notebookNoteSpeakerAsk").replace("{name}", askSpeaker.name)}
+            </p>
+            <Button
+              className="mt-4 w-full"
+              onClick={() => {
+                patch((current) => ({ ...current, speakerId: askSpeaker.id }));
+                setAskSpeaker(null);
+              }}
+            >
+              {t(locale, "notebookNoteSpeakerYes")}
+            </Button>
+            <Button
+              variant="secondary"
+              className="mt-2 w-full"
+              onClick={() => {
+                insertSpeakerSection(askSpeaker);
+                setAskSpeaker(null);
+              }}
+            >
+              {t(locale, "notebookNoteSpeakerSection")}
+            </Button>
+          </div>
+        </ViewportSheet>
+      ) : null}
     </>
   );
 }

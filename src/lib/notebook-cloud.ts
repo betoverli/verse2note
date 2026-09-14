@@ -20,6 +20,7 @@ type NoteRow = {
   blocks: string;
   visibility: string;
   updated_at: string;
+  speaker_id?: string | null;
 };
 
 type SpeakerRow = {
@@ -45,6 +46,7 @@ function fromNoteRow(row: NoteRow): Note {
     title: row.title ?? "",
     happenedAt: happened,
     tags: cleanTags(parseJson(row.tags, [])),
+    speakerId: row.speaker_id || null,
     blocks: cleanBlocks(parseJson(typeof row.blocks === "string" ? row.blocks : JSON.stringify(row.blocks ?? []), [])),
     visibility: row.visibility === "unlisted" ? "unlisted" : "private",
     updatedAt: String(row.updated_at ?? ""),
@@ -65,7 +67,7 @@ export const listMyNotes = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     const rows = await sql<NoteRow>`
-      select id, title, happened_at::text, tags, blocks, visibility, updated_at
+      select id, title, happened_at::text, tags, blocks, visibility, updated_at, speaker_id
       from notebook_notes
       where user_id = ${context.userId}
       order by happened_at desc, updated_at desc
@@ -101,10 +103,11 @@ export const upsertMyNote = createServerFn({ method: "POST" })
     `;
     if (!existing[0] && Number(count[0]?.n ?? 0) >= 200) return { ok: false as const, error: "limit" as const };
     await sql`
-      insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at)
+      insert into notebook_notes (id, user_id, title, happened_at, tags, blocks, visibility, updated_at, speaker_id)
       values (
         ${note.id}, ${context.userId}, ${note.title}, ${note.happenedAt}::date,
-        ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz
+        ${JSON.stringify(note.tags)}, ${JSON.stringify(note.blocks)}, ${note.visibility}, ${note.updatedAt}::timestamptz,
+        ${note.speakerId}
       )
       on conflict (id) do update set
         title = excluded.title,
@@ -112,7 +115,8 @@ export const upsertMyNote = createServerFn({ method: "POST" })
         tags = excluded.tags,
         blocks = excluded.blocks,
         visibility = excluded.visibility,
-        updated_at = excluded.updated_at
+        updated_at = excluded.updated_at,
+        speaker_id = excluded.speaker_id
       where notebook_notes.user_id = ${context.userId}
     `;
     return { ok: true as const };
@@ -166,7 +170,7 @@ export const getSharedNote = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     const rows = await sql<NoteRow & { user_id: string }>`
-      select id, user_id, title, happened_at::text, tags, blocks, visibility, updated_at
+      select id, user_id, title, happened_at::text, tags, blocks, visibility, updated_at, speaker_id
       from notebook_notes
       where id = ${data.id}
       limit 1
@@ -190,7 +194,7 @@ export const getGrantedNote = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<NoteRow>`
-      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at
+      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at, n.speaker_id
       from notebook_notes n
       join note_grants g on g.note_id = n.id
       where n.id = ${data.id} and g.user_id = ${context.userId}
@@ -199,7 +203,7 @@ export const getGrantedNote = createServerFn({ method: "GET" })
     let row = rows[0];
     if (!row) {
       const viaGroup = await sql<NoteRow>`
-        select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at
+        select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at, n.speaker_id
         from notebook_notes n
         join notebook_group_notes p on p.note_id = n.id
         join notebook_group_members m on m.group_id = p.group_id
@@ -223,7 +227,7 @@ export const listGrantedNotes = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     const rows = await sql<NoteRow>`
-      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at
+      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at, n.speaker_id
       from notebook_notes n
       join note_grants g on g.note_id = n.id
       where g.user_id = ${context.userId}

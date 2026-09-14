@@ -98,21 +98,25 @@ export function appendToToday(passage: Passage) {
 
 export function remixNote(note: Note, speakers: Speaker[]) {
   const map = new Map<string, string>();
+  const ids = note.speakerId ? [note.speakerId] : [];
   for (const block of note.blocks) {
-    if (block.type !== "speaker") continue;
-    if (map.has(block.speakerId)) continue;
-    const source = speakers.find((item) => item.id === block.speakerId);
+    if (block.type === "speaker") ids.push(block.speakerId);
+  }
+  for (const id of ids) {
+    if (map.has(id)) continue;
+    const source = speakers.find((item) => item.id === id);
     const created = upsertLocalSpeaker({
       id: newNoteId(),
       name: source?.name || "Speaker",
       color: source?.color || "#c4a574",
       updatedAt: new Date().toISOString(),
     });
-    map.set(block.speakerId, created.id);
+    map.set(id, created.id);
   }
   const copy = asNote({
     ...note,
     id: newNoteId(),
+    speakerId: note.speakerId ? map.get(note.speakerId) || null : null,
     visibility: "private",
     updatedAt: new Date().toISOString(),
     blocks: note.blocks.map((block) => {

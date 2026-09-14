@@ -32,6 +32,7 @@ export type Note = {
   title: string;
   happenedAt: string;
   tags: string[];
+  speakerId: string | null;
   blocks: NoteBlock[];
   visibility: "private" | "unlisted";
   updatedAt: string;
@@ -69,6 +70,7 @@ export function emptyNote(happenedAt = todayKey()): Note {
     title: "",
     happenedAt,
     tags: [],
+    speakerId: null,
     blocks: [emptyLine()],
     visibility: "private",
     updatedAt: new Date().toISOString(),
@@ -124,10 +126,17 @@ export function notePreview(note: Note) {
 
 export function noteSpeakerIds(note: Note) {
   const ids = new Set<string>();
+  if (note.speakerId) ids.add(note.speakerId);
   for (const block of note.blocks) {
     if (block.type === "speaker") ids.add(block.speakerId);
   }
   return [...ids];
+}
+
+export function noteIsBare(note: Note) {
+  if (note.speakerId) return false;
+  if (note.blocks.some((block) => block.type === "speaker")) return false;
+  return note.blocks.every((block) => block.type !== "speaker" && !lineText(block).trim());
 }
 
 export function detectTrailingRef(inlines: NoteInline[], locale: Locale) {
@@ -299,6 +308,7 @@ export function asNote(input: unknown): Note | null {
     title: typeof row.title === "string" ? row.title.trim().slice(0, 80) : "",
     happenedAt,
     tags: cleanTags(row.tags),
+    speakerId: typeof row.speakerId === "string" && row.speakerId ? row.speakerId.slice(0, 40) : null,
     blocks: cleanBlocks(row.blocks),
     visibility: row.visibility === "unlisted" ? "unlisted" : "private",
     updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : new Date().toISOString(),

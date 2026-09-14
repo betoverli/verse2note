@@ -19,6 +19,7 @@ export type ImportDraft = {
   title: string;
   happenedAt: string;
   tags: string[];
+  speakerId: string | null;
   blocks: NoteBlock[];
   speakers: Speaker[];
   refCount: number;
@@ -280,6 +281,14 @@ function collectSpeakers(lines: string[], locale: Locale, existing: Speaker[]) {
   return allowed;
 }
 
+function liftSoleSpeaker(blocks: NoteBlock[]): { speakerId: string | null; blocks: NoteBlock[] } {
+  const ids = [...new Set(blocks.filter((block) => block.type === "speaker").map((block) => block.speakerId))];
+  if (ids.length !== 1) return { speakerId: null, blocks };
+  if (blocks.some((block) => block.type !== "speaker")) return { speakerId: null, blocks };
+  const flat = blocks.flatMap((block) => (block.type === "speaker" ? block.children : [block]));
+  return { speakerId: ids[0]!, blocks: flat.length ? flat : [emptyLine()] };
+}
+
 export function textToDraft(
   raw: string,
   opts: { locale: Locale; filename?: string; existing: Speaker[] },
@@ -347,6 +356,7 @@ export function textToDraft(
   }
 
   const noteBlocks = blocks.length ? blocks : [emptyLine()];
+  const lifted = liftSoleSpeaker(noteBlocks);
   let refCount = 0;
   const walk = (items: NoteBlock[]) => {
     for (const block of items) {
@@ -357,13 +367,14 @@ export function textToDraft(
       refCount += block.inlines.filter((part) => part.type === "ref").length;
     }
   };
-  walk(noteBlocks);
+  walk(lifted.blocks);
 
   return {
     title,
     happenedAt,
     tags,
-    blocks: noteBlocks,
+    speakerId: lifted.speakerId,
+    blocks: lifted.blocks,
     speakers: created,
     refCount,
   };
@@ -459,6 +470,7 @@ export function draftToNote(draft: ImportDraft): Note {
     title: draft.title,
     happenedAt: draft.happenedAt,
     tags: draft.tags,
+    speakerId: draft.speakerId,
     blocks: draft.blocks,
     visibility: "private",
     updatedAt: new Date().toISOString(),

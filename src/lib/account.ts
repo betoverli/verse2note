@@ -27,8 +27,9 @@ export const exportMyData = createServerFn({ method: "GET" })
       blocks: string;
       visibility: string;
       updated_at: string;
+      speaker_id: string | null;
     }>`
-      select id, title, happened_at::text, tags, blocks, visibility, updated_at
+      select id, title, happened_at::text, tags, blocks, visibility, updated_at, speaker_id
       from notebook_notes where user_id = ${context.userId} order by happened_at desc
     `;
     const speakers = await sql<{ id: string; name: string; color: string; updated_at: string }>`
