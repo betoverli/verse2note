@@ -25,7 +25,7 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
 import { flushOutbox } from "@/lib/outbox";
-import { removeMyGroup, upsertMyGroup } from "@/lib/groups-cache";
+import { removeMyGroup, peekGroupNotes, peekMyGroups, setGroupNotesCache, upsertMyGroup } from "@/lib/groups-cache";
 import { cn } from "@/lib/utils";
 
 function formatDay(iso: string, locale: string) {
@@ -42,8 +42,10 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   const handle = useAppStore((s) => s.handle);
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
-  const [group, setGroup] = useState<NotebookGroup | null | undefined>(undefined);
-  const [notes, setNotes] = useState<GroupNoteCard[]>([]);
+  const [group, setGroup] = useState<NotebookGroup | null | undefined>(() =>
+    user?.id ? peekMyGroups(user.id)?.find((item) => item.id === id) : undefined,
+  );
+  const [notes, setNotes] = useState<GroupNoteCard[]>(() => peekGroupNotes(id) ?? []);
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [settings, setSettings] = useState(false);
   const [tab, setTab] = useState<"notes" | "members">("notes");
@@ -57,17 +59,11 @@ export function NotebookGroupDetail({ id }: { id: string }) {
 
   const reload = useCallback(async () => {
     try {
-      const next = await getNotebookGroup({ data: { id } });
+      const [next, noteRows] = await Promise.all([getNotebookGroup({ data: { id } }), listGroupNotes({ data: { id } })]);
       setGroup(next);
       if (next && user) upsertMyGroup(user.id, next);
-      if (next?.myStatus === "accepted") {
-        const [noteRows, people] = await Promise.all([listGroupNotes({ data: { id } }), listGroupMembers({ data: { id } })]);
-        setNotes(noteRows);
-        setMembers(people);
-      } else {
-        setNotes([]);
-        setMembers([]);
-      }
+      setGroupNotesCache(id, noteRows);
+      setNotes(noteRows);
     } catch {
       setGroup(null);
     }
@@ -76,8 +72,27 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   useEffect(() => {
     if (isPending) return;
     if (!user) return;
+    const cachedGroup = peekMyGroups(user.id)?.find((item) => item.id === id);
+    if (cachedGroup) setGroup(cachedGroup);
+    const cachedNotes = peekGroupNotes(id);
+    if (cachedNotes) setNotes(cachedNotes);
     void reload();
-  }, [user, isPending, reload]);
+  }, [user, isPending, reload, id]);
+
+  useEffect(() => {
+    if (tab !== "members" || !user) return;
+    let live = true;
+    void listGroupMembers({ data: { id } })
+      .then((people) => {
+        if (live) setMembers(people);
+      })
+      .catch(() => {
+        if (live) setMembers([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [tab, id, user?.id]);
 
   const admin = group?.myRole === "admin" && group.myStatus === "accepted";
   const member = group?.myStatus === "accepted";

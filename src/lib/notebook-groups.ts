@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, type Sql } from "@/lib/db";
 import { allowRequest } from "@/lib/rate-limit";
-import { asNote, cleanBlocks, cleanTags, type Note } from "@/lib/notebook";
+import { asNote, type Note } from "@/lib/notebook";
 
 export type GroupVisibility = "listed" | "private";
 export type GroupPostPolicy = "members" | "admins";
@@ -34,7 +34,7 @@ export type NotebookGroup = {
 export type GroupMember = GroupPerson & { role: GroupRole; status: GroupStatus };
 
 export type GroupNoteCard = {
-  note: Note;
+  note: { id: string; title: string; happenedAt: string };
   author: GroupPerson;
 };
 
@@ -116,37 +116,6 @@ function fromGroup(row: GroupRow): NotebookGroup {
     memberCount: Number(row.member_count ?? 0) || 0,
     myRole: asRole(row.my_role),
     myStatus: asStatus(row.my_status),
-    updatedAt: String(row.updated_at ?? ""),
-  };
-}
-
-function parseJson<T>(raw: string, fallback: T): T {
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function fromNoteRow(row: {
-  id: string;
-  title: string;
-  happened_at: string;
-  tags: string;
-  blocks: string;
-  visibility: string;
-  updated_at: string;
-  speaker_id?: string | null;
-}): Note {
-  const happened = typeof row.happened_at === "string" ? row.happened_at.slice(0, 10) : row.happened_at;
-  return {
-    id: row.id,
-    title: row.title ?? "",
-    happenedAt: happened,
-    tags: cleanTags(parseJson(row.tags, [])),
-    speakerId: row.speaker_id || null,
-    blocks: cleanBlocks(parseJson(typeof row.blocks === "string" ? row.blocks : JSON.stringify(row.blocks ?? []), [])),
-    visibility: row.visibility === "unlisted" ? "unlisted" : "private",
     updatedAt: String(row.updated_at ?? ""),
   };
 }
@@ -433,22 +402,16 @@ export const listGroupMembers = createServerFn({ method: "GET" })
       .map((row) => ({ ...person(row), role: asRole(row.role) ?? "member", status: asStatus(row.status) ?? "pending" }));
   });
 
-export const listGroupNotes = createServerFn({ method: "GET" })
+export const listGroupNotes = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((data: { id: string }) => data)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const mine = await memberOf(sql, data.id, context.userId);
-    if (mine?.status !== "accepted") return [] as GroupNoteCard[];
     const rows = await sql<
       {
         id: string;
         title: string;
         happened_at: string;
-        tags: string;
-        blocks: string;
-        visibility: string;
-        updated_at: string;
         user_id: string;
         handle: string;
         first_name: string;
@@ -457,17 +420,18 @@ export const listGroupNotes = createServerFn({ method: "GET" })
         avatar_url: string;
       }
     >`
-      select n.id, n.title, n.happened_at::text, n.tags, n.blocks, n.visibility, n.updated_at, n.speaker_id,
+      select n.id, n.title, n.happened_at::text,
              n.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url
       from notebook_group_notes g
       join notebook_notes n on n.id = g.note_id
       join user_prefs p on p.user_id = n.user_id
+      join notebook_group_members m on m.group_id = g.group_id and m.user_id = ${context.userId} and m.status = 'accepted'
       where g.group_id = ${data.id}
       order by n.happened_at desc, n.updated_at desc
       limit 80
     `;
     return rows.map((row) => ({
-      note: fromNoteRow(row),
+      note: { id: row.id, title: row.title ?? "", happenedAt: typeof row.happened_at === "string" ? row.happened_at.slice(0, 10) : row.happened_at },
       author: person(row),
     }));
   });
