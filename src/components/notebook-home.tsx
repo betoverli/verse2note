@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { FileUp, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { FileUp, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
@@ -11,6 +11,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { SendToFriendButton } from "@/components/send-to-friend";
 import { ViewportSheet } from "@/components/viewport-sheet";
+import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -238,6 +239,7 @@ export function NotebookHome({ query }: { query: string }) {
   const [granted, setGranted] = useState<Note[]>([]);
   const [noteGroups, setNoteGroups] = useState<Record<string, { id: string; name: string }[]>>({});
   const [compose, setCompose] = useState(false);
+  const [people, setPeople] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -309,7 +311,7 @@ export function NotebookHome({ query }: { query: string }) {
       ) : null}
 
       {filter === "speakers" ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {speakers.map((item) => (
             <button
               key={item.id}
@@ -324,6 +326,15 @@ export function NotebookHome({ query }: { query: string }) {
               {item.name}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={() => setPeople(true)}
+            className="flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-xs text-muted"
+            aria-label={t(locale, "notebookRenameSpeaker")}
+          >
+            <Pencil className="size-3" />
+            {t(locale, "notebookRenameSpeaker")}
+          </button>
         </div>
       ) : null}
 
@@ -391,6 +402,7 @@ export function NotebookHome({ query }: { query: string }) {
           </div>
         </ViewportSheet>
       ) : null}
+      {people ? <NotebookSpeakerSheet open onClose={() => setPeople(false)} /> : null}
     </div>
   );
 }

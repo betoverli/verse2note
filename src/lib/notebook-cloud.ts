@@ -152,6 +152,15 @@ export const upsertMySpeaker = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export const deleteMySpeaker = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((data: { id: string }) => data)
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await sql`delete from notebook_speakers where id = ${data.id} and user_id = ${context.userId}`;
+    return { ok: true as const };
+  });
+
 export const getSharedNote = createServerFn({ method: "GET" })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {

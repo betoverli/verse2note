@@ -1,7 +1,7 @@
 import { savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { markPlanDay, resetPlanMarks } from "@/lib/plan-marks";
 import type { Note, Speaker } from "@/lib/notebook";
-import { deleteMyNote, upsertMyNote, upsertMySpeaker } from "@/lib/notebook-cloud";
+import { deleteMyNote, deleteMySpeaker, upsertMyNote, upsertMySpeaker } from "@/lib/notebook-cloud";
 import type { UserCollection } from "@/lib/user-collection";
 import { createMyCollection, deleteMyCollection, updateMyCollection } from "@/lib/user-collections";
 import { useAppStore } from "@/lib/store";
@@ -16,7 +16,8 @@ type JobBody =
   | { type: "plan.reset"; planId: string }
   | { type: "note.upsert"; note: Note }
   | { type: "note.delete"; noteId: string }
-  | { type: "speaker.upsert"; speaker: Speaker };
+  | { type: "speaker.upsert"; speaker: Speaker }
+  | { type: "speaker.delete"; speakerId: string };
 
 type Job = JobBody & { id: string };
 
@@ -93,8 +94,21 @@ export function enqueue(job: JobBody) {
     write([...rest, { id, type: "note.upsert", note: job.note }]);
     return;
   }
+  if (job.type === "speaker.delete") {
+    const rest = current.filter(
+      (item) =>
+        !(item.type === "speaker.upsert" && item.speaker.id === job.speakerId) &&
+        !(item.type === "speaker.delete" && item.speakerId === job.speakerId),
+    );
+    write([...rest, { id, type: "speaker.delete", speakerId: job.speakerId }]);
+    return;
+  }
   if (job.type === "speaker.upsert") {
-    const rest = current.filter((item) => !(item.type === "speaker.upsert" && item.speaker.id === job.speaker.id));
+    const rest = current.filter(
+      (item) =>
+        !(item.type === "speaker.upsert" && item.speaker.id === job.speaker.id) &&
+        !(item.type === "speaker.delete" && item.speakerId === job.speaker.id),
+    );
     write([...rest, { id, type: "speaker.upsert", speaker: job.speaker }]);
     return;
   }
@@ -167,6 +181,10 @@ export async function flushOutbox() {
         }
         if (job.type === "speaker.upsert") {
           await upsertMySpeaker({ data: job.speaker });
+          continue;
+        }
+        if (job.type === "speaker.delete") {
+          await deleteMySpeaker({ data: { id: job.speakerId } });
           continue;
         }
         const item = job.collection;

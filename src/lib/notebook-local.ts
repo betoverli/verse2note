@@ -62,6 +62,13 @@ export function deleteLocalNote(id: string) {
   void flushOutbox();
 }
 
+export function deleteLocalSpeaker(id: string) {
+  const rows = useAppStore.getState().speakers.filter((item) => item.id !== id);
+  useAppStore.getState().setSpeakers(rows);
+  enqueue({ type: "speaker.delete", speakerId: id });
+  void flushOutbox();
+}
+
 export function upsertLocalSpeaker(next: Speaker) {
   const item = touchSpeaker(next);
   const list = useAppStore.getState().speakers;
