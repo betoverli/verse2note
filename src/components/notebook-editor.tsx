@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, BookOpen, CalendarDays, Hash, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
+import { Bold, BookOpen, Ellipsis, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { detectTrailingRef, emptyLine, newNoteId, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
@@ -8,7 +8,7 @@ import { formatSelection } from "@/components/notebook-line";
 import { NotebookDoc, type NotebookDocHandle } from "@/components/notebook-doc";
 import { NotebookPickerSheet } from "@/components/notebook-picker-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
-import { NotebookGroupPublish } from "@/components/notebook-group-publish";
+import { NotebookGroupPublishList } from "@/components/notebook-group-publish";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { ViewportSheet } from "@/components/viewport-sheet";
@@ -213,7 +213,7 @@ export function NotebookEditor({
   const focusIdRef = useRef(focusId);
   focusIdRef.current = focusId;
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
-  const [tagSheet, setTagSheet] = useState(false);
+  const [metaSheet, setMetaSheet] = useState(false);
   const [tag, setTag] = useState("");
   const tagRef = useRef<HTMLInputElement>(null);
   const cite = { book: citeBook, sep: citeSep };
@@ -231,10 +231,6 @@ export function NotebookEditor({
       if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     };
   }, [setActive]);
-
-  useEffect(() => {
-    if (tagSheet) tagRef.current?.focus();
-  }, [tagSheet]);
 
   useEffect(() => {
     const el = chromeRef.current;
@@ -510,31 +506,15 @@ export function NotebookEditor({
           }
           trailing={
             readOnly ? null : (
-              <div className="flex items-center">
-                <label className="relative flex size-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden text-fg">
-                  <CalendarDays className="pointer-events-none size-6" />
-                  <span className="sr-only">{t(locale, "notebookDate")}</span>
-                  <input
-                    type="date"
-                    value={draft.happenedAt}
-                    onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
-                    aria-label={t(locale, "notebookDate")}
-                    tabIndex={-1}
-                    enterKeyHint="done"
-                    className="absolute inset-0 z-10 size-full cursor-pointer appearance-none border-0 bg-transparent p-0 text-transparent opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-datetime-edit]:hidden"
-                  />
-                </label>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-12 text-fg [&_svg]:size-6"
-                  aria-label={t(locale, "notebookTags")}
-                  onClick={() => setTagSheet(true)}
-                >
-                  <Hash />
-                </Button>
-                <NotebookGroupPublish note={draft} />
-              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-12 text-fg [&_svg]:size-6"
+                aria-label={t(locale, "settings")}
+                onClick={() => setMetaSheet(true)}
+              >
+                <Ellipsis />
+              </Button>
             )
           }
         />
@@ -574,67 +554,76 @@ export function NotebookEditor({
         />
       </div>
 
-      {tagSheet ? (
-        <ViewportSheet onClose={() => setTagSheet(false)}>
+      {metaSheet ? (
+        <ViewportSheet onClose={() => setMetaSheet(false)}>
           <div
             className="sheet-invert max-h-full w-full max-w-sm overflow-y-auto rounded-t-xl p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
             onClick={(event) => event.stopPropagation()}
           >
-                <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookTags")}</p>
-                <div className="mb-3 flex flex-wrap gap-2">
-                  {draft.tags.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      onClick={() => patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))}
-                      className="rounded-full bg-surface px-3 py-1 text-sm text-fg"
-                    >
-                      #{item} ×
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    ref={tagRef}
-                    value={tag}
-                    onChange={(event) => setTag(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key !== "Enter") return;
-                      event.preventDefault();
-                      const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                      if (!next) return;
-                      patch((current) =>
-                        current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                      );
-                      setTag("");
-                    }}
-                    placeholder={t(locale, "notebookTagAdd")}
-                    enterKeyHint="done"
-                    className="h-12 min-w-0 flex-1 rounded-md bg-surface px-3 text-base text-fg outline-none"
-                  />
-                  <Button
-                    size="icon"
-                    className="size-12"
-                    aria-label={t(locale, "notebookTagAdd")}
-                    onClick={() => {
-                      const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                      if (!next) return;
-                      patch((current) =>
-                        current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                      );
-                      setTag("");
-                    }}
-                  >
-                    <Plus />
-                  </Button>
-                </div>
-                <Button className="mt-3 w-full" variant="ghost" onClick={() => setTagSheet(false)}>
-                  {t(locale, "back")}
-                </Button>
-              </div>
-            </ViewportSheet>
-          )
-        : null}
+            <p className="mb-4 text-sm font-medium text-fg">{t(locale, "settings")}</p>
+            <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookDate")}</p>
+            <input
+              type="date"
+              value={draft.happenedAt}
+              onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
+              aria-label={t(locale, "notebookDate")}
+              className="mb-5 h-12 w-full rounded-md bg-surface px-3 text-base text-fg outline-none"
+            />
+            <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookTags")}</p>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {draft.tags.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))}
+                  className="rounded-full bg-surface px-3 py-1 text-sm text-fg"
+                >
+                  #{item} ×
+                </button>
+              ))}
+            </div>
+            <div className="mb-5 flex gap-2">
+              <input
+                ref={tagRef}
+                value={tag}
+                onChange={(event) => setTag(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                  if (!next) return;
+                  patch((current) =>
+                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                  );
+                  setTag("");
+                }}
+                placeholder={t(locale, "notebookTagAdd")}
+                enterKeyHint="done"
+                className="h-12 min-w-0 flex-1 rounded-md bg-surface px-3 text-base text-fg outline-none"
+              />
+              <Button
+                size="icon"
+                className="size-12"
+                aria-label={t(locale, "notebookTagAdd")}
+                onClick={() => {
+                  const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                  if (!next) return;
+                  patch((current) =>
+                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                  );
+                  setTag("");
+                }}
+              >
+                <Plus />
+              </Button>
+            </div>
+            <NotebookGroupPublishList note={draft} />
+            <Button className="mt-4 w-full" variant="ghost" onClick={() => setMetaSheet(false)}>
+              {t(locale, "back")}
+            </Button>
+          </div>
+        </ViewportSheet>
+      ) : null}
 
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />
     </>
