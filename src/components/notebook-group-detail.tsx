@@ -25,7 +25,7 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
 import { flushOutbox } from "@/lib/outbox";
-import { removeMyGroup } from "@/lib/groups-cache";
+import { removeMyGroup, upsertMyGroup } from "@/lib/groups-cache";
 import { cn } from "@/lib/utils";
 
 function formatDay(iso: string, locale: string) {
@@ -59,6 +59,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
     try {
       const next = await getNotebookGroup({ data: { id } });
       setGroup(next);
+      if (next && user) upsertMyGroup(user.id, next);
       if (next?.myStatus === "accepted") {
         const [noteRows, people] = await Promise.all([listGroupNotes({ data: { id } }), listGroupMembers({ data: { id } })]);
         setNotes(noteRows);
@@ -70,7 +71,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
     } catch {
       setGroup(null);
     }
-  }, [id]);
+  }, [id, user]);
 
   useEffect(() => {
     if (isPending) return;

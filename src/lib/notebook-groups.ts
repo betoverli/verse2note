@@ -179,7 +179,7 @@ async function adminCount(sql: Sql, groupId: string) {
   return Number(rows[0]?.n ?? 0);
 }
 
-export const listMyGroups = createServerFn({ method: "GET" })
+export const listMyGroups = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();

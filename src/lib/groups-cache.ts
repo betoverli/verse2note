@@ -12,9 +12,11 @@ export function setMyGroupsCache(forUser: string, rows: NotebookGroup[]) {
   mine = rows;
 }
 
-export function upsertMyGroup(forUser: string, group: NotebookGroup) {
+export function upsertMyGroup(forUser: string, group: Partial<NotebookGroup> & { id: string }) {
   const list = peekMyGroups(forUser) ?? [];
-  mine = [group, ...list.filter((item) => item.id !== group.id)];
+  const current = list.find((item) => item.id === group.id);
+  const next = { ...(current as NotebookGroup | undefined), ...group } as NotebookGroup;
+  mine = [next, ...list.filter((item) => item.id !== group.id)];
   userId = forUser;
 }
 

@@ -56,20 +56,31 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       setMine(null);
       return;
     }
-    const cached = peekMyGroups(user.id);
+    const uid = user.id;
+    const cached = peekMyGroups(uid);
     if (cached) setMine(cached);
     let live = true;
-    void listMyGroups()
-      .then((rows) => {
-        if (!live) return;
-        setMyGroupsCache(user.id, rows);
-        setMine(rows);
-      })
-      .catch(() => {
-        if (live && peekMyGroups(user.id) == null) setMine([]);
-      });
+    function refresh() {
+      void listMyGroups()
+        .then((rows) => {
+          if (!live) return;
+          setMyGroupsCache(uid, rows);
+          setMine(rows);
+        })
+        .catch(() => {
+          if (live && peekMyGroups(uid) == null) setMine([]);
+        });
+    }
+    refresh();
+    const onVis = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("pageshow", refresh);
     return () => {
       live = false;
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pageshow", refresh);
     };
   }, [user?.id]);
 
