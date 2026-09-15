@@ -15,6 +15,8 @@ export type LinkPerson = {
 
 export type LinkStatus = "none" | "self" | "incoming" | "outgoing" | "accepted";
 
+export type PeopleHit = LinkPerson & { status: LinkStatus };
+
 type PrefRow = {
   user_id: string;
   handle: string;
@@ -114,26 +116,36 @@ async function addToHostGroup(sql: Sql, hostId: string, planId: string, memberId
   `;
 }
 
-export const searchPeople = createServerFn({ method: "GET" })
+export const searchPeople = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((data: { q: string }) => data)
   .handler(async ({ context, data }) => {
-    if (!allowRequest(`people:${context.userId}`, 30, 60_000)) return [];
+    if (!allowRequest(`people:${context.userId}`, 30, 60_000)) return [] as PeopleHit[];
     const q = cleanQuery(data.q);
-    if (q.length < 2) return [];
+    if (q.length < 2) return [] as PeopleHit[];
     const sql = await getSql();
     const like = `${q}%`;
     const name = `%${q}%`;
-    const rows = await sql<PrefRow>`
-      select user_id, handle, first_name, last_name, avatar_id, avatar_url
-      from user_prefs
-      where handle <> ''
-        and user_id <> ${context.userId}
-        and (handle like ${like} or first_name ilike ${name} or last_name ilike ${name})
-      order by handle
+    const rows = await sql<PrefRow & { link_status: string | null; requester_id: string | null }>`
+      select p.user_id, p.handle, p.first_name, p.last_name, p.avatar_id, p.avatar_url,
+             l.status as link_status, l.requester_id
+      from user_prefs p
+      left join user_links l
+        on (l.requester_id = ${context.userId} and l.addressee_id = p.user_id)
+        or (l.requester_id = p.user_id and l.addressee_id = ${context.userId})
+      where p.handle <> ''
+        and p.user_id <> ${context.userId}
+        and (p.handle like ${like} or p.first_name ilike ${name} or p.last_name ilike ${name})
+      order by p.handle
       limit 20
     `;
-    return rows.map(person);
+    return rows.map((row) => {
+      let status: LinkStatus = "none";
+      if (row.link_status === "accepted") status = "accepted";
+      else if (row.link_status === "pending" && row.requester_id === context.userId) status = "outgoing";
+      else if (row.link_status === "pending") status = "incoming";
+      return { ...person(row), status };
+    });
   });
 
 export const listLinks = createServerFn({ method: "GET" })

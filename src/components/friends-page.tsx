@@ -10,6 +10,8 @@ import {
   requestLink,
   searchPeople,
   type LinkPerson,
+  type LinkStatus,
+  type PeopleHit,
 } from "@/lib/links";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -42,7 +44,7 @@ function PersonRow({
 
 export function FriendsPage({ query, onQuery }: { query: string; onQuery: (value: string) => void }) {
   const locale = useAppStore((s) => s.locale);
-  const [hits, setHits] = useState<LinkPerson[]>([]);
+  const [hits, setHits] = useState<PeopleHit[]>([]);
   const [friends, setFriends] = useState<LinkPerson[]>([]);
   const [incoming, setIncoming] = useState<LinkPerson[]>([]);
   const [outgoing, setOutgoing] = useState<LinkPerson[]>([]);
@@ -103,6 +105,13 @@ export function FriendsPage({ query, onQuery }: { query: string; onQuery: (value
     await refresh();
   }
 
+  function statusOf(person: LinkPerson): LinkStatus {
+    if (friends.some((item) => item.userId === person.userId)) return "accepted";
+    if (outgoing.some((item) => item.userId === person.userId)) return "outgoing";
+    if (incoming.some((item) => item.userId === person.userId)) return "incoming";
+    return "status" in person ? (person as PeopleHit).status : "none";
+  }
+
   const searching = query.trim().length >= 2;
 
   return (
@@ -110,13 +119,45 @@ export function FriendsPage({ query, onQuery }: { query: string; onQuery: (value
       {searching ? (
         hits.length > 0 ? (
           <ul className="flex flex-col gap-2">
-            {hits.map((person) => (
-              <PersonRow key={person.userId} person={person}>
-                <Button size="sm" disabled={busy === person.handle} onClick={() => void onRequest(person.handle)}>
-                  {t(locale, "linkConnect")}
-                </Button>
-              </PersonRow>
-            ))}
+            {hits.map((person) => {
+              const status = statusOf(person);
+              return (
+                <PersonRow key={person.userId} person={person}>
+                  {status === "accepted" ? (
+                    <span className="text-xs text-muted">{t(locale, "friends")}</span>
+                  ) : status === "outgoing" ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-muted"
+                      disabled={busy === person.handle}
+                      onClick={() => void onDecline(person.handle)}
+                    >
+                      {t(locale, "linkRequested")}
+                    </Button>
+                  ) : status === "incoming" ? (
+                    <>
+                      <Button size="sm" disabled={busy === person.handle} onClick={() => void onAccept(person.handle)}>
+                        {t(locale, "linkAccept")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted"
+                        disabled={busy === person.handle}
+                        onClick={() => void onDecline(person.handle)}
+                      >
+                        {t(locale, "linkDecline")}
+                      </Button>
+                    </>
+                  ) : (
+                    <Button size="sm" disabled={busy === person.handle} onClick={() => void onRequest(person.handle)}>
+                      {t(locale, "linkConnect")}
+                    </Button>
+                  )}
+                </PersonRow>
+              );
+            })}
           </ul>
         ) : (
           <p className="text-sm text-muted">{t(locale, "linkNoResults")}</p>
