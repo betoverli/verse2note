@@ -120,6 +120,7 @@ export function AppHeader({
   return (
     <header className={cn("app-header z-20 bg-bg px-2 pb-2", pinned ? "relative" : "sticky top-0 -mx-4 sm:-mx-6 sm:px-3")}>
       <div className={cn("flex min-h-12 items-center gap-1", compact && "hidden")}>
+        <div className="window-controls-pad" aria-hidden />
         <div className="flex w-12 shrink-0 items-center justify-start">
           {backTo ? (
             <Button variant="ghost" size="icon" asChild className="relative z-10 size-12 -ml-1 text-fg [&_svg]:size-6">

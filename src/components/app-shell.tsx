@@ -11,6 +11,7 @@ import { UsagePing } from "@/components/usage-ping";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { takeInvite } from "@/lib/invite";
 import { joinPlanGroup } from "@/lib/plan-groups";
+import { syncWindowControlsPad } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 
 const PUBLIC = new Set(["/", "/about", "/for-ai", "/login"]);
@@ -78,6 +79,8 @@ export function AppShell() {
     document.documentElement.classList.toggle("has-tab-bar", Boolean(tabs));
     return () => document.documentElement.classList.remove("has-tab-bar");
   }, [tabs]);
+
+  useEffect(() => syncWindowControlsPad(), []);
 
   useEffect(() => {
     if (!onboarded || !user) return;
