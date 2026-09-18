@@ -122,7 +122,7 @@ export function AppHeader({
       <div className={cn("flex min-h-12 items-center gap-1", compact && "hidden")}>
         <div className="flex w-12 shrink-0 items-center justify-start">
           {backTo ? (
-            <Button variant="ghost" size="icon" asChild className="size-12 -ml-1 text-fg [&_svg]:size-6">
+            <Button variant="ghost" size="icon" asChild className="relative z-10 size-12 -ml-1 text-fg [&_svg]:size-6">
               {backTo.includes("$") && backParams ? (
                 <Link to={backTo} params={backParams} aria-label={t(locale, "back")}>
                   <BackIcon />

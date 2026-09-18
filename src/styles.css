@@ -289,8 +289,8 @@ html.dark .sheet-invert {
     min-height: 1.55em;
     text-align: left;
     caret-color: var(--color-fg);
-    scroll-margin-top: 9rem;
-    scroll-margin-bottom: 10rem;
+    scroll-margin-top: 6rem;
+    scroll-margin-bottom: 2rem;
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;

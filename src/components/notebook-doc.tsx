@@ -106,7 +106,7 @@ type NotebookDocProps = {
   speakers: Speaker[];
   readOnly?: boolean;
   placeholder?: string;
-  keyboard?: boolean;
+  keyboardPad?: number;
   onBlocks: (blocks: NoteBlock[]) => void;
   onFocusLine: (id: string | null) => void;
   onDetect: (value: ReturnType<typeof detectTrailingRef>) => void;
@@ -122,7 +122,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     speakers,
     readOnly,
     placeholder,
-    keyboard,
+    keyboardPad = 0,
     onBlocks,
     onFocusLine,
     onDetect,
@@ -280,8 +280,19 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   }
 
   function keepVisible() {
-    const line = lineElFromSel();
-    line?.scrollIntoView({ block: "center", inline: "nearest" });
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    if (!rect.height && !rect.width) return;
+    const vv = window.visualViewport;
+    const viewTop = vv?.offsetTop ?? 0;
+    const viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+    const header = document.querySelector(".app-header");
+    const headerBottom = header?.getBoundingClientRect().bottom ?? 0;
+    const topLimit = Math.max(viewTop, headerBottom) + 12;
+    const bottomLimit = viewBottom - 16;
+    if (rect.top < topLimit) window.scrollBy(0, rect.top - topLimit);
+    else if (rect.bottom > bottomLimit) window.scrollBy(0, rect.bottom - bottomLimit);
   }
 
   function snapshot(): LineSnap {
@@ -429,7 +440,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       role="textbox"
       aria-multiline="true"
       className="note-doc outline-none"
-      style={{ paddingBottom: keyboard ? "46dvh" : "8rem" }}
+      style={{ paddingBottom: keyboardPad > 80 ? keyboardPad + 24 : 128 }}
       onFocus={() => {
         focused.current = true;
         onFocusLine(lineElFromSel()?.dataset.lineId ?? null);

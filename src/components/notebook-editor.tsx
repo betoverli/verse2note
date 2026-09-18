@@ -123,14 +123,16 @@ function ensureLineAfter(blocks: NoteBlock[], speakerId: string) {
 }
 
 function useVisualViewport() {
-  const [state, setState] = useState({ offsetTop: 0, keyboard: false });
+  const [state, setState] = useState({ offsetTop: 0, keyboard: false, overlap: 0 });
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     const update = () => {
+      const overlap = Math.max(0, window.innerHeight - vv.height);
       setState({
-        offsetTop: vv.offsetTop,
-        keyboard: window.innerHeight - vv.height > 80,
+        offsetTop: overlap > 120 ? vv.offsetTop : 0,
+        keyboard: overlap > 120,
+        overlap,
       });
     };
     vv.addEventListener("resize", update);
@@ -142,29 +144,6 @@ function useVisualViewport() {
     };
   }, []);
   return state;
-}
-
-function useHideOnScroll(enabled: boolean) {
-  const [compact, setCompact] = useState(false);
-  const last = useRef(0);
-  useEffect(() => {
-    if (!enabled) {
-      setCompact(false);
-      return;
-    }
-    last.current = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const delta = y - last.current;
-      if (y < 16) setCompact(false);
-      else if (delta > 10) setCompact(true);
-      else if (delta < -10) setCompact(false);
-      last.current = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [enabled]);
-  return compact;
 }
 
 function olNumber(items: LineBlock[], id: string) {
@@ -202,7 +181,6 @@ export function NotebookEditor({
   const speakers = speakerList ?? storedSpeakers;
   const setActive = useAppStore((s) => s.setNotebookActiveSpeakerId);
   const vv = useVisualViewport();
-  const compact = useHideOnScroll(!vv.keyboard);
   const chromeRef = useRef<HTMLDivElement>(null);
   const docApi = useRef<NotebookDocHandle>(null);
   const [chromeH, setChromeH] = useState(108);
@@ -240,7 +218,7 @@ export function NotebookEditor({
     ro.observe(el);
     setChromeH(el.getBoundingClientRect().height);
     return () => ro.disconnect();
-  }, [compact, pending, readOnly, picker]);
+  }, [pending, readOnly, picker]);
 
   function save(next: Note) {
     draftRef.current = next;
@@ -487,7 +465,7 @@ export function NotebookEditor({
           title={draft.title || t(locale, "notebookMeeting")}
           backTo={fromGroup ? "/groups/$id" : "/notebook"}
           backParams={fromGroup ? { id: fromGroup } : undefined}
-          compact={vv.keyboard ? false : compact}
+          compact={false}
           extra={
             picker ? (
               <NotebookPickerSheet
@@ -538,7 +516,7 @@ export function NotebookEditor({
           style={cite}
           speakers={speakers}
           readOnly={readOnly}
-          keyboard={vv.keyboard}
+          keyboardPad={vv.overlap}
           onBlocks={setBlocks}
           onFocusLine={(id) => {
             setFocusId(id);
