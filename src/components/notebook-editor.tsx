@@ -360,6 +360,12 @@ export function NotebookEditor({
     };
   }
 
+  function keepTyping(event: { preventDefault: () => void; target: EventTarget | null }) {
+    const el = event.target as HTMLElement | null;
+    if (el?.closest("input, textarea, [contenteditable='true']")) return;
+    event.preventDefault();
+  }
+
   const activeLine = (() => {
     const id = focusId;
     if (!id) return null;
@@ -373,7 +379,12 @@ export function NotebookEditor({
   })();
 
   const toolbar = readOnly ? null : (
-    <div className="border-t border-border/60 px-1 pb-1">
+    <div
+      className="select-none border-t border-border/60 px-1 pb-1"
+      onPointerDownCapture={keepTyping}
+      onMouseDownCapture={keepTyping}
+      onTouchStartCapture={keepTyping}
+    >
       {pending ? (
         <button
           type="button"
@@ -384,10 +395,10 @@ export function NotebookEditor({
         </button>
       ) : null}
       <div className="flex items-center justify-between gap-0.5">
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onPointerDown={toolPointer(() => formatSelection("bold"))}>
+        <Button type="button" tabIndex={-1} variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onPointerDown={toolPointer(() => formatSelection("bold"))}>
           <Bold />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onPointerDown={toolPointer(() => formatSelection("italic"))}>
+        <Button type="button" tabIndex={-1} variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookItalic")} onPointerDown={toolPointer(() => formatSelection("italic"))}>
           <Italic />
         </Button>
         <Button
@@ -395,6 +406,7 @@ export function NotebookEditor({
           variant="ghost"
           size="icon"
           className={cn("size-11", activeLine?.type === "h" && "bg-elevated")}
+          tabIndex={-1}
           aria-label={t(locale, "notebookHeading")}
           onPointerDown={toolPointer(() => toggleLine("h"))}
         >
@@ -405,6 +417,7 @@ export function NotebookEditor({
           variant="ghost"
           size="icon"
           className={cn("size-11", activeLine?.type === "ul" && "bg-elevated")}
+          tabIndex={-1}
           aria-label={t(locale, "notebookList")}
           onPointerDown={toolPointer(() => toggleLine("ul"))}
         >
@@ -415,6 +428,7 @@ export function NotebookEditor({
           variant="ghost"
           size="icon"
           className={cn("size-11", activeLine?.type === "ol" && "bg-elevated")}
+          tabIndex={-1}
           aria-label={t(locale, "notebookNumbers")}
           onPointerDown={toolPointer(() => toggleLine("ol"))}
         >
@@ -425,6 +439,7 @@ export function NotebookEditor({
           variant="ghost"
           size="icon"
           className="size-11"
+          tabIndex={-1}
           aria-label={t(locale, "notebookAddRef")}
           onPointerDown={(event) => {
             event.preventDefault();
@@ -434,9 +449,6 @@ export function NotebookEditor({
               /* keep opening */
             }
             setPicker(true);
-            requestAnimationFrame(() => {
-              if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-            });
           }}
         >
           <BookOpen />
@@ -446,19 +458,17 @@ export function NotebookEditor({
           variant="ghost"
           size="icon"
           className="size-11"
+          tabIndex={-1}
           aria-label={t(locale, "notebookAddSpeaker")}
           onPointerDown={(event) => {
             event.preventDefault();
             setPeople(true);
-            requestAnimationFrame(() => {
-              if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-            });
           }}
         >
           <UserRound />
         </Button>
         {useAppStore.getState().notebookActiveSpeakerId ? (
-          <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onPointerDown={toolPointer(exitSpeaker)}>
+          <Button type="button" tabIndex={-1} variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookExitSpeaker")} onPointerDown={toolPointer(exitSpeaker)}>
             <X />
           </Button>
         ) : null}
@@ -539,9 +549,6 @@ export function NotebookEditor({
           onTrigger={(kind) => {
             if (kind === "at") {
               setPeople(true);
-              requestAnimationFrame(() => {
-                if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-              });
               return;
             }
             try {
@@ -550,9 +557,6 @@ export function NotebookEditor({
               /* keep opening */
             }
             setPicker(true);
-            requestAnimationFrame(() => {
-              if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-            });
           }}
           onRemoveSpeaker={removeSpeaker}
         />
