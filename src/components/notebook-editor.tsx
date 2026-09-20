@@ -441,7 +441,20 @@ export function NotebookEditor({
         >
           <BookOpen />
         </Button>
-        <Button type="button" variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookAddSpeaker")} onPointerDown={toolPointer(() => setPeople(true))}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-11"
+          aria-label={t(locale, "notebookAddSpeaker")}
+          onPointerDown={(event) => {
+            event.preventDefault();
+            setPeople(true);
+            requestAnimationFrame(() => {
+              if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+            });
+          }}
+        >
           <UserRound />
         </Button>
         {useAppStore.getState().notebookActiveSpeakerId ? (
@@ -526,6 +539,9 @@ export function NotebookEditor({
           onTrigger={(kind) => {
             if (kind === "at") {
               setPeople(true);
+              requestAnimationFrame(() => {
+                if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+              });
               return;
             }
             try {
