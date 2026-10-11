@@ -13,18 +13,10 @@ import { SendToFriendButton } from "@/components/send-to-friend";
 import { ViewportSheet } from "@/components/viewport-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { Button } from "@/components/ui/button";
+import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "tags" | "speakers" | "shared";
-
-function formatDay(iso: string, locale: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString(locale === "en" ? "en" : locale === "es" ? "es" : "pt-BR", {
-    day: "2-digit",
-    month: "short",
-  });
-}
 
 function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: string }[] }) {
   const locale = useAppStore((s) => s.locale);
@@ -182,9 +174,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
         }}
       >
         <div className="flex min-h-16 items-center gap-3 px-4 py-3 text-fg">
-          <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
-            {formatDay(note.happenedAt, locale)}
-          </span>
+          <NoteDay iso={note.happenedAt} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
             {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
@@ -351,8 +341,11 @@ export function NotebookHome({ query }: { query: string }) {
           {filter === "shared" ? t(locale, "notebookSharedEmpty") : t(locale, "notebookEmpty")}
         </p>
       ) : (
-        <ul className="flex flex-col gap-2">
-          {visible.map((item) => (
+        <NoteDateGroups
+          items={visible}
+          locale={locale}
+          dateOf={(item) => item.happenedAt}
+          render={(item) => (
             <li key={item.id}>
               {filter === "shared" ? (
                 <Link
@@ -360,17 +353,15 @@ export function NotebookHome({ query }: { query: string }) {
                   params={{ id: item.id }}
                   className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
                 >
-                  <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
-                    {formatDay(item.happenedAt, locale)}
-                  </span>
+                  <NoteDay iso={item.happenedAt} />
                   <span className="truncate text-sm font-medium">{item.title || t(locale, "notebookMeeting")}</span>
                 </Link>
               ) : (
                 <NoteCard note={item} groups={noteGroups[item.id] ?? []} />
               )}
             </li>
-          ))}
-        </ul>
+          )}
+        />
       )}
 
       <Button

@@ -23,19 +23,11 @@ import {
 } from "@/lib/notebook-groups";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
 import { Choice } from "@/components/choice";
 import { flushOutbox } from "@/lib/outbox";
 import { removeMyGroup, peekGroupNotes, peekMyGroups, setGroupNotesCache, upsertMyGroup } from "@/lib/groups-cache";
 import { cn } from "@/lib/utils";
-
-function formatDay(iso: string, locale: string) {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return new Date(y, m - 1, d).toLocaleDateString(locale === "en" ? "en" : locale === "es" ? "es" : "pt-BR", {
-    day: "2-digit",
-    month: "short",
-  });
-}
 
 export function NotebookGroupDetail({ id }: { id: string }) {
   const locale = useAppStore((s) => s.locale);
@@ -226,8 +218,11 @@ export function NotebookGroupDetail({ id }: { id: string }) {
             notes.length === 0 ? (
               <p className="text-sm text-muted">{t(locale, "notebookEmpty")}</p>
             ) : (
-              <ul className="flex flex-col gap-2">
-                {notes.map((item) => {
+              <NoteDateGroups
+                items={notes}
+                locale={locale}
+                dateOf={(item) => item.note.happenedAt}
+                render={(item) => {
                   const mine = item.author.handle === handle;
                   return (
                     <li key={item.note.id}>
@@ -237,9 +232,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
                         search={{ g: id }}
                         className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
                       >
-                        <span className="w-14 shrink-0 text-[11px] font-medium tracking-wide text-muted uppercase">
-                          {formatDay(item.note.happenedAt, locale)}
-                        </span>
+                        <NoteDay iso={item.note.happenedAt} />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium">{item.note.title || t(locale, "notebookMeeting")}</span>
                           <span className="text-xs text-muted">@{item.author.handle || item.author.firstName}</span>
@@ -247,8 +240,8 @@ export function NotebookGroupDetail({ id }: { id: string }) {
                       </Link>
                     </li>
                   );
-                })}
-              </ul>
+                }}
+              />
             )
           ) : (
             <div className="flex flex-col gap-6">
