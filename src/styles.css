@@ -403,8 +403,9 @@ html.dark .sheet-invert {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: 1.125rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
   }
 
   .note-speaker-remove {
