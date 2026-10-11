@@ -292,6 +292,7 @@ html.dark .sheet-invert {
   .note-line {
     position: relative;
     min-height: 1.55em;
+    margin-top: 0.55em;
     text-align: left;
     caret-color: var(--color-fg);
     scroll-margin-top: 6rem;
@@ -299,6 +300,11 @@ html.dark .sheet-invert {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
+  }
+
+  .note-doc > .note-line:first-child,
+  .note-speaker > .note-line:first-of-type {
+    margin-top: 0;
   }
 
   .note-line-h {
@@ -309,6 +315,7 @@ html.dark .sheet-invert {
 
   .note-line[data-kind="ul"],
   .note-line[data-kind="ol"] {
+    margin-top: 0.75em;
     padding-left: 1.35rem;
   }
 
