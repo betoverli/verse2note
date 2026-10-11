@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v13";
+const CACHE = "verse2note-v14";
 
 const PRECACHE = [
   "/",
@@ -83,9 +83,10 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   if (request.method !== "GET") return;
-  const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/assets/")) return;
+  const dest = request.destination;
+  if (dest === "script" || dest === "style" || dest === "worker" || dest === "font") return;
   const accept = request.headers.get("accept") ?? "";
   if (accept.includes("application/json")) return;
   event.respondWith(
