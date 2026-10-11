@@ -411,6 +411,8 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     const speaker = line.closest<HTMLElement>("[data-speaker-block]");
     const last = speaker?.querySelector<HTMLElement>(":scope > .note-line:last-of-type");
     if (empty && speaker && last === line) {
+      const lines = speaker.querySelectorAll(":scope > .note-line");
+      if (lines.length > 1) line.remove();
       const next = makeLine("p");
       speaker.after(next);
       placeCaret(next, true);
