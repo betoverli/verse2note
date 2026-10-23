@@ -1,0 +1,76 @@
+/**
+ * Pure helpers for the iOS shell. Safe to import from the website: nothing
+ * here touches Capacitor unless `isNativeApp()` is true, and that is only
+ * true inside the Capacitor WebView.
+ */
+
+const BIBLE_HOSTS = new Set([
+  "bible.com",
+  "tecartabible.com",
+  "ref.ly",
+  "biblegateway.com",
+  "blueletterbible.org",
+  "esv.org",
+  "bibliaonline.com.br",
+  "biblehub.com",
+]);
+
+const CUSTOM_SCHEMES = new Set([
+  "youversion",
+  "bible",
+  "olivetree",
+  "accord",
+  "e-sword",
+  "mysword",
+  "jwlibrary",
+]);
+
+type CapacitorGlobal = {
+  isNativePlatform?: () => boolean;
+  getPlatform?: () => string;
+};
+
+export function isNativeApp(): boolean {
+  if (typeof window === "undefined") return false;
+  const cap = (window as Window & { Capacitor?: CapacitorGlobal }).Capacitor;
+  return cap?.getPlatform?.() === "ios" && cap.isNativePlatform?.() === true;
+}
+
+export type LinkDecision = "stay" | "external";
+
+function isBibleHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^www\./, "");
+  return BIBLE_HOSTS.has(host) || host === "bible.com" || host.endsWith(".bible.com");
+}
+
+function isAppHost(hostname: string, pageHost: string): boolean {
+  const host = hostname.toLowerCase();
+  if (host === pageHost.toLowerCase()) return true;
+  return host === "verse2note.com" || host === "www.verse2note.com";
+}
+
+/**
+ * Decide whether a URL should leave the WebView and open through iOS
+ * (universal links and Bible-app schemes) or stay inside the app.
+ * Same-window navigations to other sites stay put so an in-app redirect
+ * is not sent to Safari by accident. Bible hosts and custom schemes always
+ * leave, because WKWebView will not hand a universal link to YouVersion.
+ */
+export function classifyLink(href: string, target = "", pageUrl = "https://verse2note.com/"): LinkDecision {
+  let url: URL;
+  let page: URL;
+  try {
+    page = new URL(pageUrl);
+    url = new URL(href, page);
+  } catch {
+    return "stay";
+  }
+  const scheme = url.protocol.replace(/:$/, "").toLowerCase();
+  if (scheme === "javascript" || scheme === "about" || scheme === "blob" || scheme === "data") return "stay";
+  if (CUSTOM_SCHEMES.has(scheme) || scheme === "mailto" || scheme === "tel" || scheme === "sms") return "external";
+  if (scheme !== "http" && scheme !== "https") return "external";
+  if (isAppHost(url.hostname, page.hostname)) return "stay";
+  if (isBibleHost(url.hostname)) return "external";
+  if (target === "_blank") return "external";
+  return "stay";
+}

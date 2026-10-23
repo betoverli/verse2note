@@ -1,3 +1,5 @@
+import { isNativeApp } from "@/lib/native/runtime";
+
 export type CopyFormat = "rich" | "markdown" | "plain";
 
 export type CopyItem = {
@@ -143,9 +145,33 @@ export function canWebShare(): boolean {
   return typeof navigator !== "undefined" && typeof navigator.share === "function";
 }
 
+async function shareWithNativeSheet(items: CopyItem[]): Promise<"shared" | "cancelled" | null> {
+  try {
+    const { Share } = await import("@capacitor/share");
+    const first = items[0];
+    if (!first) return null;
+    const text = plainWithUrls(items);
+    const data =
+      items.length === 1 && first.url.startsWith("http")
+        ? { title: first.label, text: first.label, url: first.url }
+        : { title: items.map((item) => item.label).join(", "), text };
+    await Share.share(data);
+    return "shared";
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (/cancel/i.test(message)) return "cancelled";
+    return null;
+  }
+}
+
 export async function shareReferences(items: CopyItem[]): Promise<"shared" | "cancelled"> {
-  if (items.length === 0 || !canWebShare()) {
+  if (items.length === 0 || (!isNativeApp() && !canWebShare())) {
     throw new Error("share unavailable");
+  }
+  if (isNativeApp()) {
+    const native = await shareWithNativeSheet(items);
+    if (native) return native;
+    if (!canWebShare()) throw new Error("share unavailable");
   }
 
   const first = items[0];

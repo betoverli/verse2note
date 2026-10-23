@@ -4,6 +4,7 @@ import { runPreSignInSignOut, runSignOut } from "../../../scripts/sign-out-plan.
 import { GROK_PROVIDERS } from "./providers";
 import { clearSessionUser } from "./session-cache";
 import { clearOutbox } from "@/lib/outbox";
+import { isNativeApp } from "@/lib/native/runtime";
 
 /**
  * Better Auth client for this React SPA (browser-side).
@@ -122,6 +123,12 @@ export async function signIn(
     clearToken: () => setBearerToken(null),
   });
 
+  if (isNativeApp()) {
+    const { signInWithNativeBrowser } = await import("@/lib/native/auth");
+    await signInWithNativeBrowser(providerId, callbackURL);
+    return;
+  }
+
   if (inLivePreview()) {
     if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
     const token = await waitForPopupToken(popup);
@@ -210,6 +217,20 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
     }
     window.addEventListener("message", onMessage);
   });
+}
+
+/**
+ * Store the session token handed back by the iOS system browser and continue.
+ * The website never calls this: there is no token to adopt outside the app.
+ */
+export async function adoptNativeSession(token: string, callbackURL: string): Promise<void> {
+  setBearerToken(token);
+  try {
+    await authClient.getSession();
+  } catch {
+    /* session store recovers on the next read */
+  }
+  window.location.assign(callbackURL);
 }
 
 /**

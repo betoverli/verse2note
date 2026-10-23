@@ -121,6 +121,12 @@ async function pushToUser(
       }
     }
   }
+  try {
+    const { sendApnsToUser } = await import("./apns.server");
+    await sendApnsToUser(sql, userId, payload);
+  } catch {
+    /* APNs is additive. A missing key or a bad device must not fail web push. */
+  }
 }
 
 async function deliver(

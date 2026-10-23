@@ -27,6 +27,8 @@ import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
 import { Route as ApiLinkRouteImport } from './routes/api/link'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as ApiPlansRouteImport } from './routes/api/plans'
+import { Route as AuthNativeDoneRouteImport } from './routes/auth/native-done'
+import { Route as AuthNativeStartRouteImport } from './routes/auth/native-start'
 import { Route as CIdRouteImport } from './routes/c.$id'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
 import { Route as CollectionsIdRouteImport } from './routes/collections.$id'
@@ -144,6 +146,16 @@ const ApiMcpRoute = ApiMcpRouteImport.update({
 const ApiPlansRoute = ApiPlansRouteImport.update({
   id: '/api/plans',
   path: '/api/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthNativeDoneRoute = AuthNativeDoneRouteImport.update({
+  id: '/auth/native-done',
+  path: '/auth/native-done',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthNativeStartRoute = AuthNativeStartRouteImport.update({
+  id: '/auth/native-start',
+  path: '/auth/native-start',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CIdRoute = CIdRouteImport.update({
@@ -308,6 +320,8 @@ export interface FileRoutesByFullPath {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/auth/native-done': typeof AuthNativeDoneRoute
+  '/auth/native-start': typeof AuthNativeStartRoute
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
@@ -351,6 +365,8 @@ export interface FileRoutesByTo {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/auth/native-done': typeof AuthNativeDoneRoute
+  '/auth/native-start': typeof AuthNativeStartRoute
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
@@ -400,6 +416,8 @@ export interface FileRoutesById {
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/auth/native-done': typeof AuthNativeDoneRoute
+  '/auth/native-start': typeof AuthNativeStartRoute
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
   '/collections/themes': typeof CollectionsThemesRoute
@@ -450,6 +468,8 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/auth/native-done'
+    | '/auth/native-start'
     | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
@@ -493,6 +513,8 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/auth/native-done'
+    | '/auth/native-start'
     | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
@@ -541,6 +563,8 @@ export interface FileRouteTypes {
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/auth/native-done'
+    | '/auth/native-start'
     | '/c/$id'
     | '/collections/$id'
     | '/collections/themes'
@@ -590,6 +614,8 @@ export interface RootRouteChildren {
   ApiLinkRoute: typeof ApiLinkRoute
   ApiMcpRoute: typeof ApiMcpRoute
   ApiPlansRoute: typeof ApiPlansRoute
+  AuthNativeDoneRoute: typeof AuthNativeDoneRoute
+  AuthNativeStartRoute: typeof AuthNativeStartRoute
   CIdRoute: typeof CIdRoute
   GIdRoute: typeof GIdRoute
   NIdRoute: typeof NIdRoute
@@ -723,6 +749,20 @@ declare module '@tanstack/react-router' {
       path: '/api/plans'
       fullPath: '/api/plans'
       preLoaderRoute: typeof ApiPlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/native-done': {
+      id: '/auth/native-done'
+      path: '/auth/native-done'
+      fullPath: '/auth/native-done'
+      preLoaderRoute: typeof AuthNativeDoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/native-start': {
+      id: '/auth/native-start'
+      path: '/auth/native-start'
+      fullPath: '/auth/native-start'
+      preLoaderRoute: typeof AuthNativeStartRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/c/$id': {
@@ -1036,6 +1076,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiLinkRoute: ApiLinkRoute,
   ApiMcpRoute: ApiMcpRoute,
   ApiPlansRoute: ApiPlansRoute,
+  AuthNativeDoneRoute: AuthNativeDoneRoute,
+  AuthNativeStartRoute: AuthNativeStartRoute,
   CIdRoute: CIdRoute,
   GIdRoute: GIdRoute,
   NIdRoute: NIdRoute,

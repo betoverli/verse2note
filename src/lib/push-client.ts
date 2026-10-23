@@ -1,4 +1,5 @@
 import { dropPushSubscription, getVapidPublicKey, savePushSubscription } from "@/lib/notify";
+import { isNativeApp } from "@/lib/native/runtime";
 
 function toBytes(base64: string) {
   const pad = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -32,6 +33,10 @@ async function registration() {
 }
 
 export async function enablePush() {
+  if (isNativeApp()) {
+    const { enableNativePush } = await import("@/lib/native/push");
+    return enableNativePush();
+  }
   if (!pushSupported()) return { ok: false as const, error: "unsupported" as const };
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return { ok: false as const, error: "denied" as const };
@@ -52,6 +57,11 @@ export async function enablePush() {
 }
 
 export async function disablePush() {
+  if (isNativeApp()) {
+    const { disableNativePush } = await import("@/lib/native/push");
+    await disableNativePush();
+    return;
+  }
   const worker = await navigator.serviceWorker.getRegistration();
   const sub = await worker?.pushManager.getSubscription();
   if (sub) {
