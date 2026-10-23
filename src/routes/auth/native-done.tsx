@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { detectLocale, t } from "@/lib/i18n";
-import { mintNativeHandoff } from "@/lib/native/handoff";
+import { abortNativeReturn, mintNativeHandoff } from "@/lib/native/handoff";
+import { nativeReturnTo } from "@/lib/native/return-to";
 
 export const Route = createFileRoute("/auth/native-done")({
   validateSearch: (search: Record<string, unknown>) => ({
     error: search.error === "1" || search.error === 1 || search.error === true,
   }),
   head: () => ({
-    meta: [
-      { title: "Verse2Note" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Verse2Note" }, { name: "robots", content: "noindex" }],
   }),
   component: NativeDone,
 });
@@ -24,20 +22,19 @@ function NativeDone() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      if (error) {
-        window.location.replace("verse2note://auth?error=1");
-        return;
-      }
+      const fallback = nativeReturnTo("scheme", { error: true });
       try {
-        const minted = await mintNativeHandoff();
+        const result = error ? await abortNativeReturn() : await mintNativeHandoff();
         if (cancelled) return;
-        if (!minted.ok || !("code" in minted) || !minted.code) {
-          window.location.replace("verse2note://auth?error=1");
-          return;
-        }
-        window.location.replace(`verse2note://auth?code=${encodeURIComponent(minted.code)}`);
+        window.location.replace(result.redirect || fallback);
       } catch {
-        if (!cancelled) setFailed(true);
+        if (cancelled) return;
+        try {
+          const abort = await abortNativeReturn();
+          window.location.replace(abort.redirect || fallback);
+        } catch {
+          if (!cancelled) setFailed(true);
+        }
       }
     })();
     return () => {

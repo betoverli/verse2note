@@ -71,6 +71,8 @@
 	<false/>
 	<key>Verse2NoteApnsSandbox</key>
 	<string>$(VERSE2NOTE_APNS_SANDBOX)</string>
+	<key>Verse2NoteUniversalLinks</key>
+	<string>$(VERSE2NOTE_UNIVERSAL_LINKS)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

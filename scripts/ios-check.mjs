@@ -31,10 +31,16 @@ if (plist.includes("<key>NSAllowsArbitraryLoads</key>") || plist.includes("<key>
 if (!plist.includes("remote-notification")) {
   errors.push("Falta UIBackgroundModes remote-notification.");
 }
+if (!plist.includes("Verse2NoteUniversalLinks")) {
+  errors.push("Falta a flag Verse2NoteUniversalLinks no Info.plist.");
+}
 
 const releaseEntitlements = read("ios/App/App/AppRelease.entitlements");
 if (!releaseEntitlements.includes("<string>production</string>")) {
   errors.push("O arquivo de Release tem de pedir APNs de produção (TestFlight).");
+}
+if (!releaseEntitlements.includes("applinks:verse2note.com")) {
+  errors.push("O Release tem de declarar o domínio verse2note.com para o regresso do login.");
 }
 
 const project = read("ios/App/App.xcodeproj/project.pbxproj");
@@ -43,6 +49,27 @@ if (project.includes("CODE_SIGN_ENTITLEMENTS = App/AppDebug")) {
 }
 if (!project.includes("CODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements")) {
   errors.push("Falta o entitlement de push na configuração Release.");
+}
+const debugTarget = project.split("504EC3171FED79650016851F /* Debug */")[1]?.split("name = Debug;")[0] ?? "";
+const releaseTarget = project.split("504EC3181FED79650016851F /* Release */")[1]?.split("name = Release;")[0] ?? "";
+if (debugTarget.includes("CODE_SIGN_ENTITLEMENTS") || !debugTarget.includes("VERSE2NOTE_UNIVERSAL_LINKS = NO")) {
+  errors.push("A configuração Debug não deve pedir Universal Links nem entitlements.");
+}
+if (!releaseTarget.includes("VERSE2NOTE_UNIVERSAL_LINKS = YES") || !releaseTarget.includes("App/AppRelease.entitlements")) {
+  errors.push("A configuração Release tem de ativar Universal Links e os entitlements.");
+}
+
+const shell = read("ios/App/App/NativeShell.swift");
+if (!shell.includes('path: "/auth/native-return"') || !shell.includes("Callback.https")) {
+  errors.push("O login nativo tem de poder regressar por Universal Link.");
+}
+const handoff = read("src/lib/native/handoff.server.ts");
+if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) {
+  errors.push("O handoff não pode gravar o token de sessão em claro.");
+}
+const aasa = read("src/routes/[.]well-known/apple-app-site-association.ts");
+if (!aasa.includes("appleAppSiteAssociation")) {
+  errors.push("Falta servir apple-app-site-association.");
 }
 
 for (const path of [

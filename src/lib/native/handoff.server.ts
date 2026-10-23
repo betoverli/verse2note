@@ -3,41 +3,88 @@ import { assertSameSiteRequest } from "@/lib/auth/isolation.server";
 import { readSessionToken } from "@/lib/auth/server";
 import { getSql } from "@/lib/db";
 import { allowRequest, clientKey } from "@/lib/rate-limit";
+import { currentHandoffKey, openSessionToken, sealSessionToken } from "@/lib/native/handoff-seal.server";
 import { hashHandoffCode, isHandoffCode, newHandoffCode } from "@/lib/native/handoff-code";
+import { readPkceCookie } from "@/lib/native/pkce-cookie";
+import { isPkceMaterial, pkceChallenge } from "@/lib/native/pkce";
+import { nativeReturnTo, type NativeReturnMode } from "@/lib/native/return-to";
 
 const TTL_MS = 90_000;
+
+function cookieHeader(): string | null {
+  return getRequest()?.headers.get("cookie") ?? null;
+}
+
+function returnMode(): NativeReturnMode {
+  return readPkceCookie(cookieHeader())?.mode ?? "scheme";
+}
+
+let loggedKey = false;
+
+function refuseKey(reason: "missing" | "invalid-dedicated"): { ok: false; redirect: string } {
+  if (!loggedKey) {
+    loggedKey = true;
+    const detail =
+      reason === "invalid-dedicated"
+        ? "NATIVE_AUTH_HANDOFF_KEY não tem 32 bytes."
+        : "Falta NATIVE_AUTH_HANDOFF_KEY e também BETTER_AUTH_SECRET.";
+    console.error(`Login nativo recusado: ${detail} A sessão não foi gravada.`);
+  }
+  return { ok: false, redirect: nativeReturnTo(returnMode(), { error: true }) };
+}
 
 /** Called from the system login browser, which holds the session cookie. */
 export async function mintHandoff(userId: string) {
   assertSameSiteRequest();
+  const pkce = readPkceCookie(cookieHeader());
+  const mode = pkce?.mode ?? "scheme";
+  const fail = { ok: false as const, redirect: nativeReturnTo(mode, { error: true }) };
+  if (!pkce) return fail;
   const token = readSessionToken();
-  if (!token || token.length > 4000) return { ok: false as const };
-  if (!allowRequest(`native-mint:${userId}`, 12, 60 * 60_000)) return { ok: false as const };
+  if (!token || token.length > 4000) return fail;
+  const resolved = currentHandoffKey();
+  if (!resolved.ok) return refuseKey(resolved.reason);
+  if (!allowRequest(`native-mint:${userId}`, 12, 60 * 60_000)) return fail;
   const code = newHandoffCode();
+  const sealed = sealSessionToken(token, resolved.key);
   const sql = await getSql();
   const expires = new Date(Date.now() + TTL_MS).toISOString();
-  await sql`delete from native_auth_handoff where expires_at < now()`;
+  await sql`delete from native_auth_handoff where user_id = ${userId} or expires_at < now()`;
   await sql`
-    insert into native_auth_handoff (code_hash, user_id, session_token, expires_at)
-    values (${hashHandoffCode(code)}, ${userId}, ${token}, ${expires})
+    insert into native_auth_handoff (code_hash, user_id, token_ciphertext, challenge, expires_at)
+    values (${hashHandoffCode(code)}, ${userId}, ${sealed}, ${pkce.challenge}, ${expires})
   `;
-  return { ok: true as const, code };
+  return { ok: true as const, redirect: nativeReturnTo(mode, { code }) };
 }
 
-/** Called from the WebView. The code is single-use and expires in 90 seconds. */
-export async function claimHandoff(code: string) {
+/** Error return for a login that never minted a code. Clears nothing sensitive. */
+export function errorReturn() {
+  assertSameSiteRequest();
+  return { ok: false as const, redirect: nativeReturnTo(returnMode(), { error: true }) };
+}
+
+/** Called from the WebView. The code is single-use, expires in 90 seconds, and needs the verifier. */
+export async function claimHandoff(code: string, verifier: string) {
   assertSameSiteRequest();
   const request = getRequest();
   const ip = request ? clientKey(request) : "local";
   if (!allowRequest(`native-claim:${ip}`, 20, 60_000)) return { ok: false as const };
-  if (!isHandoffCode(code)) return { ok: false as const };
+  if (!isHandoffCode(code) || !isPkceMaterial(verifier)) return { ok: false as const };
+  const challenge = await pkceChallenge(verifier);
+  const resolved = currentHandoffKey();
+  if (!resolved.ok) return { ok: false as const };
   const sql = await getSql();
-  const rows = await sql<{ session_token: string }>`
+  const rows = await sql<{ token_ciphertext: string }>`
     delete from native_auth_handoff
-    where code_hash = ${hashHandoffCode(code)} and expires_at > now()
-    returning session_token
+    where code_hash = ${hashHandoffCode(code)}
+      and challenge = ${challenge}
+      and token_ciphertext is not null
+      and expires_at > now()
+    returning token_ciphertext
   `;
-  const token = rows[0]?.session_token;
+  const sealed = rows[0]?.token_ciphertext;
+  if (!sealed) return { ok: false as const };
+  const token = openSessionToken(sealed, resolved.key);
   if (!token) return { ok: false as const };
   return { ok: true as const, token };
 }

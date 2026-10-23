@@ -29,7 +29,10 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
     }
 }
 
-/// Opens Google/X login in the system browser and returns verse2note://auth?code=…
+/// Opens Google/X login in the system browser.
+/// The return is an https Universal Link when the build and the site both
+/// have the Apple team association. Otherwise it is the verse2note scheme.
+/// Either way the code is useless without the verifier kept in the app.
 @objc(NativeAuthPlugin)
 public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "NativeAuthPlugin"
@@ -68,9 +71,15 @@ public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func runtime(_ call: CAPPluginCall) {
+        var supportsHttpsCallback = false
+        if #available(iOS 17.4, *) {
+            supportsHttpsCallback = true
+        }
         call.resolve([
             "apnsSandbox": Self.apnsSandbox,
             "bundleId": Bundle.main.bundleIdentifier ?? "com.verse2note.app",
+            "supportsHttpsCallback": supportsHttpsCallback,
+            "universalLinksBuild": Self.universalLinksBuild,
         ])
     }
 
@@ -91,12 +100,13 @@ public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
 
+        let useHttps = call.getString("callback") == "https"
         DispatchQueue.main.async {
             if self.session != nil {
                 call.reject("Login já está aberto.")
                 return
             }
-            let session = ASWebAuthenticationSession(url: url, callbackURLScheme: "verse2note") { [weak self] callback, error in
+            let finish: (URL?, Error?) -> Void = { [weak self] callback, error in
                 self?.session = nil
                 if let callback {
                     call.resolve(["url": callback.absoluteString])
@@ -106,6 +116,18 @@ public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
                 let cancelled = nsError?.domain == ASWebAuthenticationSessionError.errorDomain
                     && nsError?.code == ASWebAuthenticationSessionError.canceledLogin.rawValue
                 call.reject(cancelled ? "cancelled" : (error?.localizedDescription ?? "failed"))
+            }
+            let session: ASWebAuthenticationSession
+            if useHttps {
+                guard #available(iOS 17.4, *) else {
+                    call.reject("Universal Link precisa do iOS 17.4.")
+                    return
+                }
+                // https callback is tied to this app through the associated domain.
+                let callback = ASWebAuthenticationSession.Callback.https(host: "verse2note.com", path: "/auth/native-return")
+                session = ASWebAuthenticationSession(url: url, callback: callback, completionHandler: finish)
+            } else {
+                session = ASWebAuthenticationSession(url: url, callbackURLScheme: "verse2note", completionHandler: finish)
             }
             session.presentationContextProvider = self.anchor
             session.prefersEphemeralWebBrowserSession = true
@@ -118,7 +140,15 @@ public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     private static var apnsSandbox: Bool {
-        let raw = Bundle.main.object(forInfoDictionaryKey: "Verse2NoteApnsSandbox")
+        flag("Verse2NoteApnsSandbox")
+    }
+
+    private static var universalLinksBuild: Bool {
+        flag("Verse2NoteUniversalLinks")
+    }
+
+    private static func flag(_ key: String) -> Bool {
+        let raw = Bundle.main.object(forInfoDictionaryKey: key)
         if let value = raw as? Bool { return value }
         if let value = raw as? String {
             return value == "YES" || value == "true" || value == "1"

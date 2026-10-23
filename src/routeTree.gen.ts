@@ -23,11 +23,14 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ReadingRouteImport } from './routes/reading'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as DotwellKnownAppleAppSiteAssociationRouteImport } from './routes/[.]well-known/apple-app-site-association'
 import { Route as ApiCollectionsRouteImport } from './routes/api/collections'
 import { Route as ApiLinkRouteImport } from './routes/api/link'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
 import { Route as ApiPlansRouteImport } from './routes/api/plans'
+import { Route as AuthNativeConfigRouteImport } from './routes/auth/native-config'
 import { Route as AuthNativeDoneRouteImport } from './routes/auth/native-done'
+import { Route as AuthNativeReturnRouteImport } from './routes/auth/native-return'
 import { Route as AuthNativeStartRouteImport } from './routes/auth/native-start'
 import { Route as CIdRouteImport } from './routes/c.$id'
 import { Route as CollectionsIndexRouteImport } from './routes/collections.index'
@@ -128,6 +131,12 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownAppleAppSiteAssociationRoute =
+  DotwellKnownAppleAppSiteAssociationRouteImport.update({
+    id: '/.well-known/apple-app-site-association',
+    path: '/.well-known/apple-app-site-association',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiCollectionsRoute = ApiCollectionsRouteImport.update({
   id: '/api/collections',
   path: '/api/collections',
@@ -148,9 +157,19 @@ const ApiPlansRoute = ApiPlansRouteImport.update({
   path: '/api/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthNativeConfigRoute = AuthNativeConfigRouteImport.update({
+  id: '/auth/native-config',
+  path: '/auth/native-config',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthNativeDoneRoute = AuthNativeDoneRouteImport.update({
   id: '/auth/native-done',
   path: '/auth/native-done',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthNativeReturnRoute = AuthNativeReturnRouteImport.update({
+  id: '/auth/native-return',
+  path: '/auth/native-return',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthNativeStartRoute = AuthNativeStartRouteImport.update({
@@ -316,11 +335,14 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/.well-known/apple-app-site-association': typeof DotwellKnownAppleAppSiteAssociationRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/auth/native-config': typeof AuthNativeConfigRoute
   '/auth/native-done': typeof AuthNativeDoneRoute
+  '/auth/native-return': typeof AuthNativeReturnRoute
   '/auth/native-start': typeof AuthNativeStartRoute
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
@@ -361,11 +383,14 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/.well-known/apple-app-site-association': typeof DotwellKnownAppleAppSiteAssociationRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/auth/native-config': typeof AuthNativeConfigRoute
   '/auth/native-done': typeof AuthNativeDoneRoute
+  '/auth/native-return': typeof AuthNativeReturnRoute
   '/auth/native-start': typeof AuthNativeStartRoute
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
@@ -412,11 +437,14 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRouteWithChildren
   '/reading': typeof ReadingRouteWithChildren
   '/settings': typeof SettingsRoute
+  '/.well-known/apple-app-site-association': typeof DotwellKnownAppleAppSiteAssociationRoute
   '/api/collections': typeof ApiCollectionsRoute
   '/api/link': typeof ApiLinkRoute
   '/api/mcp': typeof ApiMcpRoute
   '/api/plans': typeof ApiPlansRoute
+  '/auth/native-config': typeof AuthNativeConfigRoute
   '/auth/native-done': typeof AuthNativeDoneRoute
+  '/auth/native-return': typeof AuthNativeReturnRoute
   '/auth/native-start': typeof AuthNativeStartRoute
   '/c/$id': typeof CIdRoute
   '/collections/$id': typeof CollectionsIdRoute
@@ -464,11 +492,14 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reading'
     | '/settings'
+    | '/.well-known/apple-app-site-association'
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/auth/native-config'
     | '/auth/native-done'
+    | '/auth/native-return'
     | '/auth/native-start'
     | '/c/$id'
     | '/collections/$id'
@@ -509,11 +540,14 @@ export interface FileRouteTypes {
     | '/login'
     | '/privacy'
     | '/settings'
+    | '/.well-known/apple-app-site-association'
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/auth/native-config'
     | '/auth/native-done'
+    | '/auth/native-return'
     | '/auth/native-start'
     | '/c/$id'
     | '/collections/$id'
@@ -559,11 +593,14 @@ export interface FileRouteTypes {
     | '/profile'
     | '/reading'
     | '/settings'
+    | '/.well-known/apple-app-site-association'
     | '/api/collections'
     | '/api/link'
     | '/api/mcp'
     | '/api/plans'
+    | '/auth/native-config'
     | '/auth/native-done'
+    | '/auth/native-return'
     | '/auth/native-start'
     | '/c/$id'
     | '/collections/$id'
@@ -610,11 +647,14 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRouteWithChildren
   ReadingRoute: typeof ReadingRouteWithChildren
   SettingsRoute: typeof SettingsRoute
+  DotwellKnownAppleAppSiteAssociationRoute: typeof DotwellKnownAppleAppSiteAssociationRoute
   ApiCollectionsRoute: typeof ApiCollectionsRoute
   ApiLinkRoute: typeof ApiLinkRoute
   ApiMcpRoute: typeof ApiMcpRoute
   ApiPlansRoute: typeof ApiPlansRoute
+  AuthNativeConfigRoute: typeof AuthNativeConfigRoute
   AuthNativeDoneRoute: typeof AuthNativeDoneRoute
+  AuthNativeReturnRoute: typeof AuthNativeReturnRoute
   AuthNativeStartRoute: typeof AuthNativeStartRoute
   CIdRoute: typeof CIdRoute
   GIdRoute: typeof GIdRoute
@@ -723,6 +763,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/.well-known/apple-app-site-association': {
+      id: '/.well-known/apple-app-site-association'
+      path: '/.well-known/apple-app-site-association'
+      fullPath: '/.well-known/apple-app-site-association'
+      preLoaderRoute: typeof DotwellKnownAppleAppSiteAssociationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/collections': {
       id: '/api/collections'
       path: '/api/collections'
@@ -751,11 +798,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPlansRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/native-config': {
+      id: '/auth/native-config'
+      path: '/auth/native-config'
+      fullPath: '/auth/native-config'
+      preLoaderRoute: typeof AuthNativeConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/native-done': {
       id: '/auth/native-done'
       path: '/auth/native-done'
       fullPath: '/auth/native-done'
       preLoaderRoute: typeof AuthNativeDoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/native-return': {
+      id: '/auth/native-return'
+      path: '/auth/native-return'
+      fullPath: '/auth/native-return'
+      preLoaderRoute: typeof AuthNativeReturnRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/native-start': {
@@ -1072,11 +1133,15 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRouteWithChildren,
   ReadingRoute: ReadingRouteWithChildren,
   SettingsRoute: SettingsRoute,
+  DotwellKnownAppleAppSiteAssociationRoute:
+    DotwellKnownAppleAppSiteAssociationRoute,
   ApiCollectionsRoute: ApiCollectionsRoute,
   ApiLinkRoute: ApiLinkRoute,
   ApiMcpRoute: ApiMcpRoute,
   ApiPlansRoute: ApiPlansRoute,
+  AuthNativeConfigRoute: AuthNativeConfigRoute,
   AuthNativeDoneRoute: AuthNativeDoneRoute,
+  AuthNativeReturnRoute: AuthNativeReturnRoute,
   AuthNativeStartRoute: AuthNativeStartRoute,
   CIdRoute: CIdRoute,
   GIdRoute: GIdRoute,
