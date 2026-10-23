@@ -31,9 +31,11 @@ export const getNotifyPrefs = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const { loadPrefs, hasSubscription } = await import("./notify.server");
+    const { countApnsDevices } = await import("./native/devices.server");
     const prefs = await loadPrefs(context.userId);
     const subscribed = await hasSubscription(context.userId);
-    return { ...prefs, subscribed };
+    const apns = await countApnsDevices(context.userId);
+    return { ...prefs, subscribed, apns };
   });
 
 export const saveNotifyPrefs = createServerFn({ method: "POST" })

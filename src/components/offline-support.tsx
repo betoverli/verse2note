@@ -1,7 +1,9 @@
 import { useEffect } from "react";
+import { isNativeApp } from "@/lib/native/runtime";
 
 export function OfflineSupport() {
   useEffect(() => {
+    if (isNativeApp()) return;
     if (!("serviceWorker" in navigator)) return;
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||

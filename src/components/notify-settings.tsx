@@ -5,9 +5,18 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { t } from "@/lib/i18n";
 import { getNotifyPrefs, saveNotifyPrefs, type NotifyPrefs } from "@/lib/notify";
 import { disablePush, enablePush, isStandalone, pushSupported } from "@/lib/push-client";
+import { isNativeApp } from "@/lib/native/runtime";
 import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+
+function nativePushEnabled() {
+  try {
+    return localStorage.getItem("verse2note.apns") === "1";
+  } catch {
+    return false;
+  }
+}
 
 function Toggle({
   on,
@@ -55,20 +64,25 @@ export function NotifySettings() {
   const [prefs, setPrefs] = useState<NotifyPrefs>({ reading: true, friends: true, shares: true, groups: true });
   const [deviceOn, setDeviceOn] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [native, setNative] = useState(false);
   const apple = isAppleUa();
   const standalone = isStandalone();
-  const supported = pushSupported();
-  const needsInstall = apple && !standalone;
+  const supported = native || pushSupported();
+  const needsInstall = apple && !standalone && !native;
+
+  useEffect(() => {
+    setNative(isNativeApp());
+  }, []);
 
   useEffect(() => {
     if (!user) return;
     void getNotifyPrefs()
       .then((data) => {
         setPrefs({ reading: data.reading, friends: data.friends, shares: data.shares, groups: data.groups });
-        setDeviceOn(data.subscribed);
+        setDeviceOn(native ? nativePushEnabled() : data.subscribed);
       })
       .catch(() => undefined);
-  }, [user]);
+  }, [user, native]);
 
   async function toggleDevice() {
     if (busy || needsInstall || !supported) return;
@@ -105,6 +119,7 @@ export function NotifySettings() {
       <section className="space-y-3">
         <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notifyDevice")}</h2>
         {needsInstall ? <p className="text-sm text-muted">{t(locale, "notifyInstall")}</p> : null}
+        {native ? <p className="text-sm text-muted">{t(locale, "notifyNativeHint")}</p> : null}
         {!supported ? <p className="text-sm text-muted">{t(locale, "notifyUnsupported")}</p> : null}
         <Toggle
           on={deviceOn}

@@ -19,6 +19,96 @@ Abre em `http://localhost:8080`.
 
 TanStack Start, React, Tailwind v4. Persistência no aparelho (`localStorage`).
 
+## App iOS
+
+O site continua a ser o site. O app de iPhone é uma capa nativa (Capacitor) cuja janela abre `https://verse2note.com`. Ícone, ecrã de abertura, avisos da Apple, folha de partilha e abertura da Bíblia (YouVersion e outras) são nativos. O login com Google ou X abre o navegador do sistema e volta para o app, porque a Apple e o Google recusam esse login dentro da janela embutida. E-mail e senha continuam na janela do app. O regresso do login traz só um código de uso único, preso a um segredo que fica no app.
+
+Quem usa o site no navegador não vê diferença. As funções nativas só acordam dentro do app.
+
+Não é preciso um Mac para o dia a dia. O GitHub Actions compila num Mac da nuvem.
+
+### O endereço é http ou https?
+
+`http://verse2note.com` já responde com um redirecionamento para `https://verse2note.com` e o site pede HTTPS aos navegadores (HSTS). O app abre o endereço **https**.
+
+Não há exceção de rede insegura no app, de propósito. A Apple bloqueia sites `http://` dentro do app, e o cookie de sessão (`__Host-…`, marcado como seguro) nem sequer é gravado em HTTP. Se alguém apontar o app para um endereço `http://`, o login deixa de funcionar. Não mude isso.
+
+### Login do app
+
+O navegador do sistema volta para o app de uma destas formas:
+
+1. **Enquanto não houver conta Apple**, o regresso usa o endereço `verse2note://`. Outro app poderia tentar registrar o mesmo nome. Por isso o código sozinho não entra na conta: o app gerou um segredo, mandou só a impressão digital dele, e apresenta o segredo na hora de trocar o código pela sessão. Quem copiar o código não consegue usá-lo.
+2. **Quando a conta Apple estiver paga** e a variável `APPLE_TEAM_ID` existir no servidor, o regresso passa a ser `https://verse2note.com/auth/native-return`. Esse endereço só abre neste app, porque o site publica a associação e o app de TestFlight declara o domínio. O iPhone precisa do iOS 17.4 ou mais novo para esse caminho. O segredo do ponto 1 continua valendo.
+
+O código dura 90 segundos e só serve uma vez. No banco fica a sessão cifrada (AES-GCM), não o token legível. Se não houver chave nenhuma, o login do app recusa e não grava nada. O login do site no navegador não usa esta tabela.
+
+### O que já corre sem conta de programador Apple
+
+Em cada pull request, o fluxo **iOS** compila o app para o simulador **sem assinatura**. Isso prova que o projeto abre. Não instala no iPhone e não envia avisos.
+
+### Quando a conta Apple Developer estiver paga
+
+A conta custa cerca de 99 dólares por ano, em [developer.apple.com](https://developer.apple.com). Sem ela não há TestFlight nem App Store, e os avisos nativos não saem do aparelho.
+
+O identificador do app é `com.verse2note.app`. Use esse nome em todo o lado. A versão visível está em `ios/App/App.xcodeproj/project.pbxproj` (`MARKETING_VERSION`, hoje `1.0`). O número de build do TestFlight sobe sozinho a cada envio.
+
+#### 1. No site da Apple
+
+1. Em Certificates, Identifiers & Profiles, crie um App ID `com.verse2note.app` e marque **Push Notifications** e **Associated Domains**.
+2. Crie uma chave **Apple Push Notifications service (APNs)**. Transfira o ficheiro `.p8` uma única vez. Anote o Key ID e o Team ID (10 letras/números).
+3. Crie um certificado **Apple Distribution**, exporte-o do Porta-chaves como `.p12` com uma senha, e passe a Base64:
+   `base64 -i certificado.p12 | pbcopy` (num Mac) ou peça a alguém com Mac. Guarde a senha.
+4. Crie um perfil de provisionamento **App Store** para esse App ID, com esse certificado. Transfira o `.mobileprovision` e passe a Base64 da mesma forma.
+5. Em Users and Access → Integrations, crie uma chave de API do App Store Connect com acesso de desenvolvedor. Transfira o `.p8`. Anote o Issuer ID e o Key ID (é outra chave, diferente da de avisos).
+6. Em App Store Connect, crie a ficha do app Verse2Note com o mesmo identificador.
+
+#### 2. Segredos no GitHub (compilação e TestFlight)
+
+No repositório: Settings → Secrets and variables → Actions → New repository secret.
+
+| Nome | O que é |
+| --- | --- |
+| `APPLE_TEAM_ID` | Team ID, 10 caracteres |
+| `APP_STORE_CONNECT_ISSUER_ID` | Issuer ID da chave de API |
+| `APP_STORE_CONNECT_KEY_ID` | Key ID da chave de API (não a de avisos) |
+| `APP_STORE_CONNECT_PRIVATE_KEY` | Conteúdo do `.p8` da API, ou o mesmo ficheiro em Base64 |
+| `IOS_DISTRIBUTION_CERTIFICATE_P12_BASE64` | O `.p12` em Base64 |
+| `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD` | Senha desse `.p12` |
+| `IOS_PROVISIONING_PROFILE_BASE64` | O `.mobileprovision` em Base64 |
+
+Quando os sete existirem: Actions → **iOS** → Run workflow → marque **Enviar ao TestFlight**. Sem os segredos, esse passo recusa e não envia nada. O build do simulador não precisa deles.
+
+#### 3. Variáveis no servidor (para os avisos saírem)
+
+O envio do aviso fica no site, ao lado dos avisos que o navegador já recebe. Na Vercel (ou onde o site corre), acrescente:
+
+| Nome | O que é |
+| --- | --- |
+| `APNS_KEY_ID` | Key ID da chave de avisos |
+| `APNS_TEAM_ID` | O mesmo Team ID |
+| `APNS_PRIVATE_KEY` | Conteúdo do `.p8` de avisos. Se a quebra de linha desaparecer, troque cada quebra por `\n` |
+| `APNS_TOPIC` | Opcional. Por omissão `com.verse2note.app` |
+| `APNS_ENVIRONMENT` | Opcional. `production` para TestFlight e App Store. `sandbox` só para um app instalado pelo Xcode em modo de desenvolvimento |
+| `APPLE_TEAM_ID` | Opcional até a conta existir. Os mesmos 10 caracteres do Team ID. Liga o regresso do login por `https://verse2note.com/auth/native-return`. Sem isto, o app continua a voltar por `verse2note://`, com o segredo descrito acima |
+| `NATIVE_AUTH_HANDOFF_KEY` | Opcional. 32 bytes em Base64 ou 64 caracteres hex. Cifra a sessão guardada por 90 segundos. Se faltar, o servidor usa `BETTER_AUTH_SECRET`, que o site já tem. Se as duas faltarem, o login do app para e o banco não recebe o token |
+
+Sem as variáveis de avisos o site continua igual e os avisos do navegador continuam. Os avisos do iPhone só passam a sair depois disto **e** de publicar esta versão do site.
+
+Depois de gravar `APPLE_TEAM_ID`, publique o site. A Apple guarda uma cópia do ficheiro `https://verse2note.com/.well-known/apple-app-site-association` e pode demorar algumas horas a vê-la. Até lá, se o login do app falhar no TestFlight, apague `APPLE_TEAM_ID` por um momento: o regresso volta ao esquema `verse2note://`. O perfil de provisionamento tem de incluir Associated Domains, senão a assinatura do TestFlight recusa.
+
+#### 4. Publicar o site
+
+O app mostra o site que está no ar. Ícone e ecrã de abertura já vêm no app. Partilha nativa, avisos e o login pelo navegador do sistema passam a funcionar quando esta versão estiver em verse2note.com.
+
+### Desenvolvimento
+
+```bash
+npm run ios:check
+npm run ios:sync
+```
+
+`ios:sync` copia a configuração para o projeto Xcode. Para apontar o app a outro site HTTPS durante um teste: `CAPACITOR_SERVER_URL=https://exemplo.com npm run ios:sync`. Não use `http://`.
+
 ## API / agentes
 
 - Docs: [/for-ai](https://verse2note.com/for-ai)

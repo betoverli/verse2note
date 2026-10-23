@@ -50,6 +50,10 @@ export function Login() {
     try {
       await signIn(providerId, { callbackURL: afterAuth });
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setBusy(false);
+        return;
+      }
       const message = err instanceof Error ? err.message : "";
       setError(/pop-up|popup/i.test(message) ? t(locale, "accountPopup") : message || t(locale, "accountError"));
       setBusy(false);
