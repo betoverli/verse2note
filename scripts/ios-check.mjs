@@ -42,6 +42,9 @@ if (!releaseEntitlements.includes("<string>production</string>")) {
 if (!releaseEntitlements.includes("applinks:verse2note.com")) {
   errors.push("O Release tem de declarar o domínio verse2note.com para o regresso do login.");
 }
+if (!releaseEntitlements.includes("webcredentials:verse2note.com")) {
+  errors.push("O Release tem de declarar webcredentials:verse2note.com, senão o iPhone não abre a folha de login.");
+}
 
 const project = read("ios/App/App.xcodeproj/project.pbxproj");
 if (project.includes("CODE_SIGN_ENTITLEMENTS = App/AppDebug")) {
@@ -63,6 +66,13 @@ const shell = read("ios/App/App/NativeShell.swift");
 if (!shell.includes('path: "/auth/native-return"') || !shell.includes("Callback.https")) {
   errors.push("O login nativo tem de poder regressar por Universal Link.");
 }
+if (!shell.includes("Verse2NoteBridgeViewController")) {
+  errors.push("O controlador da ponte tem de registrar o plugin de login.");
+}
+const scene = read("ios/App/App/SceneDelegate.swift");
+if (!scene.includes("rootViewController = Verse2NoteBridgeViewController()")) {
+  errors.push("O SceneDelegate tem de mostrar o controlador que registra o login.");
+}
 const handoff = read("src/lib/native/handoff.server.ts");
 if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) {
   errors.push("O handoff não pode gravar o token de sessão em claro.");
@@ -70,6 +80,10 @@ if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) 
 const aasa = read("src/routes/[.]well-known/apple-app-site-association.ts");
 if (!aasa.includes("appleAppSiteAssociation")) {
   errors.push("Falta servir apple-app-site-association.");
+}
+const aasaSource = read("src/lib/native/aasa.server.ts");
+if (!aasaSource.includes("webcredentials")) {
+  errors.push("O AASA tem de publicar webcredentials para o ASWebAuthenticationSession HTTPS.");
 }
 
 for (const path of [

@@ -30,8 +30,9 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
 }
 
 /// Opens Google/X login in the system browser.
-/// The return is an https Universal Link when the build and the site both
-/// have the Apple team association. Otherwise it is the verse2note scheme.
+/// The return is an https callback when the build and the site both have the
+/// Apple team association, including webcredentials (required before iOS will
+/// present ASWebAuthenticationSession). Otherwise it is the verse2note scheme.
 /// Either way the code is useless without the verifier kept in the app.
 @objc(NativeAuthPlugin)
 public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -102,6 +103,9 @@ public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
 
         let useHttps = call.getString("callback") == "https"
         DispatchQueue.main.async {
+            self.anchor.windowProvider = { [weak self] in
+                self?.bridge?.webView?.window
+            }
             if self.session != nil {
                 call.reject("Login já está aberto.")
                 return
@@ -158,9 +162,23 @@ public class NativeAuthPlugin: CAPPlugin, CAPBridgedPlugin {
 }
 
 private final class AuthAnchor: NSObject, ASWebAuthenticationPresentationContextProviding {
+    var windowProvider: () -> UIWindow? = { nil }
+
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        if let window = windowProvider(), window.windowScene != nil {
+            return window
+        }
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let windows = scenes.flatMap { $0.windows }
-        return windows.first { $0.isKeyWindow } ?? windows.first ?? ASPresentationAnchor()
+        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+        if let window = scene?.keyWindow {
+            return window
+        }
+        if let window = scene?.windows.first(where: { $0.isKeyWindow && !$0.isHidden }) {
+            return window
+        }
+        if let scene {
+            return UIWindow(windowScene: scene)
+        }
+        return ASPresentationAnchor()
     }
 }

@@ -27,6 +27,17 @@ export function nativeReturnTo(
   return `verse2note://auth${qs ? `?${qs}` : ""}`;
 }
 
+/**
+ * The HTTPS auth session refuses to present when the app is not associated
+ * via `webcredentials` (typical on a TestFlight build that only declared
+ * `applinks`). That failure is not a user cancel, so the caller can open the
+ * custom-scheme session instead. A cancel must not start a second prompt.
+ */
+export function shouldFallBackToScheme(mode: NativeReturnMode, message: string): boolean {
+  if (mode !== "https") return false;
+  return !/cancel/i.test(message);
+}
+
 /** True when this URL is the callback the app is waiting for, and it succeeded. */
 export function isAllowedReturn(url: URL, mode: NativeReturnMode): boolean {
   if (url.searchParams.has("error")) return false;
