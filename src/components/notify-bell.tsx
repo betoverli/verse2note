@@ -117,7 +117,7 @@ export function NotifyBell() {
                 </button>
               ) : null}
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div>
               {items == null ? (
                 <div className="h-16 rounded-[16px] bg-surface" aria-hidden />
               ) : items.length === 0 ? (

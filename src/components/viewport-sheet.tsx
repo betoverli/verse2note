@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /** Full-width bottom form sheet. Top radius only, flush with the screen edge. */
 export const formSheetClass =
-  "flex max-h-[min(85dvh,40rem)] w-full flex-col overflow-y-auto rounded-t-[20px] bg-elevated pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]";
+  "flex w-full flex-col rounded-t-[20px] bg-elevated pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))]";
 
 export function SheetGrabber() {
   return <div className="mx-auto mb-3 h-1.5 w-9 shrink-0 rounded-full bg-fill" aria-hidden />;
@@ -16,11 +16,8 @@ function useViewportBox() {
   useEffect(() => {
     const vv = window.visualViewport;
     const update = () => {
-      if (!vv) {
-        setBox({ top: 0, height: window.innerHeight });
-        return;
-      }
-      setBox({ top: vv.offsetTop, height: vv.height });
+      const next = !vv ? { top: 0, height: window.innerHeight } : { top: vv.offsetTop, height: vv.height };
+      setBox((prev) => (prev.top === next.top && prev.height === next.height ? prev : next));
     };
     update();
     vv?.addEventListener("resize", update);
@@ -63,7 +60,7 @@ function SheetFrame({ children, onClose }: { children: ReactNode; onClose: () =>
       style={{ top: box.top, left: 0, width: "100%", height: box.height || "100%" }}
     >
       <button type="button" className="ios-sheet-backdrop absolute inset-0 bg-black/40" aria-label="Close" onClick={onClose} />
-      <div className="ios-sheet-panel relative z-10 w-full max-h-full overflow-y-auto">{children}</div>
+      <div className="ios-sheet-panel relative z-10 w-full max-h-[min(85dvh,40rem)] overflow-y-auto">{children}</div>
     </div>,
     document.body,
   );

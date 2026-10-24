@@ -40,7 +40,7 @@ export function Landing() {
 
   return (
     <main
-      className="mx-auto flex h-dvh w-full max-w-lg flex-col overflow-hidden px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6"
+      className="clip-box mx-auto flex h-dvh w-full max-w-lg flex-col px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6"
       suppressHydrationWarning
     >
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />

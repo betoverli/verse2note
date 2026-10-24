@@ -14,6 +14,7 @@ import { ActionSheet } from "@/components/viewport-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { Button } from "@/components/ui/button";
 import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
+import { lockSwipe } from "@/lib/swipe-axis";
 import { cn } from "@/lib/utils";
 
 type Filter = "all" | "tags" | "speakers" | "shared";
@@ -33,8 +34,10 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
   const shareIcon = useRef<HTMLSpanElement>(null);
   const deleteIcon = useRef<HTMLSpanElement>(null);
   const x = useRef(0);
-  const start = useRef({ x: 0, y: 0, lock: "" as "" | "h" | "v" });
+  const dragged = useRef(false);
   const width = useRef(1);
+  const paintRef = useRef<(value: number, animate?: boolean) => void>(() => {});
+  const finishRef = useRef<(dir: "share" | "delete" | "reset") => void>(() => {});
 
   function paint(value: number, animate = false) {
     x.current = value;
@@ -68,88 +71,89 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
     paint(0, true);
   }
 
+  paintRef.current = paint;
+  finishRef.current = finish;
+
   useEffect(() => {
     const el = layer.current;
     if (!el) return;
 
-    const point = (event: TouchEvent | PointerEvent) => {
-      if ("touches" in event) {
-        const touch = event.touches[0] ?? event.changedTouches[0];
-        return { x: touch?.clientX ?? 0, y: touch?.clientY ?? 0 };
-      }
-      return { x: event.clientX, y: event.clientY };
-    };
+    let originX = 0;
+    let originY = 0;
+    let lock: "" | "h" | "v" = "";
+    let pointerId = -1;
 
-    const onStart = (event: TouchEvent | PointerEvent) => {
-      if ("button" in event && event.button) return;
+    const onDown = (event: PointerEvent) => {
+      if (event.button) return;
       width.current = wrap.current?.getBoundingClientRect().width || 1;
-      const p = point(event);
-      start.current = { x: p.x, y: p.y, lock: "" };
+      originX = event.clientX;
+      originY = event.clientY;
+      lock = "";
+      pointerId = event.pointerId;
     };
 
-    const onMove = (event: TouchEvent | PointerEvent) => {
-      const p = point(event);
-      if (!p.x && !p.y && !start.current.lock) return;
-      const dx = p.x - start.current.x;
-      const dy = p.y - start.current.y;
-      if (!start.current.lock) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        start.current.lock = Math.abs(dx) > Math.abs(dy) ? "h" : "v";
+    const onMove = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId || lock === "v") return;
+      const dx = event.clientX - originX;
+      const dy = event.clientY - originY;
+      if (!lock) {
+        const next = lockSwipe(dx, dy);
+        if (!next) return;
+        lock = next;
+        if (lock !== "h") return;
+        try {
+          el.setPointerCapture(event.pointerId);
+        } catch {
+          /* pointer already released */
+        }
       }
-      if (start.current.lock !== "h") return;
-      event.preventDefault();
       const max = width.current;
-      paint(Math.max(-max, Math.min(max, dx)));
+      paintRef.current(Math.max(-max, Math.min(max, dx)));
     };
 
-    const onEnd = () => {
-      const lock = start.current.lock;
+    const onUp = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      pointerId = -1;
+      const wasHorizontal = lock === "h";
+      lock = "";
+      if (!wasHorizontal) return;
+      // A touchend that preventDefaulted used to swallow the click. Pointer
+      // events do not, so ignore the click that follows a sideways drag.
+      dragged.current = true;
+      window.setTimeout(() => {
+        dragged.current = false;
+      }, 400);
       const dx = x.current;
-      start.current.lock = "";
-      if (lock !== "h") return;
       const threshold = Math.max(72, width.current * 0.28);
-      if (dx <= -threshold) finish("delete");
-      else if (dx >= threshold) finish("share");
-      else finish("reset");
+      if (dx <= -threshold) finishRef.current("delete");
+      else if (dx >= threshold) finishRef.current("share");
+      else finishRef.current("reset");
     };
 
-    el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchmove", onMove, { passive: false });
-    el.addEventListener("touchend", onEnd);
-    el.addEventListener("touchcancel", onEnd);
-    const onPointerStart = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-      onStart(event);
-      try {
-        el.setPointerCapture(event.pointerId);
-      } catch {
-        /* pointer already released */
-      }
+    const onCancel = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      pointerId = -1;
+      const wasHorizontal = lock === "h";
+      lock = "";
+      if (wasHorizontal) finishRef.current("reset");
     };
-    const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType === "touch") return;
-      onMove(event);
-    };
-    el.addEventListener("pointerdown", onPointerStart);
-    el.addEventListener("pointermove", onPointerMove);
-    el.addEventListener("pointerup", onEnd);
-    el.addEventListener("pointercancel", onEnd);
+
+    el.addEventListener("pointerdown", onDown);
+    el.addEventListener("pointermove", onMove);
+    el.addEventListener("pointerup", onUp);
+    el.addEventListener("pointercancel", onCancel);
     return () => {
-      el.removeEventListener("touchstart", onStart);
-      el.removeEventListener("touchmove", onMove);
-      el.removeEventListener("touchend", onEnd);
-      el.removeEventListener("touchcancel", onEnd);
-      el.removeEventListener("pointerdown", onPointerStart);
-      el.removeEventListener("pointermove", onPointerMove);
-      el.removeEventListener("pointerup", onEnd);
-      el.removeEventListener("pointercancel", onEnd);
+      el.removeEventListener("pointerdown", onDown);
+      el.removeEventListener("pointermove", onMove);
+      el.removeEventListener("pointerup", onUp);
+      el.removeEventListener("pointercancel", onCancel);
     };
   }, [note.id]);
 
   if (gone) return null;
 
   return (
-    <div ref={wrap} className="relative overflow-hidden">
+    <div ref={wrap} className="clip-box relative">
       <div
         ref={shareBg}
         className="pointer-events-none absolute inset-0 flex items-center justify-start bg-accent px-5 text-accent-fg opacity-0"
@@ -171,10 +175,10 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
       <div
         ref={layer}
         role="link"
-        className="relative bg-surface will-change-transform active:bg-fill"
+        className="relative bg-surface active:bg-fill"
         style={{ touchAction: "pan-y" }}
         onClick={() => {
-          if (Math.abs(x.current) > 12) return;
+          if (dragged.current || Math.abs(x.current) > 12) return;
           void navigate({ to: "/notebook/$id", params: { id: note.id } });
         }}
       >

@@ -8,6 +8,7 @@ export function NativeShell() {
 
   useEffect(() => {
     if (!isNativeApp()) return;
+    document.documentElement.classList.add("native-ios");
     void import("@/lib/native/shell").then((mod) => mod.installNativeShell());
   }, []);
 
