@@ -79,7 +79,7 @@ Não há exceção de rede insegura no app, de propósito. A Apple bloqueia site
 O navegador do sistema volta para o app de uma destas formas:
 
 1. **Enquanto não houver conta Apple**, o regresso usa o endereço `verse2note://`. Outro app poderia tentar registrar o mesmo nome. Por isso o código sozinho não entra na conta: o app gerou um segredo, mandou só a impressão digital dele, e apresenta o segredo na hora de trocar o código pela sessão. Quem copiar o código não consegue usá-lo.
-2. **Quando a conta Apple estiver paga** e a variável `APPLE_TEAM_ID` existir no servidor, o regresso passa a ser `https://verse2note.com/auth/native-return`. Esse endereço só abre neste app, porque o site publica a associação e o app de TestFlight declara o domínio. O iPhone precisa do iOS 17.4 ou mais novo para esse caminho. O segredo do ponto 1 continua valendo.
+2. **Quando a conta Apple estiver paga** e a variável `APPLE_TEAM_ID` existir no servidor, o regresso preferido é `https://verse2note.com/auth/native-return`. O iPhone só abre essa folha de login (iOS 17.4 ou mais novo) se o app e o site concordarem nos dois serviços de domínio: `applinks:verse2note.com` (o link de regresso) e `webcredentials:verse2note.com` (a autorização que o `ASWebAuthenticationSession` exige antes de mostrar o Google). Com só o `applinks`, o toque em Continuar com Google não abre nada. Se essa verificação falhar, o app tenta outra vez com `verse2note://`. O segredo do ponto 1 continua valendo.
 
 O código dura 90 segundos e só serve uma vez. No banco fica a sessão cifrada (AES-GCM), não o token legível. Se não houver chave nenhuma, o login do app recusa e não grava nada. O login do site no navegador não usa esta tabela.
 
@@ -135,7 +135,7 @@ O envio do aviso fica no site, ao lado dos avisos que o navegador já recebe. Na
 
 Sem as variáveis de avisos o site continua igual e os avisos do navegador continuam. Os avisos do iPhone só passam a sair depois disto **e** de publicar esta versão do site.
 
-Depois de gravar `APPLE_TEAM_ID`, publique o site. A Apple guarda uma cópia do ficheiro `https://verse2note.com/.well-known/apple-app-site-association` e pode demorar algumas horas a vê-la. Até lá, se o login do app falhar no TestFlight, apague `APPLE_TEAM_ID` por um momento: o regresso volta ao esquema `verse2note://`. O perfil de provisionamento tem de incluir Associated Domains, senão a assinatura do TestFlight recusa.
+Depois de gravar `APPLE_TEAM_ID`, publique o site. O ficheiro `https://verse2note.com/.well-known/apple-app-site-association` tem de listar `TEAMID.com.verse2note.app` em `applinks` e em `webcredentials`. A Apple guarda uma cópia e pode demorar algumas horas a vê-la. Enquanto isso o login do app volta por `verse2note://` sozinho; não é preciso apagar `APPLE_TEAM_ID`. O perfil de provisionamento tem de incluir Associated Domains (cobre `applinks` e `webcredentials`). No Google Cloud não se acrescenta o esquema `verse2note`: o redirect autorizado continua a ser `https://verse2note.com/api/auth/callback/google`. O `Info.plist` já tem o esquema `verse2note`, e o `capacitor.config.ts` não deve passar a abrir `accounts.google.com` dentro da janela do app.
 
 #### 4. Publicar o site
 

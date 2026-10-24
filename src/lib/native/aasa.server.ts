@@ -12,16 +12,23 @@ export function configuredTeamId(): string | null {
  * apple-app-site-association. With no Team ID the file is valid and claims
  * no app, so the custom-scheme return keeps working. After APPLE_TEAM_ID is
  * set, only that team's app receives /auth/native-return.
+ *
+ * `webcredentials` is required for ASWebAuthenticationSession's HTTPS callback
+ * (iOS 17.4+). `applinks` alone lets the return URL open the app, but the
+ * system refuses to present the login sheet until this app is also listed
+ * under webcredentials.
  */
 export function appleAppSiteAssociation(teamId: string | null): {
   applinks: { details: Array<{ appIDs: string[]; components: Array<Record<string, unknown>> }> };
+  webcredentials?: { apps: string[] };
 } {
   if (!teamId) return { applinks: { details: [] } };
+  const appId = `${teamId}.${BUNDLE_ID}`;
   return {
     applinks: {
       details: [
         {
-          appIDs: [`${teamId}.${BUNDLE_ID}`],
+          appIDs: [appId],
           components: [
             {
               "/": UNIVERSAL_RETURN_PATH,
@@ -31,5 +38,6 @@ export function appleAppSiteAssociation(teamId: string | null): {
         },
       ],
     },
+    webcredentials: { apps: [appId] },
   };
 }

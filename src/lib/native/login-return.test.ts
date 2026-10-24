@@ -5,7 +5,7 @@ import { appleAppSiteAssociation } from "./aasa.server.ts";
 import { openSessionToken, resolveHandoffKey, sealSessionToken } from "./handoff-seal.server.ts";
 import { pkceCookieHeader, readPkceCookie } from "./pkce-cookie.ts";
 import { isPkceMaterial, newPkceVerifier, pkceChallenge, samePkce, verifierMatches } from "./pkce.ts";
-import { isAllowedReturn, nativeReturnTo } from "./return-to.ts";
+import { isAllowedReturn, nativeReturnTo, shouldFallBackToScheme } from "./return-to.ts";
 
 const token = "session-token-that-must-not-be-stored-raw";
 
@@ -75,10 +75,21 @@ describe("handoff seal", () => {
 
 describe("apple-app-site-association", () => {
   it("claims no app until the Team ID exists", () => {
-    const empty = JSON.stringify(appleAppSiteAssociation(null));
-    assert.equal(empty.includes("com.verse2note.app"), false);
+    const empty = appleAppSiteAssociation(null);
+    assert.equal(JSON.stringify(empty).includes("com.verse2note.app"), false);
+    assert.equal("webcredentials" in empty, false);
     const live = appleAppSiteAssociation("AB12CD34EF");
     assert.deepEqual(live.applinks.details[0]?.appIDs, ["AB12CD34EF.com.verse2note.app"]);
     assert.equal(live.applinks.details[0]?.components[0]?.["/"], "/auth/native-return");
+    assert.deepEqual(live.webcredentials, { apps: ["AB12CD34EF.com.verse2note.app"] });
+  });
+});
+
+describe("https auth session fallback", () => {
+  it("retries the custom scheme only when the https sheet never opened", () => {
+    assert.equal(shouldFallBackToScheme("https", "Não foi possível abrir o login."), true);
+    assert.equal(shouldFallBackToScheme("https", "cancelled"), false);
+    assert.equal(shouldFallBackToScheme("https", "The user cancelled the login."), false);
+    assert.equal(shouldFallBackToScheme("scheme", "Não foi possível abrir o login."), false);
   });
 });
