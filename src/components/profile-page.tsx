@@ -292,8 +292,10 @@ export function ProfileView() {
               disabled={signingOut}
               onClick={() => {
                 setSigningOut(true);
-                useAppStore.getState().clearAccount();
-                void signOut("/app").catch(() => setSigningOut(false));
+                void signOut().catch(() => {
+                  setSigningOut(false);
+                  toast.error(t(locale, "signOutFailed"));
+                });
               }}
             >
               {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
@@ -339,7 +341,10 @@ export function ProfileView() {
                     clearMyGroupsCache();
                     useAppStore.getState().clearAccount();
                     toast.success(t(locale, "accountDeleted"));
-                    void signOut("/").catch(() => setSigningOut(false));
+                    void signOut().catch(() => {
+                      setSigningOut(false);
+                      toast.error(t(locale, "signOutFailed"));
+                    });
                   })
                   .catch(() => {
                     setSigningOut(false);

@@ -6,6 +6,7 @@ import { GROK_PROVIDERS } from "./providers";
 import { clearSessionUser } from "./session-cache";
 import { clearOutbox } from "@/lib/outbox";
 import { isNativeApp } from "@/lib/native/runtime";
+import { useAppStore } from "@/lib/store";
 
 /**
  * Better Auth client for this React SPA (browser-side).
@@ -128,6 +129,9 @@ export async function signIn(
   });
 
   if (isNativeApp()) {
+    // The WebView must not call signIn.social. That would navigate the shell
+    // itself, and Google's redirect_uri would follow whatever host the shell
+    // happened to be on. The system browser always starts on the canonical site.
     const { signInWithNativeBrowser } = await import("@/lib/native/auth");
     await signInWithNativeBrowser(providerId, callbackURL);
     return;
@@ -253,18 +257,32 @@ export async function adoptNativeSession(token: string, callbackURL: string): Pr
 }
 
 /**
- * Sign out of THIS app's local session, clear the preview token, then redirect.
+ * Where sign-out lands. `/` sends an onboarded person straight back into the
+ * app, and an unfinished profile then covers that page again. `/login` is
+ * public, so the profile gate cannot paint over it.
+ */
+export const SIGN_OUT_PATH = "/login";
+
+async function clearNativeAuthCookies(): Promise<void> {
+  const { registerPlugin } = await import("@capacitor/core");
+  const cookies = registerPlugin<{ clearAllCookies(): Promise<void> }>("CapacitorCookies");
+  await cookies.clearAllCookies();
+}
+
+/**
+ * Sign out of THIS app's local session, clear the preview token, then open
+ * the login screen.
  *
  * Use this, never `authClient.signOut()` — see the note on `authClient`.
  * Sequencing lives in `scripts/sign-out-plan.mjs` so it can be unit-tested.
  *
  * **Rejects when deployed if the server never confirms.** There the session is
  * an HttpOnly cookie only the server can clear, so redirecting anyway would
- * report a sign-out that did not happen. `<UserButton />` handles that for you;
- * a hand-rolled control must catch it and let the visitor retry. In the live
- * preview the local clear is sufficient, so it always resolves.
+ * report a sign-out that did not happen. Callers must catch it and let the
+ * visitor retry. In the live preview the local clear is sufficient, so it
+ * always resolves.
  */
-export async function signOut(redirectTo = "/"): Promise<void> {
+export async function signOut(redirectTo = SIGN_OUT_PATH): Promise<void> {
   clearSessionUser();
   clearOutbox();
   await runSignOut({
@@ -277,8 +295,19 @@ export async function signOut(redirectTo = "/"): Promise<void> {
       if (error) throw new Error(error.message ?? "Sign-out failed");
     },
     clearToken: () => setBearerToken(null),
-    redirect: () => {
-      window.location.href = redirectTo;
+    redirect: async () => {
+      // A render while the request was in flight may have written the cached
+      // user back. Drop it again, and drop the local profile, before the next
+      // page reads either one.
+      clearSessionUser();
+      useAppStore.getState().clearAccount();
+      if (isNativeApp()) {
+        await Promise.race([
+          clearNativeAuthCookies().catch(() => undefined),
+          new Promise((resolve) => setTimeout(resolve, 1500)),
+        ]);
+      }
+      window.location.assign(redirectTo);
     },
   });
 }

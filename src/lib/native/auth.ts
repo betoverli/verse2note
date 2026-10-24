@@ -4,6 +4,8 @@ import { claimNativeHandoff } from "@/lib/native/handoff";
 import { newPkceVerifier, pkceChallenge } from "@/lib/native/pkce";
 import {
   isAllowedReturn,
+  nativeOAuthStartOrigin,
+  preferredNativeReturnMode,
   shouldFallBackToScheme,
   type NativeReturnMode,
 } from "@/lib/native/return-to";
@@ -37,25 +39,34 @@ function asAuthError(error: unknown): Error {
 }
 
 function nativeStartUrl(providerId: string, challenge: string, mode: NativeReturnMode): string {
-  const start = new URL("/auth/native-start", window.location.origin);
+  // Always the canonical host when the page is not a local/sandbox origin.
+  // Google's redirect_uri is that host plus /api/auth/callback/google — never
+  // /auth/native-done, /auth/native-return, or the custom scheme.
+  const start = new URL("/auth/native-start", nativeOAuthStartOrigin(window.location.href));
   start.searchParams.set("providerId", providerId);
   start.searchParams.set("code_challenge", challenge);
   start.searchParams.set("return", mode);
   return start.toString();
 }
 
-async function chooseReturnMode(): Promise<NativeReturnMode> {
+function acceptReturn(raw: string, mode: NativeReturnMode): URL | null {
   try {
-    const runtime = await NativeAuth.runtime();
-    if (!runtime.supportsHttpsCallback || !runtime.universalLinksBuild) return "scheme";
-    if (window.location.hostname !== "verse2note.com") return "scheme";
-    const res = await fetch("/auth/native-config", { headers: { accept: "application/json" } });
-    if (!res.ok) return "scheme";
-    const body = (await res.json()) as { universalLinks?: boolean };
-    return body.universalLinks ? "https" : "scheme";
+    const url = new URL(raw);
+    return isAllowedReturn(url, mode) ? url : null;
   } catch {
-    return "scheme";
+    return null;
   }
+}
+
+async function startSession(
+  providerId: string,
+  challenge: string,
+  mode: NativeReturnMode,
+): Promise<{ url: string }> {
+  return NativeAuth.start({
+    url: nativeStartUrl(providerId, challenge, mode),
+    callback: mode,
+  });
 }
 
 /**
@@ -63,6 +74,9 @@ async function chooseReturnMode(): Promise<NativeReturnMode> {
  * system browser (ASWebAuthenticationSession), then brings a one-time code
  * back into the app. The website's normal redirect is unchanged.
  * The verifier stays in this call. The return URL only carries the code.
+ *
+ * The installed build already registers this custom scheme. Its HTTPS callback
+ * is reported as a cancel, and a cancel is not retried.
  */
 export async function signInWithNativeBrowser(
   providerId: string,
@@ -70,37 +84,34 @@ export async function signInWithNativeBrowser(
 ): Promise<void> {
   const verifier = newPkceVerifier();
   const challenge = await pkceChallenge(verifier);
-  let mode = await chooseReturnMode();
+  let mode: NativeReturnMode = preferredNativeReturnMode();
   let result: { url: string };
   try {
-    result = await NativeAuth.start({
-      url: nativeStartUrl(providerId, challenge, mode),
-      callback: mode,
-    });
+    result = await startSession(providerId, challenge, mode);
   } catch (error) {
-    // iOS will not show the sheet for an HTTPS callback until this app is in
-    // the domain's webcredentials association. The custom scheme is already
-    // registered and does not depend on that check, so retry it once.
+    // Kept for a caller that still asks for https. A cancel is the user
+    // closing the sheet, so it must not open a second one.
     if (!shouldFallBackToScheme(mode, errorMessage(error))) throw asAuthError(error);
     mode = "scheme";
     try {
-      result = await NativeAuth.start({
-        url: nativeStartUrl(providerId, challenge, mode),
-        callback: mode,
-      });
+      result = await startSession(providerId, challenge, mode);
     } catch (retryError) {
       throw asAuthError(retryError);
     }
   }
-  let back: URL;
-  try {
-    back = new URL(result.url);
-  } catch {
-    throw new Error("Sign-in was cancelled or failed");
+  let back = acceptReturn(result.url, mode);
+  if (!back && mode === "https") {
+    // The HTTPS session can finish at once with an error URL. That is not a
+    // tap on Cancel, so try the scheme the binary already captures.
+    mode = "scheme";
+    try {
+      result = await startSession(providerId, challenge, mode);
+    } catch (retryError) {
+      throw asAuthError(retryError);
+    }
+    back = acceptReturn(result.url, mode);
   }
-  if (!isAllowedReturn(back, mode)) {
-    throw new Error("Sign-in was cancelled or failed");
-  }
+  if (!back) throw new Error("Sign-in was cancelled or failed");
   const code = back.searchParams.get("code") ?? "";
   const claimed = await claimNativeHandoff({ data: { code, verifier } });
   if (!claimed.ok || !("token" in claimed) || !claimed.token) {

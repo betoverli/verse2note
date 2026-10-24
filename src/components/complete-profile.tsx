@@ -42,6 +42,7 @@ export function CompleteProfile() {
   const setProfile = useAppStore((s) => s.setProfile);
   const { user } = useCurrentUserState();
   const [busy, setBusy] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -134,10 +135,18 @@ export function CompleteProfile() {
       </form>
       <button
         type="button"
-        className="mt-auto min-h-11 pt-8 text-[17px] text-accent"
-        onClick={() => void signOut()}
+        className="mt-auto min-h-11 pt-8 text-[17px] text-accent disabled:opacity-60"
+        disabled={signingOut}
+        onClick={() => {
+          setError(null);
+          setSigningOut(true);
+          void signOut().catch(() => {
+            setSigningOut(false);
+            setError(t(locale, "signOutFailed"));
+          });
+        }}
       >
-        {t(locale, "signOut")}
+        {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
       </button>
     </main>
   );
