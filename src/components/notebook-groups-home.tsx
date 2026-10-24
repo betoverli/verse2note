@@ -14,6 +14,8 @@ import { peekMyGroups, setMyGroupsCache, upsertMyGroup } from "@/lib/groups-cach
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
+import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import { cn } from "@/lib/utils";
 
 function GroupRow({ item }: { item: NotebookGroup }) {
   const locale = useAppStore((s) => s.locale);
@@ -147,44 +149,50 @@ export function NotebookGroupsHome({ query }: { query: string }) {
   return (
     <div className="flex flex-col gap-6">
       {create ? (
-        <div className="rounded-lg bg-surface p-4 shadow-[var(--shadow-border)]">
-          <p className="mb-3 text-sm font-medium text-fg">{t(locale, "notebookGroupNew")}</p>
-          <input
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void make();
-              }
+        <ViewportSheet onClose={() => setCreate(false)}>
+          <form
+            className={cn(formSheetClass, "px-4")}
+            onSubmit={(event) => {
+              event.preventDefault();
+              void make();
             }}
-            placeholder={t(locale, "notebookGroupName")}
-            maxLength={60}
-            name="group-title"
-            inputMode="text"
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="sentences"
-            spellCheck={false}
-            enterKeyHint="done"
-            className="h-12 w-full rounded-md bg-bg px-3 text-base text-fg outline-none"
-          />
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
-            <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
-          </div>
-          <div className="mt-4 flex gap-2">
-            <Button type="button" variant="ghost" className="flex-1" onClick={() => setCreate(false)}>
-              {t(locale, "linkCancel")}
-            </Button>
-            <Button type="button" className="flex-1" disabled={busy || name.trim().length < 2} onClick={() => void make()}>
+          >
+            <SheetGrabber />
+            <p className="mb-4 text-center text-[17px] font-semibold text-fg">{t(locale, "notebookGroupNew")}</p>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t(locale, "notebookGroupName")}
+              maxLength={60}
+              name="group-title"
+              inputMode="text"
+              autoFocus
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="sentences"
+              spellCheck={false}
+              enterKeyHint="done"
+              className="h-12 w-full rounded-[12px] bg-surface px-3 text-[17px] text-fg outline-none"
+            />
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
+              <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
+            </div>
+            <Button type="submit" className="mt-4 w-full" disabled={busy || name.trim().length < 2}>
               {t(locale, "notebookGroupCreate")}
             </Button>
-          </div>
-        </div>
+            <button
+              type="button"
+              className="mt-1 flex min-h-11 w-full items-center justify-center text-[17px] font-semibold text-accent active:opacity-60"
+              onClick={() => setCreate(false)}
+            >
+              {t(locale, "linkCancel")}
+            </button>
+          </form>
+        </ViewportSheet>
       ) : null}
       {mine == null ? <div className="h-20 rounded-lg bg-surface" aria-hidden /> : null}
-      {accepted.length === 0 && pending.length === 0 && mine && !create ? (
+      {accepted.length === 0 && pending.length === 0 && mine ? (
         <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p>
       ) : null}
       {accepted.length > 0 ? (
@@ -214,16 +222,14 @@ export function NotebookGroupsHome({ query }: { query: string }) {
           ))}
         </ul>
       ) : null}
-      {create ? null : (
-        <Button
-          className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
-          style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-          onClick={() => setCreate(true)}
-          aria-label={t(locale, "notebookGroupNew")}
-        >
-          <Plus />
-        </Button>
-      )}
+      <Button
+        className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
+        style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
+        onClick={() => setCreate(true)}
+        aria-label={t(locale, "notebookGroupNew")}
+      >
+        <Plus />
+      </Button>
     </div>
   );
 }

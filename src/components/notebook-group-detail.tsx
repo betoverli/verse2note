@@ -25,6 +25,7 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
 import { Choice } from "@/components/choice";
+import { ActionSheet } from "@/components/viewport-sheet";
 import { flushOutbox } from "@/lib/outbox";
 import { removeMyGroup, peekGroupNotes, peekMyGroups, setGroupNotesCache, upsertMyGroup } from "@/lib/groups-cache";
 import { cn } from "@/lib/utils";
@@ -321,6 +322,7 @@ function GroupSettings({
   const [listed, setListed] = useState(group.visibility === "listed");
   const [adminsOnly, setAdminsOnly] = useState(group.postPolicy === "admins");
   const [busy, setBusy] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
 
   async function save() {
     if (busy) return;
@@ -382,20 +384,33 @@ function GroupSettings({
           {t(locale, "notebookGroupLeave")}
         </Button>
         <Button
-          className="mt-1 w-full text-[#8b3a32]"
+          className="mt-1 w-full text-danger"
           variant="ghost"
-          onClick={() => {
-            if (!confirm(t(locale, "notebookGroupDeleteAsk"))) return;
-            void deleteNotebookGroup({ data: { id: group.id } }).then((result) => {
-              if (result?.ok) {
-                removeMyGroup(group.id);
-                onLeft();
-              }
-            });
-          }}
+          onClick={() => setAskDelete(true)}
         >
           {t(locale, "notebookGroupDelete")}
         </Button>
+        {askDelete ? (
+          <ActionSheet
+            message={t(locale, "notebookGroupDeleteAsk")}
+            cancelLabel={t(locale, "linkCancel")}
+            onClose={() => setAskDelete(false)}
+            actions={[
+              {
+                label: t(locale, "notebookGroupDelete"),
+                destructive: true,
+                onSelect: () => {
+                  void deleteNotebookGroup({ data: { id: group.id } }).then((result) => {
+                    if (result?.ok) {
+                      removeMyGroup(group.id);
+                      onLeft();
+                    }
+                  });
+                },
+              },
+            ]}
+          />
+        ) : null}
         <Button className="mt-2 w-full" variant="ghost" onClick={onClose}>
           {t(locale, "linkCancel")}
         </Button>

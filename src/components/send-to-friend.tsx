@@ -1,6 +1,5 @@
 import { UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { ProfileAvatar } from "@/lib/avatars";
@@ -9,6 +8,8 @@ import { listLinks, sendCollectionToFriend, sendPlanToFriend, type LinkPerson } 
 import { sendNoteToFriend } from "@/lib/notebook-cloud";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import { cn } from "@/lib/utils";
 
 export function SendToFriendButton({
   kind,
@@ -62,64 +63,57 @@ export function SendToFriendButton({
     setOpen(false);
   }
 
-  const sheet =
-    open && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-fg/50 px-4 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,calc(env(safe-area-inset-bottom)+1rem))]"
-            onClick={() => setOpen(false)}
-          >
-            <div
-              className="w-full max-w-md rounded-xl bg-elevated p-4 shadow-[var(--shadow-border)]"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <p className="text-sm font-medium text-fg">{t(locale, "linkSend")}</p>
-              {friends == null ? (
-                <div className="mt-3 h-24 rounded-md bg-surface" aria-hidden />
-              ) : friends.length === 0 ? (
-                <p className="mt-3 text-sm text-muted">
-                  {t(locale, "linkNone")}{" "}
-                  <Link to="/profile/friends" className="text-fg underline-offset-2 hover:underline" onClick={() => setOpen(false)}>
-                    {t(locale, "friends")}
-                  </Link>
-                </p>
-              ) : (
-                <ul className="mt-3 max-h-64 space-y-1 overflow-y-auto">
-                  {friends.map((person) => (
-                    <li key={person.userId}>
-                      <button
-                        type="button"
-                        disabled={Boolean(busy)}
-                        onClick={() => void send(person)}
-                        className="flex min-h-12 w-full items-center gap-3 rounded-md px-2 text-left text-fg hover:bg-surface"
-                      >
-                        <ProfileAvatar
-                          id={person.avatarId}
-                          url={person.avatarUrl}
-                          className="size-8 bg-surface"
-                          iconClassName="size-4"
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium">
-                            {person.firstName || `@${person.handle}`}
-                          </span>
-                          {person.handle ? (
-                            <span className="block truncate text-xs text-muted">@{person.handle}</span>
-                          ) : null}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Button variant="ghost" className="mt-3 w-full text-muted" onClick={() => setOpen(false)}>
-                {t(locale, "back")}
-              </Button>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+  const sheet = open ? (
+    <ViewportSheet onClose={() => setOpen(false)}>
+      <div className={cn(formSheetClass, "px-4")}>
+        <SheetGrabber />
+        <p className="mb-3 text-center text-[17px] font-semibold text-fg">{t(locale, "linkSend")}</p>
+        {friends == null ? (
+          <div className="h-24 rounded-[16px] bg-surface" aria-hidden />
+        ) : friends.length === 0 ? (
+          <p className="px-1 py-4 text-center text-[15px] text-muted">
+            {t(locale, "linkNone")}{" "}
+            <Link to="/profile/friends" className="text-accent" onClick={() => setOpen(false)}>
+              {t(locale, "friends")}
+            </Link>
+          </p>
+        ) : (
+          <ul className="ios-group max-h-72 overflow-y-auto">
+            {friends.map((person) => (
+              <li key={person.userId}>
+                <button
+                  type="button"
+                  disabled={Boolean(busy)}
+                  onClick={() => void send(person)}
+                  className="flex min-h-[52px] w-full items-center gap-3 px-4 text-left text-fg active:bg-fill disabled:opacity-40"
+                >
+                  <ProfileAvatar
+                    id={person.avatarId}
+                    url={person.avatarUrl}
+                    className="size-8 bg-fill"
+                    iconClassName="size-4"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[17px]">
+                      {person.firstName || `@${person.handle}`}
+                    </span>
+                    {person.handle ? <span className="block truncate text-[13px] text-muted">@{person.handle}</span> : null}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button
+          type="button"
+          className="mt-2 flex min-h-11 w-full items-center justify-center text-[17px] font-semibold text-accent active:opacity-60"
+          onClick={() => setOpen(false)}
+        >
+          {t(locale, "linkCancel")}
+        </button>
+      </div>
+    </ViewportSheet>
+  ) : null;
 
   return (
     <>
