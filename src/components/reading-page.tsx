@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, CalendarDays, Clock, Library } from "lucide-react";
+import { BookOpen, CalendarDays, ChevronRight, Clock, Library } from "lucide-react";
 import { useMemo, type ComponentType } from "react";
 import {
   PLAN_TOTAL,
@@ -44,28 +44,29 @@ export function ReadingPage({ query }: { query: string }) {
         <>
           {user && mine.length > 0 ? (
             <section className="space-y-3">
-              <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "myPlans")}</h2>
+              <h2 className="ios-caption">{t(locale, "myPlans")}</h2>
               <PlanList items={mine} />
             </section>
           ) : null}
           <section className="space-y-3">
-            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "browsePlans")}</h2>
+            <h2 className="ios-caption">{t(locale, "browsePlans")}</h2>
             <CategoryGrid items={categories} />
             <Link
               to="/reading/all"
-              className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              className="flex min-h-11 items-center justify-between gap-3 rounded-[16px] bg-surface px-4 py-3 text-fg active:bg-fill"
             >
               <span className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
-                  <CalendarDays className="size-5" />
+                <span className="flex size-7 items-center justify-center rounded-[8px] bg-accent text-accent-fg">
+                  <CalendarDays className="size-4" />
                 </span>
                 <span>
-                  <span className="block text-sm font-medium">{t(locale, "allPlans")}</span>
-                  <span className="mt-0.5 block text-xs text-muted">
+                  <span className="block text-[17px]">{t(locale, "allPlans")}</span>
+                  <span className="mt-0.5 block text-[13px] text-muted">
                     {PLAN_TOTAL} {t(locale, "plans")}
                   </span>
                 </span>
               </span>
+              <ChevronRight className="size-4 shrink-0 text-subtle" />
             </Link>
           </section>
         </>
@@ -85,7 +86,7 @@ function CategoryGrid({ items }: { items: PlanCategory[] }) {
             <Link
               to="/reading/category/$categoryId"
               params={{ categoryId: item.id }}
-              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-lg bg-surface p-4 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-[16px] bg-surface p-4 text-fg active:bg-fill"
             >
               <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
                 <Icon className="size-5" />

@@ -380,7 +380,7 @@ export function NotebookEditor({
 
   const toolbar = readOnly ? null : (
     <div
-      className="select-none border-t border-border/60 px-1 pb-1"
+      className="select-none border-t border-separator px-1 pb-1"
       onPointerDownCapture={keepTyping}
       onMouseDownCapture={keepTyping}
       onTouchStartCapture={keepTyping}
@@ -389,7 +389,7 @@ export function NotebookEditor({
         <button
           type="button"
           onPointerDown={toolPointer(confirmRef)}
-          className="mb-1 flex min-h-10 w-full items-center justify-center rounded-md bg-accent px-3 text-sm text-accent-fg"
+          className="mb-1 flex min-h-11 w-full items-center justify-center rounded-[12px] bg-accent px-3 text-[15px] font-semibold text-accent-fg"
         >
           {t(locale, "notebookConfirmRef")}
         </button>
@@ -405,7 +405,7 @@ export function NotebookEditor({
           type="button"
           variant="ghost"
           size="icon"
-          className={cn("size-11", activeLine?.type === "h" && "bg-elevated")}
+          className={cn("size-11", activeLine?.type === "h" && "bg-fill text-accent")}
           tabIndex={-1}
           aria-label={t(locale, "notebookHeading")}
           onPointerDown={toolPointer(() => toggleLine("h"))}
@@ -416,7 +416,7 @@ export function NotebookEditor({
           type="button"
           variant="ghost"
           size="icon"
-          className={cn("size-11", activeLine?.type === "ul" && "bg-elevated")}
+          className={cn("size-11", activeLine?.type === "ul" && "bg-fill text-accent")}
           tabIndex={-1}
           aria-label={t(locale, "notebookList")}
           onPointerDown={toolPointer(() => toggleLine("ul"))}
@@ -427,7 +427,7 @@ export function NotebookEditor({
           type="button"
           variant="ghost"
           size="icon"
-          className={cn("size-11", activeLine?.type === "ol" && "bg-elevated")}
+          className={cn("size-11", activeLine?.type === "ol" && "bg-fill text-accent")}
           tabIndex={-1}
           aria-label={t(locale, "notebookNumbers")}
           onPointerDown={toolPointer(() => toggleLine("ol"))}
@@ -480,7 +480,7 @@ export function NotebookEditor({
     <>
       <div
         ref={chromeRef}
-        className="fixed inset-x-0 z-40 bg-bg px-2 sm:px-3"
+        className="fixed inset-x-0 z-40"
         style={{ top: vv.offsetTop }}
       >
         <AppHeader
@@ -511,7 +511,7 @@ export function NotebookEditor({
                 enterKeyHint="done"
                 onChange={(event) => patch((current) => ({ ...current, title: event.target.value.slice(0, 80) }))}
                 placeholder={t(locale, "notebookMeeting")}
-                className="h-10 w-full bg-transparent text-center text-[17px] font-semibold text-fg outline-none placeholder:text-subtle"
+                className="h-11 w-full bg-transparent text-center text-[17px] font-semibold tracking-[-0.02em] text-fg outline-none placeholder:text-subtle"
               />
             )
           }
@@ -520,7 +520,7 @@ export function NotebookEditor({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-12 text-fg [&_svg]:size-6"
+                className="size-11 text-fg [&_svg]:size-5"
                 aria-label={t(locale, "settings")}
                 onClick={() => setMetaSheet(true)}
               >
@@ -565,10 +565,11 @@ export function NotebookEditor({
       {metaSheet ? (
         <ViewportSheet onClose={() => setMetaSheet(false)}>
           <div
-            className="sheet-invert max-h-full w-full max-w-sm overflow-y-auto rounded-t-xl p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
+            className="sheet-invert max-h-full w-full max-w-sm overflow-y-auto rounded-t-[20px] p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className="mb-4 text-sm font-medium text-fg">{t(locale, "settings")}</p>
+            <div className="mx-auto mb-3 h-1.5 w-9 rounded-full bg-fill" aria-hidden />
+            <p className="mb-4 text-center text-[17px] font-semibold tracking-[-0.02em] text-fg">{t(locale, "settings")}</p>
             <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookDate")}</p>
             <input
               type="date"
@@ -584,7 +585,7 @@ export function NotebookEditor({
                   key={item}
                   type="button"
                   onClick={() => patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))}
-                  className="rounded-full bg-surface px-3 py-1 text-sm text-fg"
+                  className="flex min-h-11 items-center rounded-full bg-fill px-4 text-[15px] text-fg"
                 >
                   #{item} ×
                 </button>
@@ -630,7 +631,7 @@ export function NotebookEditor({
               <button
                 type="button"
                 onClick={() => patch((current) => ({ ...current, speakerId: null }))}
-                className={`rounded-full px-3 py-1 text-sm ${draft.speakerId ? "bg-surface text-muted" : "bg-accent text-accent-fg"}`}
+                className={`flex min-h-11 items-center rounded-full px-4 text-[15px] ${draft.speakerId ? "bg-fill text-fg" : "bg-accent text-accent-fg"}`}
               >
                 {t(locale, "notebookNoteSpeakerNone")}
               </button>
@@ -642,7 +643,7 @@ export function NotebookEditor({
                     upsertLocalSpeaker(item);
                     patch((current) => ({ ...current, speakerId: item.id }));
                   }}
-                  className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm ${draft.speakerId === item.id ? "bg-accent text-accent-fg" : "bg-surface text-fg"}`}
+                  className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px] ${draft.speakerId === item.id ? "bg-accent text-accent-fg" : "bg-fill text-fg"}`}
                 >
                   <span className="size-2 rounded-full" style={{ background: item.color }} />
                   {item.name}

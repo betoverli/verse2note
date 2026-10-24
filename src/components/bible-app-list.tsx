@@ -1,8 +1,6 @@
 import { Check, ChevronRight } from "lucide-react";
 import { BIBLE_APPS, appHasOptions, appIcon } from "@/lib/bible/apps";
 import type { Locale } from "@/lib/bible/books";
-import { t } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 
 export function BibleAppList({
   locale,
@@ -16,7 +14,7 @@ export function BibleAppList({
   summary?: string;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="ios-group" data-inset="icon">
       {BIBLE_APPS.map((item) => {
         const active = item.id === appId;
         const extra = appHasOptions(item);
@@ -26,12 +24,7 @@ export function BibleAppList({
             type="button"
             onClick={() => onSelect(item.id)}
             aria-pressed={active}
-            className={cn(
-              "flex w-full items-start gap-3 rounded-md px-4 py-3 text-left transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.99]",
-              active
-                ? "bg-accent text-accent-fg"
-                : "bg-surface text-fg shadow-[var(--shadow-border)] hover:bg-elevated",
-            )}
+            className="flex min-h-[60px] w-full items-center gap-3 px-4 py-2.5 text-left text-fg active:bg-fill"
           >
             <img
               src={appIcon(item.id)}
@@ -39,27 +32,18 @@ export function BibleAppList({
               width={36}
               height={36}
               draggable={false}
-              className="mt-0.5 size-9 shrink-0 rounded-sm bg-elevated object-cover"
+              className="size-9 shrink-0 rounded-[8px] bg-elevated object-cover"
             />
             <span className="min-w-0 flex-1">
-              <span className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">{item.names[locale]}</span>
-                <span className={cn("text-xs uppercase", active ? "opacity-70" : "text-subtle")}>
-                  {item.hasWeb ? t(locale, "webBadge") : null}
-                  {item.hasWeb && item.hasNative ? " · " : null}
-                  {item.hasNative ? t(locale, "nativeBadge") : null}
-                </span>
-              </span>
-              <span className={cn("mt-0.5 block text-xs", active ? "opacity-70" : "text-muted")}>
+              <span className="block truncate text-[17px]">{item.names[locale]}</span>
+              <span className="block truncate text-[13px] text-muted">
                 {active && summary ? summary : item.blurb[locale]}
               </span>
             </span>
-            {extra ? (
-              <ChevronRight
-                className={cn("mt-1 size-4 shrink-0", active ? "opacity-80" : "text-muted")}
-              />
-            ) : active ? (
-              <Check className="mt-1 size-4 shrink-0" />
+            {active ? (
+              <Check className="size-5 shrink-0 text-accent" />
+            ) : extra ? (
+              <ChevronRight className="size-4 shrink-0 text-subtle" />
             ) : null}
           </button>
         );

@@ -195,10 +195,10 @@ function Login() {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)]">
       <Wordmark size="sm" />
-      <h1 className="mt-10 font-display text-3xl italic tracking-tight text-fg">
+      <h1 className="mt-8 text-[34px] leading-[1.15] font-bold tracking-[-0.022em] text-fg">
         {mode === "up" ? t(locale, "createAccount") : t(locale, "signIn")}
       </h1>
-      <p className="mt-3 text-pretty text-sm leading-relaxed text-muted">{t(locale, "accountLead")}</p>
+      <p className="mt-3 text-pretty text-[17px] leading-snug text-muted">{t(locale, "accountLead")}</p>
 
       <div className="mt-8 flex flex-col gap-2">
         {authEnabled ? (
@@ -207,7 +207,7 @@ function Login() {
               <Button
                 type="button"
                 variant="secondary"
-                className="w-full"
+                className="w-full" size="lg"
                 disabled={busy}
                 onClick={() => void onSocial(GOOGLE_PROVIDER_ID)}
               >
@@ -220,7 +220,7 @@ function Login() {
                 key={provider.providerId}
                 type="button"
                 variant="secondary"
-                className="w-full"
+                className="w-full" size="lg"
                 disabled={busy}
                 onClick={() => void onSocial(provider.providerId)}
               >
@@ -232,67 +232,72 @@ function Login() {
           <p className="text-sm text-muted">{t(locale, "accountOff")}</p>
         )}
       </div>
-      {error ? <p className="mt-4 text-sm text-accent">{error}</p> : null}
+      {error ? <p className="mt-4 text-[15px] text-danger">{error}</p> : null}
 
       {authEnabled ? (
         <>
-          <p className="mt-6 text-center text-xs tracking-wide text-subtle uppercase">{t(locale, "orEmail")}</p>
-          <form className="mt-4 flex flex-col gap-3" onSubmit={(event) => void onSubmit(event)}>
-            {mode === "up" ? (
-              <>
-                <Input
-                  name="name"
-                  autoComplete="given-name"
-                  required
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder={t(locale, "accountName")}
-                />
-                <div className="relative">
-                  <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted">@</span>
+          <p className="mt-6 text-center text-[13px] text-muted">{t(locale, "orEmail")}</p>
+          <form className="mt-3 flex flex-col gap-4" onSubmit={(event) => void onSubmit(event)}>
+            <div className="ios-fields">
+              {mode === "up" ? (
+                <>
                   <Input
-                    name="username"
-                    autoComplete="username"
+                    name="name"
+                    autoComplete="given-name"
                     required
-                    minLength={3}
-                    maxLength={20}
-                    value={handle}
-                    onChange={(event) => setHandle(cleanHandle(event.target.value))}
-                    className="pl-8"
-                    autoCapitalize="off"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    placeholder={t(locale, "handle")}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    placeholder={t(locale, "accountName")}
+                    className="rounded-none bg-transparent shadow-none focus-visible:ring-0"
                   />
-                </div>
-              </>
-            ) : null}
-            <Input
-              type="email"
-              name="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder={t(locale, "accountEmail")}
-            />
-            <Input
-              type="password"
-              name="password"
-              autoComplete={mode === "up" ? "new-password" : "current-password"}
-              required
-              minLength={8}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={t(locale, "accountPassword")}
-            />
-            <Button type="submit" className="w-full" disabled={busy}>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted">@</span>
+                    <Input
+                      name="username"
+                      autoComplete="username"
+                      required
+                      minLength={3}
+                      maxLength={20}
+                      value={handle}
+                      onChange={(event) => setHandle(cleanHandle(event.target.value))}
+                      className="rounded-none bg-transparent pl-8 shadow-none focus-visible:ring-0"
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      placeholder={t(locale, "handle")}
+                    />
+                  </div>
+                </>
+              ) : null}
+              <Input
+                type="email"
+                name="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder={t(locale, "accountEmail")}
+                className="rounded-none bg-transparent shadow-none focus-visible:ring-0"
+              />
+              <Input
+                type="password"
+                name="password"
+                autoComplete={mode === "up" ? "new-password" : "current-password"}
+                required
+                minLength={8}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={t(locale, "accountPassword")}
+                className="rounded-none bg-transparent shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? t(locale, "accountWait") : mode === "up" ? t(locale, "createAccount") : t(locale, "signIn")}
             </Button>
           </form>
           <button
             type="button"
-            className="mt-4 min-h-11 text-sm text-muted hover:text-fg"
+            className="mt-4 min-h-11 text-[17px] text-accent"
             onClick={() => {
               setMode(mode === "up" ? "in" : "up");
               setError(null);
@@ -303,13 +308,13 @@ function Login() {
         </>
       ) : null}
 
-      <p className="mt-6 text-xs leading-relaxed text-subtle">{t(locale, "accountHint")}</p>
-      <p className="mt-auto flex justify-center gap-3 pt-8 text-center text-sm text-muted">
-        <Link to="/" className="hover:text-fg">
+      <p className="mt-6 text-[13px] leading-relaxed text-subtle">{t(locale, "accountHint")}</p>
+      <p className="mt-auto flex justify-center gap-3 pt-8 text-center text-[17px]">
+        <Link to="/" className="text-accent">
           {t(locale, "back")}
         </Link>
-        <span aria-hidden>·</span>
-        <Link to="/privacy" className="hover:text-fg">
+        <span aria-hidden className="text-subtle">·</span>
+        <Link to="/privacy" className="text-accent">
           {t(locale, "privacyTitle")}
         </Link>
       </p>

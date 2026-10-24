@@ -22,11 +22,11 @@ function GroupRow({ item }: { item: NotebookGroup }) {
     <Link
       to="/groups/$id"
       params={{ id: item.id }}
-      className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
+      className="flex min-h-11 items-center gap-3 px-4 py-3 text-fg active:bg-fill"
     >
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium">{item.name}</span>
-        <span className="mt-0.5 block text-xs text-muted">
+        <span className="block truncate text-[17px]">{item.name}</span>
+        <span className="mt-0.5 block text-[13px] text-muted">
           {item.memberCount}
           {pending ? ` · ${t(locale, "notebookGroupPending")}` : null}
         </span>
@@ -188,7 +188,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
         <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p>
       ) : null}
       {accepted.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="ios-group">
           {accepted.map((item) => (
             <li key={item.id}>
               <GroupRow item={item} />
@@ -197,7 +197,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
         </ul>
       ) : null}
       {pending.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="ios-group">
           {pending.map((item) => (
             <li key={item.id}>
               <GroupRow item={item} />
@@ -206,7 +206,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
         </ul>
       ) : null}
       {extra.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="ios-group">
           {extra.map((item) => (
             <li key={item.id}>
               <GroupRow item={item} />
@@ -216,7 +216,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       ) : null}
       {create ? null : (
         <Button
-          className="fixed right-4 z-20 size-12 rounded-full"
+          className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
           style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
           onClick={() => setCreate(true)}
           aria-label={t(locale, "notebookGroupNew")}

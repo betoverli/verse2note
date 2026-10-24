@@ -9,6 +9,7 @@ import {
   Heart,
   Home,
   Hourglass,
+  ChevronRight,
   Library,
   Music,
   Scale,
@@ -58,23 +59,24 @@ export function CollectionsPage({ query }: { query: string }) {
         <>
           <MyCollections />
           <section className="space-y-3">
-            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "browseCollections")}</h2>
+            <h2 className="ios-caption">{t(locale, "browseCollections")}</h2>
             <CategoryGrid items={categories} />
             <Link
               to="/collections/themes"
-              className="flex min-h-16 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              className="flex min-h-11 items-center justify-between gap-3 rounded-[16px] bg-surface px-4 py-3 text-fg active:bg-fill"
             >
               <span className="flex items-center gap-3">
-                <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
-                  <Library className="size-5" />
+                <span className="flex size-7 items-center justify-center rounded-[8px] bg-accent text-accent-fg">
+                  <Library className="size-4" />
                 </span>
                 <span>
-                  <span className="block text-sm font-medium">{t(locale, "allThemes")}</span>
-                  <span className="mt-0.5 block text-xs text-muted">
+                  <span className="block text-[17px]">{t(locale, "allThemes")}</span>
+                  <span className="mt-0.5 block text-[13px] text-muted">
                     {THEME_TOTAL} {t(locale, "themes")}
                   </span>
                 </span>
               </span>
+              <ChevronRight className="size-4 shrink-0 text-subtle" />
             </Link>
           </section>
         </>
@@ -94,7 +96,7 @@ function CategoryGrid({ items }: { items: Category[] }) {
             <Link
               to="/collections/category/$categoryId"
               params={{ categoryId: item.id }}
-              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-lg bg-surface p-4 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-[16px] bg-surface p-4 text-fg active:bg-fill"
             >
               <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
                 <Icon className="size-5" />

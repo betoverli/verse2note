@@ -2,83 +2,102 @@
 @import "./fonts.css";
 
 @theme {
-  --color-bg: #121110;
-  --color-surface: #1c1a18;
-  --color-elevated: #262320;
-  --color-fg: #f3eee6;
-  --color-muted: #a89f93;
-  --color-subtle: #7a736a;
-  --color-accent: #e8dcc8;
-  --color-accent-fg: #1a1714;
-  --color-border: rgb(243 238 230 / 0.12);
-  --color-ring: #e8dcc8;
-  --color-success: #b7c4a8;
+  /* iOS system grouped palette. Dark is the default token set; html.light overrides it. */
+  --color-bg: #000000;
+  --color-surface: #1c1c1e;
+  --color-elevated: #2c2c2e;
+  --color-fill: rgb(118 118 128 / 24%);
+  --color-fg: #ffffff;
+  --color-muted: rgb(235 235 245 / 60%);
+  --color-subtle: rgb(235 235 245 / 30%);
+  --color-accent: #0a84ff;
+  --color-accent-fg: #ffffff;
+  --color-border: rgb(84 84 88 / 65%);
+  --color-separator: rgb(84 84 88 / 65%);
+  --color-ring: #0a84ff;
+  --color-success: #30d158;
+  --color-danger: #ff453a;
 
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Cormorant Garamond", ui-serif, Georgia, "Times New Roman", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Iowan Old Style", Palatino, ui-serif, Georgia, serif;
 
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
 
-  --shadow-border: 0 0 0 1px rgb(243 238 230 / 0.08);
-  --shadow-border-hover: 0 0 0 1px rgb(243 238 230 / 0.16);
+  --shadow-border: none;
+  --shadow-border-hover: none;
 }
 
 html.light {
-  --color-bg: #f4efe6;
-  --color-surface: #ebe4d6;
-  --color-elevated: #fffaf2;
-  --color-fg: #1c1814;
-  --color-muted: #6b6358;
-  --color-subtle: #8a8176;
-  --color-accent: #2a241e;
-  --color-accent-fg: #f7f1e6;
-  --color-border: rgb(28 24 20 / 0.12);
-  --color-ring: #2a241e;
-  --color-success: #4d5c42;
-  --shadow-border: 0 0 0 1px rgb(28 24 20 / 0.1);
-  --shadow-border-hover: 0 0 0 1px rgb(28 24 20 / 0.18);
+  --color-bg: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-elevated: #e5e5ea;
+  --color-fill: rgb(118 118 128 / 12%);
+  --color-fg: #000000;
+  --color-muted: rgb(60 60 67 / 60%);
+  --color-subtle: rgb(60 60 67 / 30%);
+  --color-accent: #007aff;
+  --color-accent-fg: #ffffff;
+  --color-border: rgb(60 60 67 / 29%);
+  --color-separator: rgb(60 60 67 / 29%);
+  --color-ring: #007aff;
+  --color-success: #34c759;
+  --color-danger: #ff3b30;
+  --shadow-border: none;
+  --shadow-border-hover: none;
 }
 
 html.light .sheet-invert {
-  --color-bg: #121110;
-  --color-surface: #1c1a18;
-  --color-elevated: #262320;
-  --color-fg: #f3eee6;
-  --color-muted: #a89f93;
-  --color-subtle: #7a736a;
-  --color-accent: #e8dcc8;
-  --color-accent-fg: #1a1714;
-  --color-border: rgb(243 238 230 / 0.12);
-  --color-ring: #e8dcc8;
-  --shadow-border: 0 0 0 1px rgb(243 238 230 / 0.08);
+  --color-bg: #000000;
+  --color-surface: #1c1c1e;
+  --color-elevated: #2c2c2e;
+  --color-fill: rgb(118 118 128 / 24%);
+  --color-fg: #ffffff;
+  --color-muted: rgb(235 235 245 / 60%);
+  --color-subtle: rgb(235 235 245 / 30%);
+  --color-accent: #0a84ff;
+  --color-accent-fg: #ffffff;
+  --color-border: rgb(84 84 88 / 65%);
+  --color-separator: rgb(84 84 88 / 65%);
+  --color-ring: #0a84ff;
+  --color-danger: #ff453a;
+  --shadow-border: none;
   background-color: var(--color-elevated);
   color: var(--color-fg);
 }
 
 html.dark .sheet-invert {
-  --color-bg: #f4efe6;
-  --color-surface: #ebe4d6;
-  --color-elevated: #fffaf2;
-  --color-fg: #1c1814;
-  --color-muted: #6b6358;
-  --color-subtle: #8a8176;
-  --color-accent: #2a241e;
-  --color-accent-fg: #f7f1e6;
-  --color-border: rgb(28 24 20 / 0.12);
-  --color-ring: #2a241e;
-  --shadow-border: 0 0 0 1px rgb(28 24 20 / 0.1);
+  --color-bg: #f2f2f7;
+  --color-surface: #ffffff;
+  --color-elevated: #e5e5ea;
+  --color-fill: rgb(118 118 128 / 12%);
+  --color-fg: #000000;
+  --color-muted: rgb(60 60 67 / 60%);
+  --color-subtle: rgb(60 60 67 / 30%);
+  --color-accent: #007aff;
+  --color-accent-fg: #ffffff;
+  --color-border: rgb(60 60 67 / 29%);
+  --color-separator: rgb(60 60 67 / 29%);
+  --color-ring: #007aff;
+  --color-danger: #ff3b30;
+  --shadow-border: none;
   background-color: var(--color-elevated);
   color: var(--color-fg);
 }
 
 @layer components {
   .app-header {
-    padding-top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
-    background-color: var(--color-bg);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 0.25rem);
+    padding-bottom: 0.25rem;
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    background-color: color-mix(in srgb, var(--color-bg) 72%, transparent);
     background-image: none;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 0.5px solid var(--color-separator);
     isolation: isolate;
     overflow: visible;
     -webkit-transform: translateZ(0);
@@ -96,7 +115,9 @@ html.dark .sheet-invert {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: var(--color-bg);
+    background-color: color-mix(in srgb, var(--color-bg) 78%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
     pointer-events: none;
   }
 
@@ -136,6 +157,12 @@ html.dark .sheet-invert {
   .tab-bar {
     bottom: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+    background-color: color-mix(in srgb, var(--color-bg) 78%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(22px);
+    backdrop-filter: saturate(180%) blur(22px);
+    border-top: 0.5px solid var(--color-separator);
   }
 
   @supports (height: 100lvh) {
@@ -164,14 +191,14 @@ html.dark .sheet-invert {
 
   .badge-seal[data-earned="true"] {
     box-shadow:
-      0 0 0 1px rgb(232 220 200 / 0.28),
-      0 10px 24px rgb(26 23 20 / 0.22);
+      0 0 0 1px rgb(255 255 255 / 0.18),
+      0 10px 24px rgb(0 0 0 / 0.22);
   }
 
   html.light .badge-seal[data-earned="true"] {
     box-shadow:
-      0 0 0 1px rgb(28 24 20 / 0.12),
-      0 10px 22px rgb(28 24 20 / 0.12);
+      0 0 0 1px rgb(0 0 0 / 0.08),
+      0 10px 22px rgb(0 0 0 / 0.12);
   }
 
   .badge-hero {
@@ -283,15 +310,16 @@ html.dark .sheet-invert {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
-    caret-color: var(--color-fg);
+    caret-color: var(--color-accent);
     counter-reset: note-ol;
     font-size: 17px;
-    line-height: 1.55;
+    line-height: 1.4;
+    letter-spacing: -0.022em;
   }
 
   .note-line {
     position: relative;
-    min-height: 1.55em;
+    min-height: 1.4em;
     margin-top: 0.55em;
     text-align: left;
     caret-color: var(--color-fg);
@@ -425,6 +453,81 @@ html.dark .sheet-invert {
     content: attr(data-placeholder);
     color: var(--color-subtle);
   }
+
+  .ios-group {
+    overflow: hidden;
+    border-radius: 16px;
+    background: var(--color-surface);
+  }
+
+  .ios-group > * + * {
+    position: relative;
+  }
+
+  .ios-group > * + *::after {
+    content: "";
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    right: 0;
+    left: 1rem;
+    height: 0.5px;
+    background: var(--color-separator);
+    pointer-events: none;
+  }
+
+  .ios-group[data-inset="icon"] > * + *::after {
+    left: 3.5rem;
+  }
+
+  .ios-group[data-inset="date"] > * + *::after {
+    left: 4rem;
+  }
+
+  .ios-caption {
+    margin: 0;
+    padding: 0 1rem;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: -0.006em;
+    text-transform: none;
+    color: var(--color-muted);
+  }
+
+  .ios-fields {
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--color-surface);
+  }
+
+  .ios-fields > * + * {
+    border-top: 0.5px solid var(--color-separator);
+  }
+
+  .ios-segment {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 12px;
+    background: var(--color-fill);
+  }
+
+  .ios-segment > button {
+    border-radius: 10px;
+    color: var(--color-fg);
+  }
+
+  .ios-segment > button[aria-pressed="true"] {
+    background: var(--color-surface);
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.12),
+      0 0 0.5px rgb(0 0 0 / 0.08);
+  }
+
+  html.dark .ios-segment > button[aria-pressed="true"] {
+    background: #636366;
+  }
 }
 
 :root {
@@ -442,6 +545,7 @@ html.has-tab-bar {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
@@ -465,7 +569,12 @@ html.has-tab-bar {
 
   body {
     font-family: var(--font-sans);
-    background-image: linear-gradient(180deg, #141312 0%, #121110 48%, #10100f 100%);
+    letter-spacing: -0.011em;
+    background-image: none;
+  }
+
+  .font-display {
+    letter-spacing: -0.02em;
   }
 
   button:not(:disabled),
@@ -484,7 +593,7 @@ html.has-tab-bar {
   }
 
   ::selection {
-    background: rgb(232 220 200 / 0.28);
+    background: rgb(10 132 255 / 0.32);
     color: var(--color-fg);
   }
 
@@ -497,11 +606,11 @@ html.has-tab-bar {
   }
 
   html.light body {
-    background-image: linear-gradient(180deg, #f7f3ea 0%, #f4efe6 48%, #efe8da 100%);
+    background-image: none;
   }
 
   html.light ::selection {
-    background: rgb(42 36 30 / 0.18);
+    background: rgb(0 122 255 / 0.24);
     color: var(--color-fg);
   }
 }
