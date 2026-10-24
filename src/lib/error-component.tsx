@@ -12,7 +12,8 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
         <Wordmark size="sm" />
       </h1>
       <p className="max-w-md text-sm break-words text-muted">
-        {error.message || "An unexpected error occurred. Try reloading the page."}
+        {(error instanceof Error && error.message) ||
+          "An unexpected error occurred. Try reloading the page."}
       </p>
     </main>
   );
