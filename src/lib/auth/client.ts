@@ -1,6 +1,7 @@
 import { genericOAuthClient } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 import { runPreSignInSignOut, runSignOut } from "../../../scripts/sign-out-plan.mjs";
+import { GOOGLE_PROVIDER_ID } from "./google";
 import { GROK_PROVIDERS } from "./providers";
 import { clearSessionUser } from "./session-cache";
 import { clearOutbox } from "@/lib/outbox";
@@ -86,8 +87,11 @@ function inLivePreview(): boolean {
 type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: string };
 
 /**
- * Start sign-in with one upstream provider (`providerId` from `GROK_PROVIDERS`),
- * federating through the Grok auth broker.
+ * Start sign-in with one provider.
+ *
+ * `google` is Better Auth's native Google social provider (callback
+ * `/api/auth/callback/google`). Any other id federates through the Grok auth
+ * broker (`GROK_PROVIDERS`).
  *
  * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
  *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
@@ -150,6 +154,21 @@ export async function signIn(
       }
     }
     return;
+  }
+
+  if (providerId === GOOGLE_PROVIDER_ID) {
+    const { data, error } = await authClient.signIn.social({
+      provider: GOOGLE_PROVIDER_ID,
+      callbackURL,
+      errorCallbackURL,
+      disableRedirect: true,
+    });
+    if (error) throw new Error(error.message ?? "Sign-in failed");
+    if (data?.url) {
+      window.location.assign(data.url);
+      return;
+    }
+    throw new Error("Sign-in did not return a redirect URL");
   }
 
   const { data, error } = await authClient.signIn.oauth2({

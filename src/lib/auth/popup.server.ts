@@ -16,7 +16,8 @@
  * React route here paints the full app shell in the popup. The opener lives in
  * `client.ts` (`signIn` → `openSignInPopup`).
  */
-import { auth, SESSION_TOKEN_COOKIE } from "./server";
+import { beginOAuthSignIn } from "./oauth-start.server";
+import { SESSION_TOKEN_COOKIE } from "./server";
 
 /** Message shape the popup posts to the opener (must match `client.ts`). */
 type PopupMessage = {
@@ -62,16 +63,10 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
   // Stay first-party for the callback so the session cookie lands in THIS popup.
   const back = `${url.origin}/auth/popup?done=1`;
   try {
-    const apiRes = await auth.api.signInWithOAuth2({
-      body: {
-        providerId,
-        callbackURL: back,
-        errorCallbackURL: `${back}&error=1`,
-      },
-      // Forward the preview host so Better Auth derives the correct baseURL /
-      // redirect_uri for the dynamic `*.grok-sandbox.com` origin.
-      headers: request.headers,
-      asResponse: true,
+    const apiRes = await beginOAuthSignIn(request, {
+      providerId,
+      callbackURL: back,
+      errorCallbackURL: `${back}&error=1`,
     });
 
     if (!apiRes.ok) {

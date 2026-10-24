@@ -19,6 +19,47 @@ Abre em `http://localhost:8080`.
 
 TanStack Start, React, Tailwind v4. Persistência no aparelho (`localStorage`).
 
+## Login com Google
+
+O botão **Continuar com Google** usa o Google OAuth do Better Auth (credenciais próprias no Google Cloud). Não usa o login da plataforma antiga.
+
+No servidor (Vercel → Settings → Environment Variables), em **Production**:
+
+| Nome | O que é |
+| --- | --- |
+| `GOOGLE_CLIENT_ID` | Client ID do cliente OAuth do tipo **Web application** |
+| `GOOGLE_CLIENT_SECRET` | Client secret desse cliente. Nunca no repositório, e nunca numa variável `VITE_` (essa chega ao navegador) |
+
+As duas têm de existir. Se faltar uma, o site continua no ar, o botão Google não aparece, e entrar com e-mail e senha fica igual. O build não precisa destas variáveis: o servidor lê-as quando arranca. Depois de as gravar, publique de novo para o processo as ver.
+
+`BETTER_AUTH_URL` hoje é `https://verse2note.vercel.app`. O Better Auth monta o callback como `{origem}/api/auth/callback/google`.
+
+No Google Cloud Console → APIs & Services → Credentials → OAuth client ID → **Web application**, em **Authorized redirect URIs**:
+
+Agora (o site que está no ar):
+
+- `https://verse2note.vercel.app/api/auth/callback/google`
+
+Neste computador (os dois endereços são diferentes para o Google):
+
+- `http://localhost:8080/api/auth/callback/google`
+- `http://127.0.0.1:8080/api/auth/callback/google`
+
+Mais tarde, quando `verse2note.com` apontar para este site. Não mude o DNS agora; o domínio ainda está noutro sítio:
+
+- `https://verse2note.com/api/auth/callback/google`
+- `https://www.verse2note.com/api/auth/callback/google`
+
+Origens JavaScript autorizadas, se o formulário as pedir:
+
+- `https://verse2note.vercel.app`
+- `http://localhost:8080`
+- `http://127.0.0.1:8080`
+- `https://verse2note.com`
+- `https://www.verse2note.com`
+
+O regresso do app de iPhone não entra nesta lista. A Apple e o Google só vêem o callback acima; o app volta depois, com um código de uso único.
+
 ## App iOS
 
 O site continua a ser o site. O app de iPhone é uma capa nativa (Capacitor) cuja janela abre `https://verse2note.com`. Ícone, ecrã de abertura, avisos da Apple, folha de partilha e abertura da Bíblia (YouVersion e outras) são nativos. O login com Google ou X abre o navegador do sistema e volta para o app, porque a Apple e o Google recusam esse login dentro da janela embutida. E-mail e senha continuam na janela do app. O regresso do login traz só um código de uso único, preso a um segredo que fica no app.
