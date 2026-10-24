@@ -85,6 +85,21 @@ const aasaSource = read("src/lib/native/aasa.server.ts");
 if (!aasaSource.includes("webcredentials")) {
   errors.push("O AASA tem de publicar webcredentials para o ASWebAuthenticationSession HTTPS.");
 }
+const nativeAuth = read("src/lib/native/auth.ts");
+if (!nativeAuth.includes("preferredNativeReturnMode")) {
+  errors.push("O login nativo tem de pedir o esquema já registado no binário.");
+}
+const nativeConfig = read("src/routes/auth/native-config.ts");
+if (!nativeConfig.includes("universalLinks: false")) {
+  errors.push("native-config tem de dizer universalLinks false para o script já publicado pedir verse2note://.");
+}
+const done = read("src/routes/auth/native-done.ts");
+if (done.includes("useEffect") || done.includes("window.location") || done.includes("Response.redirect(")) {
+  errors.push("O regresso /auth/native-done tem de ser um 302 do servidor. Response.redirect recusa verse2note://.");
+}
+if (!done.includes("nativeDoneLocation") || !done.includes("status: 302")) {
+  errors.push("O regresso /auth/native-done tem de redirecionar para o código de uso único.");
+}
 
 for (const path of [
   "ios/App/App/NativeShell.swift",

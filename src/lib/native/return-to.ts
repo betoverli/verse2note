@@ -13,6 +13,18 @@ export function parseReturnMode(value: string | null | undefined): NativeReturnM
   return value === "https" ? "https" : "scheme";
 }
 
+/**
+ * Mode the website asks the installed app to open.
+ *
+ * An HTTPS auth callback on the TestFlight build is refused or reported as a
+ * cancel when the associated-domain check is missing or stale. The login
+ * screen treats that cancel as the user giving up, so it never opens the
+ * custom-scheme sheet. That scheme is already registered in the binary.
+ */
+export function preferredNativeReturnMode(): NativeReturnMode {
+  return "scheme";
+}
+
 export function nativeReturnTo(
   mode: NativeReturnMode,
   params: { code?: string; error?: boolean },

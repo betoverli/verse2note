@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { appleAppSiteAssociation } from "./aasa.server.ts";
 import { openSessionToken, resolveHandoffKey, sealSessionToken } from "./handoff-seal.server.ts";
 import { pkceCookieHeader, readPkceCookie } from "./pkce-cookie.ts";
 import { isPkceMaterial, newPkceVerifier, pkceChallenge, samePkce, verifierMatches } from "./pkce.ts";
-import { isAllowedReturn, nativeReturnTo, shouldFallBackToScheme } from "./return-to.ts";
+import { isScriptedCrossSite } from "../auth/fetch-metadata.ts";
+import { nativeDoneLocation } from "./done-redirect.ts";
+import { isAllowedReturn, nativeReturnTo, preferredNativeReturnMode, shouldFallBackToScheme } from "./return-to.ts";
+import { NATIVE_SESSION_COOKIE, sessionTokenFromCookie } from "./session-cookie.ts";
 
 const token = "session-token-that-must-not-be-stored-raw";
 
@@ -91,5 +95,59 @@ describe("https auth session fallback", () => {
     assert.equal(shouldFallBackToScheme("https", "cancelled"), false);
     assert.equal(shouldFallBackToScheme("https", "The user cancelled the login."), false);
     assert.equal(shouldFallBackToScheme("scheme", "Não foi possível abrir o login."), false);
+  });
+
+  it("asks the installed app for the custom scheme", () => {
+    assert.equal(preferredNativeReturnMode(), "scheme");
+  });
+});
+
+describe("native done redirect", () => {
+  it("follows the pkce cookie and never puts the session token in the url", async () => {
+    const challenge = await pkceChallenge("c".repeat(43));
+    const schemeCookie = pkceCookieHeader(challenge, "scheme").split(";")[0];
+    const httpsCookie = pkceCookieHeader(challenge, "https").split(";")[0];
+    const code = "d".repeat(43);
+    assert.equal(nativeDoneLocation(schemeCookie, { code }), `verse2note://auth?code=${code}`);
+    assert.equal(
+      nativeDoneLocation(httpsCookie, { code }),
+      `https://verse2note.com/auth/native-return?code=${code}`,
+    );
+    assert.equal(nativeDoneLocation(schemeCookie, { error: true }), "verse2note://auth?error=1");
+    assert.equal(
+      nativeDoneLocation(httpsCookie, { error: true }),
+      "https://verse2note.com/auth/native-return?error=1",
+    );
+    assert.equal(nativeDoneLocation(null, { code }), "verse2note://auth?error=1");
+    assert.equal(nativeDoneLocation(`${schemeCookie}; ${NATIVE_SESSION_COOKIE}=secret`, { code }).includes("secret"), false);
+  });
+});
+
+describe("session cookie", () => {
+  it("reads the session cookie the handoff will seal", () => {
+    const header = `a=1; ${NATIVE_SESSION_COOKIE}=session%2Etoken; b=2`;
+    assert.equal(sessionTokenFromCookie(header), "session.token");
+    assert.equal(sessionTokenFromCookie("a=1"), null);
+    assert.equal(sessionTokenFromCookie(`${NATIVE_SESSION_COOKIE}=${"x".repeat(4001)}`), null);
+    const server = readFileSync(new URL("../auth/server.ts", import.meta.url), "utf8");
+    assert.match(server, new RegExp(`SESSION_TOKEN_COOKIE = ${JSON.stringify(NATIVE_SESSION_COOKIE)}`));
+  });
+});
+
+describe("native done request", () => {
+  it("allows the google redirect and blocks a scripted sibling", () => {
+    const navigate = new Headers({
+      "sec-fetch-site": "cross-site",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-dest": "document",
+    });
+    assert.equal(isScriptedCrossSite("GET", navigate), false);
+    const scripted = new Headers({
+      "sec-fetch-site": "same-site",
+      "sec-fetch-mode": "cors",
+      "sec-fetch-dest": "empty",
+    });
+    assert.equal(isScriptedCrossSite("POST", scripted), true);
+    assert.equal(isScriptedCrossSite("GET", new Headers()), false);
   });
 });
