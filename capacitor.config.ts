@@ -35,9 +35,11 @@ const config: CapacitorConfig = {
   },
   plugins: {
     // Sync non-HttpOnly cookies with WKWebView. The session cookie is
-    // HttpOnly and is set by the HTTPS response itself. OAuth does not rely
-    // on this: it finishes in ASWebAuthenticationSession and hands the app
-    // a one-time code (see src/lib/native/auth.ts).
+    // HttpOnly (`__Host-`, Secure, SameSite=Lax, no Domain) and is set by
+    // the HTTPS response itself. Google sign-in does not leave that cookie
+    // in this WebView: it finishes in an ephemeral ASWebAuthenticationSession
+    // and the app stores the bearer in localStorage. Email uses the cookie;
+    // SceneDelegate flushes the jar when the app backgrounds.
     CapacitorCookies: {
       enabled: true,
     },

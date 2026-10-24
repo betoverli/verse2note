@@ -11,7 +11,7 @@ import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { NotebookGroupPublishList } from "@/components/notebook-group-publish";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
-import { ViewportSheet } from "@/components/viewport-sheet";
+import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
 import { cn } from "@/lib/utils";
 import type { Passage } from "@/lib/bible/passage";
 
@@ -188,6 +188,7 @@ export function NotebookEditor({
   const [picker, setPicker] = useState(false);
   const [people, setPeople] = useState(false);
   const [askSpeaker, setAskSpeaker] = useState<Speaker | null>(null);
+  const [dropSpeaker, setDropSpeaker] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
   const focusIdRef = useRef(focusId);
   focusIdRef.current = focusId;
@@ -315,7 +316,13 @@ export function NotebookEditor({
   }
 
   function removeSpeaker(id: string) {
-    if (!confirm(t(locale, "notebookRemoveSpeaker"))) return;
+    setDropSpeaker(id);
+  }
+
+  function confirmDropSpeaker() {
+    const id = dropSpeaker;
+    if (!id) return;
+    setDropSpeaker(null);
     const current = latest();
     const idx = current.blocks.findIndex((block) => block.id === id);
     const prev = idx > 0 ? current.blocks[idx - 1] : current.blocks[idx + 1];
@@ -564,11 +571,8 @@ export function NotebookEditor({
 
       {metaSheet ? (
         <ViewportSheet onClose={() => setMetaSheet(false)}>
-          <div
-            className="sheet-invert max-h-full w-full max-w-sm overflow-y-auto rounded-t-[20px] p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[20px]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mx-auto mb-3 h-1.5 w-9 rounded-full bg-fill" aria-hidden />
+          <div className={cn(formSheetClass, "sheet-invert px-4")}>
+            <SheetGrabber />
             <p className="mb-4 text-center text-[17px] font-semibold tracking-[-0.02em] text-fg">{t(locale, "settings")}</p>
             <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookDate")}</p>
             <input
@@ -660,35 +664,34 @@ export function NotebookEditor({
 
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />
       {askSpeaker ? (
-        <ViewportSheet onClose={() => setAskSpeaker(null)}>
-          <div
-            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <p className="text-sm font-medium text-fg">
-              {t(locale, "notebookNoteSpeakerAsk").replace("{name}", askSpeaker.name)}
-            </p>
-            <Button
-              className="mt-4 w-full"
-              onClick={() => {
-                patch((current) => ({ ...current, speakerId: askSpeaker.id }));
-                setAskSpeaker(null);
-              }}
-            >
-              {t(locale, "notebookNoteSpeakerYes")}
-            </Button>
-            <Button
-              variant="secondary"
-              className="mt-2 w-full"
-              onClick={() => {
-                insertSpeakerSection(askSpeaker);
-                setAskSpeaker(null);
-              }}
-            >
-              {t(locale, "notebookNoteSpeakerSection")}
-            </Button>
-          </div>
-        </ViewportSheet>
+        <ActionSheet
+          message={t(locale, "notebookNoteSpeakerAsk").replace("{name}", askSpeaker.name)}
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setAskSpeaker(null)}
+          actions={[
+            {
+              label: t(locale, "notebookNoteSpeakerYes"),
+              onSelect: () => patch((current) => ({ ...current, speakerId: askSpeaker.id })),
+            },
+            {
+              label: t(locale, "notebookNoteSpeakerSection"),
+              onSelect: () => insertSpeakerSection(askSpeaker),
+            },
+          ]}
+        />
+      ) : null}
+      {dropSpeaker ? (
+        <ActionSheet
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setDropSpeaker(null)}
+          actions={[
+            {
+              label: t(locale, "notebookRemoveSpeaker"),
+              destructive: true,
+              onSelect: confirmDropSpeaker,
+            },
+          ]}
+        />
       ) : null}
     </>
   );

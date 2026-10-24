@@ -51,8 +51,9 @@ export function NotifyPrompt() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-fg/40 p-4 sm:items-center">
-      <div className="w-full max-w-sm rounded-xl bg-elevated p-5 shadow-[var(--shadow-border)]">
+    <div className="fixed inset-0 z-[70] flex items-end bg-black/40">
+      <div className="ios-sheet-panel w-full rounded-t-[20px] bg-elevated px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto mb-4 h-1.5 w-9 rounded-full bg-fill" aria-hidden />
         <div className="mb-3 flex size-11 items-center justify-center rounded-md bg-surface text-fg">
           <Bell className="size-5" />
         </div>

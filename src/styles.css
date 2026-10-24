@@ -528,6 +528,41 @@ html.dark .sheet-invert {
   html.dark .ios-segment > button[aria-pressed="true"] {
     background: #636366;
   }
+
+  .ios-sheet-backdrop {
+    animation: ios-sheet-dim 0.22s ease-out;
+  }
+
+  .ios-sheet-panel {
+    animation: ios-sheet-in 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @keyframes ios-sheet-dim {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes ios-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ios-sheet-backdrop,
+    .ios-sheet-panel {
+      animation: none;
+    }
+  }
 }
 
 :root {

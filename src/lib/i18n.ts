@@ -44,6 +44,7 @@ const strings = {
     notebookImportShare:
       "No Android, com o app na tela inicial: Compartilhar → Verse2Note. No iPhone o sistema ainda não entrega o Compartilhar para PWA — copie o texto ou exporte o arquivo e abra aqui.",
     notebookSearch: "Buscar notas",
+    searchClear: "Limpar",
     notebookTags: "Tags",
     notebookSpeakers: "Speakers",
     notebookShared: "Compartilhadas",
@@ -485,6 +486,7 @@ const strings = {
     notebookImportShare:
       "On Android, with the app on the home screen: Share → Verse2Note. On iPhone, PWAs still do not get Share — copy the text or export the file and open it here.",
     notebookSearch: "Search notes",
+    searchClear: "Clear",
     notebookTags: "Tags",
     notebookSpeakers: "Speakers",
     notebookShared: "Shared",
@@ -926,6 +928,7 @@ const strings = {
     notebookImportShare:
       "En Android, con la app en la pantalla de inicio: Compartir → Verse2Note. En iPhone el sistema aún no entrega Compartir a un PWA — copia el texto o exporta el archivo y ábrelo aquí.",
     notebookSearch: "Buscar notas",
+    searchClear: "Borrar",
     notebookTags: "Etiquetas",
     notebookSpeakers: "Speakers",
     notebookShared: "Compartidas",
