@@ -21,6 +21,7 @@ import { getIsAdmin } from "@/lib/usage";
 import { deleteMyAccount, exportMyData } from "@/lib/account";
 import { clearMyGroupsCache } from "@/lib/groups-cache";
 import { Button } from "@/components/ui/button";
+import { ActionSheet } from "@/components/viewport-sheet";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -201,6 +202,7 @@ export function ProfileView() {
   const lastName = useAppStore((s) => s.lastName);
   const { user, isPending } = useCurrentUserState();
   const [signingOut, setSigningOut] = useState(false);
+  const [askDelete, setAskDelete] = useState(false);
   const [admin, setAdmin] = useState(false);
   const [badges, setBadges] = useState<BadgeId[]>([]);
   const gateSession = typeof window !== "undefined" ? hasGateSessionMarker() : false;
@@ -328,8 +330,23 @@ export function ProfileView() {
               type="button"
               className="flex min-h-11 w-full items-center px-4 text-left text-[17px] text-danger active:bg-fill disabled:opacity-40"
               disabled={signingOut}
-              onClick={() => {
-                if (!confirm(t(locale, "deleteAccountAsk"))) return;
+              onClick={() => setAskDelete(true)}
+            >
+              {t(locale, "deleteAccount")}
+            </button>
+          </li>
+        </ul>
+      ) : null}
+      {askDelete ? (
+        <ActionSheet
+          message={t(locale, "deleteAccountAsk")}
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setAskDelete(false)}
+          actions={[
+            {
+              label: t(locale, "deleteAccount"),
+              destructive: true,
+              onSelect: () => {
                 setSigningOut(true);
                 void deleteMyAccount()
                   .then((result) => {
@@ -350,12 +367,10 @@ export function ProfileView() {
                     setSigningOut(false);
                     toast.error(t(locale, "linkSendFail"));
                   });
-              }}
-            >
-              {t(locale, "deleteAccount")}
-            </button>
-          </li>
-        </ul>
+              },
+            },
+          ]}
+        />
       ) : null}
     </div>
   );

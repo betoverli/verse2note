@@ -6,7 +6,8 @@ import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ViewportSheet } from "@/components/viewport-sheet";
+import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import { cn } from "@/lib/utils";
 
 export function NotebookSpeakerSheet({
   open,
@@ -23,6 +24,7 @@ export function NotebookSpeakerSheet({
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [dropId, setDropId] = useState<string | null>(null);
 
   function used(id: string) {
     return notes.some((note) => noteSpeakerIds(note).includes(id));
@@ -56,11 +58,9 @@ export function NotebookSpeakerSheet({
 
   return (
     <ViewportSheet onClose={onClose}>
-      <div
-        className="sheet-invert max-h-full w-full max-w-md overflow-y-auto rounded-t-xl p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-[var(--shadow-border)] sm:rounded-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <p className="text-sm font-medium text-fg">
+      <div className={cn(formSheetClass, "sheet-invert px-4")}>
+        <SheetGrabber />
+        <p className="mb-1 text-center text-[17px] font-semibold text-fg">
           {onPick ? t(locale, "notebookAddSpeaker") : t(locale, "notebookSpeakers")}
         </p>
         <ul className="mt-3 max-h-52 space-y-1 overflow-y-auto">
@@ -123,10 +123,7 @@ export function NotebookSpeakerSheet({
                   size="icon"
                   className="size-10 shrink-0 text-[#8b3a32]"
                   aria-label={t(locale, "notebookDeleteSpeaker")}
-                  onClick={() => {
-                    if (!confirm(t(locale, "notebookDeleteSpeakerAsk"))) return;
-                    deleteLocalSpeaker(speaker.id);
-                  }}
+                  onClick={() => setDropId(speaker.id)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
@@ -150,6 +147,20 @@ export function NotebookSpeakerSheet({
           <Button type="submit">{t(locale, "notebookSaveSpeaker")}</Button>
         </form>
       </div>
+      {dropId ? (
+        <ActionSheet
+          message={t(locale, "notebookDeleteSpeakerAsk")}
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setDropId(null)}
+          actions={[
+            {
+              label: t(locale, "notebookDeleteSpeaker"),
+              destructive: true,
+              onSelect: () => deleteLocalSpeaker(dropId),
+            },
+          ]}
+        />
+      ) : null}
     </ViewportSheet>
   );
 }

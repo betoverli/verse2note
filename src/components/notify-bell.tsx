@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -12,6 +11,7 @@ import {
 } from "@/lib/notify";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
 import { cn } from "@/lib/utils";
 
 function ago(iso: string, locale: "pt" | "en" | "es") {
@@ -93,79 +93,68 @@ export function NotifyBell() {
   }
 
   return (
-    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
-      <DropdownMenu.Trigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative size-12 text-fg [&_svg]:size-6"
-          aria-label={t(locale, "notifications")}
-        >
-          <Bell />
-          {count > 0 ? (
-            <span className="absolute top-2.5 right-2.5 size-2 rounded-full bg-accent" aria-hidden />
-          ) : null}
-        </Button>
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          align="end"
-          sideOffset={6}
-          collisionPadding={12}
-          className="z-50 flex w-[min(calc(100vw-1.5rem),22rem)] max-h-[min(70dvh,28rem)] flex-col overflow-hidden rounded-lg bg-elevated shadow-[var(--shadow-border)] outline-none"
-        >
-          <div className="flex items-center justify-between gap-3 px-3 py-2">
-            <DropdownMenu.Label className="text-xs font-medium tracking-wide text-muted uppercase">
-              {t(locale, "notifications")}
-            </DropdownMenu.Label>
-            {unread ? (
-              <button
-                type="button"
-                className="text-xs font-medium text-muted hover:text-fg"
-                onClick={() => void markAll()}
-              >
-                {t(locale, "notifyMarkAll")}
-              </button>
-            ) : null}
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-1">
-            {items == null ? (
-              <div className="h-16 rounded-md bg-surface" aria-hidden />
-            ) : items.length === 0 ? (
-              <p className="px-3 py-4 text-sm text-muted">{t(locale, "notifyEmpty")}</p>
-            ) : (
-              items.map((item) => (
-                <DropdownMenu.Item
-                  key={item.id}
-                  className={cn(
-                    "flex cursor-pointer flex-col gap-0.5 rounded-md px-3 py-2.5 text-left text-fg outline-none data-[highlighted]:bg-surface",
-                    !item.read && "bg-surface/60",
-                  )}
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    void openItem(item);
-                  }}
-                >
-                  <span className="flex items-baseline justify-between gap-3">
-                    <span className="text-sm font-medium">{item.title}</span>
-                    <span className="shrink-0 text-xs text-muted">{ago(item.createdAt, locale)}</span>
-                  </span>
-                  <span className="text-sm leading-snug text-muted">{item.body}</span>
-                </DropdownMenu.Item>
-              ))
-            )}
-          </div>
-          <DropdownMenu.Separator className="h-px bg-border/70" />
-          <DropdownMenu.Item asChild>
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="relative size-12 text-fg [&_svg]:size-6"
+        aria-label={t(locale, "notifications")}
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+      >
+        <Bell />
+        {count > 0 ? <span className="absolute top-2.5 right-2.5 size-2 rounded-full bg-accent" aria-hidden /> : null}
+      </Button>
+      {open ? (
+        <ViewportSheet onClose={() => setOpen(false)}>
+          <div className={cn(formSheetClass, "px-4")}>
+            <SheetGrabber />
+            <div className="mb-3 flex items-center justify-between gap-3 px-1">
+              <p className="text-[17px] font-semibold text-fg">{t(locale, "notifications")}</p>
+              {unread ? (
+                <button type="button" className="text-[17px] text-accent active:opacity-60" onClick={() => void markAll()}>
+                  {t(locale, "notifyMarkAll")}
+                </button>
+              ) : null}
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {items == null ? (
+                <div className="h-16 rounded-[16px] bg-surface" aria-hidden />
+              ) : items.length === 0 ? (
+                <p className="px-1 py-6 text-center text-[15px] text-muted">{t(locale, "notifyEmpty")}</p>
+              ) : (
+                <ul className="ios-group">
+                  {items.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        className={cn(
+                          "flex w-full flex-col gap-0.5 px-4 py-3 text-left text-fg active:bg-fill",
+                          !item.read && "bg-fill/50",
+                        )}
+                        onClick={() => void openItem(item)}
+                      >
+                        <span className="flex items-baseline justify-between gap-3">
+                          <span className="text-[17px] font-medium">{item.title}</span>
+                          <span className="shrink-0 text-[13px] text-muted">{ago(item.createdAt, locale)}</span>
+                        </span>
+                        <span className="text-[15px] leading-snug text-muted">{item.body}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <Link
               to="/profile/notifications"
-              className="mx-1 mb-1 rounded-md px-3 py-2 text-xs font-medium text-muted outline-none data-[highlighted]:bg-surface data-[highlighted]:text-fg"
+              className="mt-2 flex min-h-11 items-center justify-center text-[17px] text-accent active:opacity-60"
+              onClick={() => setOpen(false)}
             >
               {t(locale, "notifySetup")}
             </Link>
-          </DropdownMenu.Item>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+          </div>
+        </ViewportSheet>
+      ) : null}
+    </>
   );
 }

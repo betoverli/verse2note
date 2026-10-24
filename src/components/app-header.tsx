@@ -111,11 +111,12 @@ export function AppHeader({
   const inputRef = useRef<HTMLInputElement>(null);
   useEffect(() => setApple(isAppleUa()), []);
   const BackIcon = apple ? ChevronLeft : ArrowLeft;
-  const showSearch = Boolean(search && (searchOpen || search.value));
 
-  useEffect(() => {
-    if (showSearch) inputRef.current?.focus();
-  }, [showSearch]);
+  function cancelSearch() {
+    search?.onChange("");
+    setSearchOpen(false);
+    inputRef.current?.blur();
+  }
 
   return (
     <header className={cn("app-header z-20", pinned ? "relative" : "sticky top-0 -mx-4 sm:-mx-6")}>
@@ -136,63 +137,77 @@ export function AppHeader({
             </Button>
           ) : null}
         </div>
-        {showSearch && search ? (
-          <div className="min-w-0 flex-1">
+        {titleField ? (
+          <div className="min-w-0 flex-1">{titleField}</div>
+        ) : (
+          <HeaderTitle title={title} />
+        )}
+        <div className="flex min-w-12 shrink-0 items-center justify-end">{trailing}</div>
+      </div>
+      {search ? (
+        <form
+          className="flex items-center gap-2 px-1 pb-1.5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            inputRef.current?.blur();
+          }}
+        >
+          <div className="relative min-w-0 flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted" />
             <input
               ref={inputRef}
               type="search"
+              inputMode="search"
               value={search.value}
               onChange={(event) => search.onChange(event.target.value)}
+              onFocus={() => setSearchOpen(true)}
+              onBlur={() => {
+                if (!search.value) setSearchOpen(false);
+              }}
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
-                  search.onChange("");
-                  setSearchOpen(false);
+                  event.preventDefault();
+                  cancelSearch();
                 }
               }}
               placeholder={search.placeholder}
               aria-label={search.placeholder}
               autoCapitalize="none"
               autoCorrect="off"
+              autoComplete="off"
               spellCheck={false}
               enterKeyHint="search"
-              className="h-9 w-full rounded-[10px] bg-fill px-3 text-[17px] text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 w-full rounded-[10px] bg-fill pr-8 pl-8 text-[17px] text-fg placeholder:text-subtle outline-none [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
             />
-          </div>
-        ) : titleField ? (
-          <div className="min-w-0 flex-1">{titleField}</div>
-        ) : (
-          <HeaderTitle title={title} />
-        )}
-        <div className="flex min-w-12 shrink-0 items-center justify-end">
-          {search ? (
-            showSearch ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 text-accent [&_svg]:size-5"
-                aria-label={t(locale, "back")}
+            {search.value ? (
+              <button
+                type="button"
+                aria-label={t(locale, "searchClear")}
+                className="absolute top-1/2 right-1 grid size-7 -translate-y-1/2 place-items-center"
+                onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
                   search.onChange("");
-                  setSearchOpen(false);
+                  inputRef.current?.focus();
                 }}
               >
-                <X />
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-11 text-accent [&_svg]:size-5"
-                aria-label={search.placeholder}
-                onClick={() => setSearchOpen(true)}
-              >
-                <Search />
-              </Button>
-            )
+                <span className="grid size-[18px] place-items-center rounded-full bg-[#8e8e93] text-white">
+                  <X className="size-3" strokeWidth={3} />
+                </span>
+              </button>
+            ) : null}
+          </div>
+          {searchOpen || search.value ? (
+            <button
+              type="button"
+              className="shrink-0 px-1 text-[17px] text-accent active:opacity-60"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={cancelSearch}
+            >
+              {t(locale, "linkCancel")}
+            </button>
           ) : null}
-          {showSearch ? null : trailing}
-        </div>
-      </div>
+        </form>
+      ) : null}
       {extra}
     </header>
   );

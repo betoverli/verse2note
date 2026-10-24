@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { BookmarkPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -11,6 +10,8 @@ import { samePassage, type Passage } from "@/lib/bible/passage";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import { cn } from "@/lib/utils";
 
 export function SaveToCollectionButton({
   passages,
@@ -65,60 +66,55 @@ export function SaveToCollectionButton({
     setBusy(false);
   }
 
-  const sheet =
-    open && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 px-4 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,calc(env(safe-area-inset-bottom)+1rem))]"
-            onClick={() => setOpen(false)}
-          >
-            <div
-              className="w-full max-w-md rounded-xl bg-elevated p-4 shadow-[var(--shadow-border)]"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <p className="text-sm font-medium text-fg">{t(locale, "addToCollection")}</p>
-              {items.length > 0 ? (
-                <ul className="mt-3 max-h-48 space-y-2 overflow-y-auto">
-                  {items.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void addTo(item)}
-                        className="flex min-h-12 w-full items-center justify-between rounded-md bg-surface px-3 text-left text-sm text-fg"
-                      >
-                        <span>{item.title}</span>
-                        <span className="text-xs text-muted">{item.passages.length}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <form
-                className="mt-3 flex gap-2"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void onCreate();
-                }}
-              >
-                <Input
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={t(locale, "newCollection")}
-                  maxLength={60}
-                />
-                <Button type="submit" disabled={busy || !title.trim()}>
-                  {t(locale, "collectionSave")}
-                </Button>
-              </form>
-              <Button variant="ghost" className="mt-2 w-full text-muted" onClick={() => setOpen(false)}>
-                {t(locale, "back")}
-              </Button>
-            </div>
-          </div>,
-          document.body,
-        )
-      : null;
+  const sheet = open ? (
+    <ViewportSheet onClose={() => setOpen(false)}>
+      <div className={cn(formSheetClass, "px-4")}>
+        <SheetGrabber />
+        <p className="mb-3 text-center text-[17px] font-semibold text-fg">{t(locale, "addToCollection")}</p>
+        {items.length > 0 ? (
+          <ul className="ios-group max-h-64 overflow-y-auto">
+            {items.map((item) => (
+              <li key={item.id}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void addTo(item)}
+                  className="flex min-h-[52px] w-full items-center justify-between px-4 text-left text-[17px] text-fg active:bg-fill disabled:opacity-40"
+                >
+                  <span className="truncate">{item.title}</span>
+                  <span className="ml-3 shrink-0 text-[15px] text-muted">{item.passages.length}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <form
+          className="mt-3 flex gap-2"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onCreate();
+          }}
+        >
+          <Input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={t(locale, "newCollection")}
+            maxLength={60}
+          />
+          <Button type="submit" disabled={busy || !title.trim()}>
+            {t(locale, "collectionSave")}
+          </Button>
+        </form>
+        <button
+          type="button"
+          className="mt-1 flex min-h-11 w-full items-center justify-center text-[17px] font-semibold text-accent active:opacity-60"
+          onClick={() => setOpen(false)}
+        >
+          {t(locale, "linkCancel")}
+        </button>
+      </div>
+    </ViewportSheet>
+  ) : null;
 
   return (
     <>

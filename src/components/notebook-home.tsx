@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { FileUp, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
@@ -10,7 +10,7 @@ import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { SendToFriendButton } from "@/components/send-to-friend";
-import { ViewportSheet } from "@/components/viewport-sheet";
+import { ActionSheet } from "@/components/viewport-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { Button } from "@/components/ui/button";
 import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
@@ -120,6 +120,11 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
     const onPointerStart = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
       onStart(event);
+      try {
+        el.setPointerCapture(event.pointerId);
+      } catch {
+        /* pointer already released */
+      }
     };
     const onPointerMove = (event: PointerEvent) => {
       if (event.pointerType === "touch") return;
@@ -196,29 +201,21 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
       </div>
       <SendToFriendButton kind="note" targetId={note.id} hideTrigger open={share} onOpenChange={setShare} />
       {askDelete ? (
-        <ViewportSheet onClose={() => setAskDelete(false)}>
-          <div
-            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <p className="text-sm font-medium text-fg">{t(locale, "notebookDeleteAsk")}</p>
-            <div className="mt-4 flex gap-2">
-              <Button className="flex-1" variant="ghost" onClick={() => setAskDelete(false)}>
-                {t(locale, "linkCancel")}
-              </Button>
-              <Button
-                className="flex-1 bg-danger text-white hover:bg-danger/90"
-                onClick={() => {
-                  setAskDelete(false);
-                  setGone(true);
-                  deleteLocalNote(note.id);
-                }}
-              >
-                {t(locale, "notebookDelete")}
-              </Button>
-            </div>
-          </div>
-        </ViewportSheet>
+        <ActionSheet
+          message={t(locale, "notebookDeleteAsk")}
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setAskDelete(false)}
+          actions={[
+            {
+              label: t(locale, "notebookDelete"),
+              destructive: true,
+              onSelect: () => {
+                setGone(true);
+                deleteLocalNote(note.id);
+              },
+            },
+          ]}
+        />
       ) : null}
     </div>
   );
@@ -236,7 +233,6 @@ export function NotebookHome({ query }: { query: string }) {
   const [speakerId, setSpeakerId] = useState<string | null>(null);
   const [granted, setGranted] = useState<Note[]>([]);
   const [noteGroups, setNoteGroups] = useState<Record<string, { id: string; name: string }[]>>({});
-  const [compose, setCompose] = useState(false);
   const [people, setPeople] = useState(false);
 
   useEffect(() => {
@@ -367,40 +363,11 @@ export function NotebookHome({ query }: { query: string }) {
       <Button
         className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
         style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-        onClick={() => setCompose(true)}
+        onClick={() => openNew()}
         aria-label={t(locale, "notebookNew")}
       >
         <Plus />
       </Button>
-      {compose ? (
-        <ViewportSheet onClose={() => setCompose(false)}>
-          <div
-            className="w-full max-w-sm rounded-t-xl bg-elevated p-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Button
-              className="w-full"
-              onClick={() => {
-                setCompose(false);
-                openNew();
-              }}
-            >
-              <Plus />
-              {t(locale, "notebookNew")}
-            </Button>
-            <Button
-              variant="secondary"
-              className="mt-2 w-full"
-              asChild
-            >
-              <Link to="/notebook/import" onClick={() => setCompose(false)}>
-                <FileUp />
-                {t(locale, "notebookImport")}
-              </Link>
-            </Button>
-          </div>
-        </ViewportSheet>
-      ) : null}
       {people ? <NotebookSpeakerSheet open onClose={() => setPeople(false)} /> : null}
     </div>
   );
