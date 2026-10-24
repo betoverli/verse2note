@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { addEmailPassword } from "@/lib/account-methods";
-import { GROK_PROVIDERS, authClient } from "@/lib/auth/client";
+import { authClient } from "@/lib/auth/client";
+import { GOOGLE_PROVIDER_ID } from "@/lib/auth/google";
+import { BROKER_UI_PROVIDERS, GROK_PROVIDERS } from "@/lib/auth/providers";
+import { useGoogleSignInEnabled } from "@/lib/auth/use-google-sign-in";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
@@ -12,14 +15,15 @@ type AccountRow = { providerId: string };
 
 function labelFor(providerId: string, locale: "pt" | "en" | "es") {
   if (providerId === "credential") return t(locale, "accountEmail");
+  if (providerId === GOOGLE_PROVIDER_ID || providerId === "grok-google") return t(locale, "continueGoogle");
   const provider = GROK_PROVIDERS.find((item) => item.providerId === providerId);
-  if (provider?.idp === "google") return t(locale, "continueGoogle");
   if (provider?.idp === "twitter") return t(locale, "continueX");
   return providerId;
 }
 
 export function LinkedMethods() {
   const locale = useAppStore((s) => s.locale);
+  const googleEnabled = useGoogleSignInEnabled();
   const [accounts, setAccounts] = useState<AccountRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [password, setPassword] = useState("");
@@ -51,16 +55,30 @@ export function LinkedMethods() {
 
   const has = (id: string) => accounts.some((item) => item.providerId === id);
   const hasEmail = has("credential");
+  const nativeGoogle = has(GOOGLE_PROVIDER_ID);
+  const legacyGoogle = has("grok-google");
+  const showGoogle = googleEnabled || nativeGoogle || legacyGoogle;
+  // A broker-era Google link still counts as connected. When native Google is
+  // configured and not yet attached, offer Add so the signed-in user can link it.
+  const googleLinked = nativeGoogle || (legacyGoogle && !googleEnabled);
 
   async function onLink(providerId: string) {
     setError(null);
     setBusy(providerId);
     try {
-      const { data, error: fail } = await authClient.oauth2.link({
-        providerId,
-        callbackURL: "/profile/edit",
-        errorCallbackURL: "/profile/edit",
-      });
+      const { data, error: fail } =
+        providerId === GOOGLE_PROVIDER_ID
+          ? await authClient.linkSocial({
+              provider: GOOGLE_PROVIDER_ID,
+              callbackURL: "/profile/edit",
+              errorCallbackURL: "/profile/edit",
+              disableRedirect: true,
+            })
+          : await authClient.oauth2.link({
+              providerId,
+              callbackURL: "/profile/edit",
+              errorCallbackURL: "/profile/edit",
+            });
       if (fail) {
         setError(fail.message || t(locale, "accountError"));
         setBusy(null);
@@ -110,7 +128,24 @@ export function LinkedMethods() {
     <section className="space-y-3">
       <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "linkedMethods")}</h2>
       <ul className="flex flex-col gap-2">
-        {GROK_PROVIDERS.map((provider) => {
+        {showGoogle ? (
+          <li className="flex min-h-14 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
+            <span className="text-sm font-medium text-fg">{t(locale, "continueGoogle")}</span>
+            {googleLinked ? (
+              <span className="text-xs text-muted">{t(locale, "linkedOn")}</span>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={Boolean(busy)}
+                onClick={() => void onLink(GOOGLE_PROVIDER_ID)}
+              >
+                {busy === GOOGLE_PROVIDER_ID ? t(locale, "accountWait") : t(locale, "linkAdd")}
+              </Button>
+            )}
+          </li>
+        ) : null}
+        {BROKER_UI_PROVIDERS.map((provider) => {
           const connected = has(provider.providerId);
           return (
             <li key={provider.providerId} className="flex min-h-14 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-border)]">

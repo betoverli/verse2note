@@ -5,11 +5,11 @@
  * local email/password, flip the flag in `./email-password` only (see auth skill).
  *
  * The app runs its own Better Auth at `/api/auth/*`, so the session cookie stays
- * on this app's own origin. Sign-in federates to the shared **Grok auth broker**
- * (`GROK_AUTH_ISSUER`) via the `genericOAuth` plugin — the broker brokers the
- * upstream sign-in methods (Google, X, …) and holds their shared secrets; this
- * app only holds its own client id/secret and names the upstream it wants via
- * each provider's `idp` hint.
+ * on this app's own origin. X still federates to the shared **Grok auth broker**
+ * (`GROK_AUTH_ISSUER`) via the `genericOAuth` plugin. Google does not: when
+ * `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set, Better Auth's built-in
+ * Google social provider is registered (callback `/api/auth/callback/google`).
+ * If those env vars are missing, Google is omitted and the rest of auth still boots.
  *
  * Tri-mode:
  *   - Deployed: the deployer injects a per-app `GROK_AUTH_*` + `BETTER_AUTH_URL`
@@ -38,6 +38,7 @@ import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordEnabled } from "./email-password";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
+import { GOOGLE_PROVIDER_ID, googleOAuthFromEnv } from "./google";
 import { GROK_PROVIDERS } from "./providers";
 import { pgliteDialect } from "./pglite-dialect";
 import {
@@ -85,6 +86,12 @@ const grokClientSecret = env("GROK_AUTH_CLIENT_SECRET") ?? PREVIEW_CLIENT_SECRET
 /** True when federated sign-in is active (real auth is enforced). */
 export const authConfigured =
   !authDisabled && Boolean(grokClientId && grokClientSecret);
+
+/**
+ * Native Google. Off unless both server env vars are set, and off entirely when
+ * auth is disabled. Partial config does not register a broken provider.
+ */
+const googleOAuth = authDisabled ? { configured: false as const } : googleOAuthFromEnv(process.env);
 
 // This app's own Better Auth origin. When deployed the deployer injects the
 // public URL. In the sandbox live preview there's no fixed URL (each preview gets
@@ -137,6 +144,12 @@ const baseURL = {
     "localhost",
     "127.0.0.1",
     "[::1]",
+    // Better Auth matches the Host header, which includes the port. Without
+    // these, local sign-in falls back to BETTER_AUTH_URL and Google is sent
+    // the production redirect URI.
+    "localhost:8080",
+    "127.0.0.1:8080",
+    "[::1]:8080",
     "verse2note.com",
     "www.verse2note.com",
     "*.grok.me",
@@ -272,6 +285,7 @@ export const auth = betterAuth({
       enabled: true,
       trustedProviders: [
         ...GROK_PROVIDERS.map((p) => p.providerId),
+        ...(googleOAuth.configured ? [GOOGLE_PROVIDER_ID] : []),
         GATE_PROVIDER_ID,
       ],
       // Password accounts are never email-verified (no mailer). Require the
@@ -279,8 +293,10 @@ export const auth = betterAuth({
       // register victim@gmail.com then ride the victim's later Google login.
       // Google/X still create their own users; X does not share Google emails.
       requireLocalEmailVerified: true,
-      // Explicit "add Google/X/email" from a signed-in profile uses /oauth2/link.
-      // Those identities do not share an email, so linking must allow it.
+      // Explicit "add Google/X/email" from a signed-in profile links the new
+      // identity onto the current user. Google uses Better Auth `linkSocial`
+      // (`/api/auth/callback/google`); X still uses `/oauth2/link`. Those
+      // identities do not share an email, so linking must allow it.
       allowDifferentEmails: true,
     },
   },
@@ -293,6 +309,22 @@ export const auth = betterAuth({
 
   // Local email/password — toggled only via `./email-password` (not a plugin).
   ...(emailAndPasswordEnabled ? { emailAndPassword: { enabled: true } } : {}),
+
+  // Native Google Cloud OAuth. `select_account` lets the visitor pick an account
+  // without `prompt=consent` / `prompt=login`, which made Google treat every
+  // visit as a first-time consent. Callback: `/api/auth/callback/google`.
+  ...(googleOAuth.configured
+    ? {
+        socialProviders: {
+          google: {
+            clientId: googleOAuth.clientId,
+            clientSecret: googleOAuth.clientSecret,
+            prompt: "select_account" as const,
+            overrideUserInfoOnSignIn: true,
+          },
+        },
+      }
+    : {}),
 
   // `__Host-` prefixed cookies: the browser REFUSES any same-named cookie that
   // carries a `Domain` attribute, so a sibling `*.grok.me` app cannot "toss" a

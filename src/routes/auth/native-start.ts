@@ -3,8 +3,9 @@ import { configuredTeamId } from "@/lib/native/aasa.server";
 import { pkceCookieHeader } from "@/lib/native/pkce-cookie";
 import { isPkceMaterial } from "@/lib/native/pkce";
 import { nativeReturnTo, parseReturnMode } from "@/lib/native/return-to";
+import { GOOGLE_PROVIDER_ID, googleOAuthFromEnv } from "@/lib/auth/google";
+import { beginOAuthSignIn } from "@/lib/auth/oauth-start.server";
 import { GROK_PROVIDERS } from "@/lib/auth/providers";
-import { auth } from "@/lib/auth/server";
 
 function fail(mode: "https" | "scheme") {
   return new Response(null, {
@@ -25,19 +26,18 @@ export const Route = createFileRoute("/auth/native-start")({
         const providerId = url.searchParams.get("providerId")?.trim() ?? "";
         const challenge = url.searchParams.get("code_challenge")?.trim() ?? "";
         const mode = parseReturnMode(url.searchParams.get("return"));
-        if (!GROK_PROVIDERS.some((provider) => provider.providerId === providerId)) return fail(mode);
+        const googleOk =
+          providerId === GOOGLE_PROVIDER_ID && googleOAuthFromEnv(process.env).configured;
+        const brokerOk = GROK_PROVIDERS.some((provider) => provider.providerId === providerId);
+        if (!googleOk && !brokerOk) return fail(mode);
         if (!isPkceMaterial(challenge)) return fail(mode);
         if (mode === "https" && !configuredTeamId()) return fail("https");
         const done = `${url.origin}/auth/native-done`;
         try {
-          const apiRes = await auth.api.signInWithOAuth2({
-            body: {
-              providerId,
-              callbackURL: done,
-              errorCallbackURL: `${done}?error=1`,
-            },
-            headers: request.headers,
-            asResponse: true,
+          const apiRes = await beginOAuthSignIn(request, {
+            providerId,
+            callbackURL: done,
+            errorCallbackURL: `${done}?error=1`,
           });
           if (!apiRes.ok) return fail(mode);
           const body = (await apiRes.json().catch(() => null)) as { url?: string } | null;

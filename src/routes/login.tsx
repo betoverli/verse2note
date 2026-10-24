@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { authClient, authEnabled, signIn } from "@/lib/auth/client";
+import { GOOGLE_PROVIDER_ID } from "@/lib/auth/google";
+import { getGoogleSignInEnabled } from "@/lib/auth/google-status";
+import { BROKER_UI_PROVIDERS } from "@/lib/auth/providers";
 import { t } from "@/lib/i18n";
 import { safeNext } from "@/lib/invite";
 import { cleanEmail, cleanHandle, cleanName, profileIsComplete } from "@/lib/profile";
@@ -13,6 +16,14 @@ import { Wordmark } from "@/components/wordmark";
 
 export const Route = createFileRoute("/login")({
   component: Login,
+  loader: async () => {
+    try {
+      const result = await getGoogleSignInEnabled();
+      return { google: result.enabled };
+    } catch {
+      return { google: false };
+    }
+  },
   validateSearch: (search: Record<string, unknown>): { create: boolean; next?: string } => {
     const next = safeNext(search.next);
     return {
@@ -30,10 +41,34 @@ export const Route = createFileRoute("/login")({
   },
 });
 
-export function Login() {
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 18 18" aria-hidden="true" className="size-4">
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z"
+      />
+    </svg>
+  );
+}
+
+function Login() {
   const locale = useAppStore((s) => s.locale);
   const navigate = useNavigate();
   const { create, next } = Route.useSearch();
+  const { google } = Route.useLoaderData();
   const afterAuth = next ?? "/profile";
   const [mode, setMode] = useState<"in" | "up">(create ? "up" : "in");
   const [name, setName] = useState("");
@@ -167,18 +202,32 @@ export function Login() {
 
       <div className="mt-8 flex flex-col gap-2">
         {authEnabled ? (
-          GROK_PROVIDERS.map((provider) => (
-            <Button
-              key={provider.providerId}
-              type="button"
-              variant="secondary"
-              className="w-full"
-              disabled={busy}
-              onClick={() => void onSocial(provider.providerId)}
-            >
-              {provider.idp === "google" ? t(locale, "continueGoogle") : t(locale, "continueX")}
-            </Button>
-          ))
+          <>
+            {google ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                disabled={busy}
+                onClick={() => void onSocial(GOOGLE_PROVIDER_ID)}
+              >
+                <GoogleMark />
+                {t(locale, "continueGoogle")}
+              </Button>
+            ) : null}
+            {BROKER_UI_PROVIDERS.map((provider) => (
+              <Button
+                key={provider.providerId}
+                type="button"
+                variant="secondary"
+                className="w-full"
+                disabled={busy}
+                onClick={() => void onSocial(provider.providerId)}
+              >
+                {provider.idp === "twitter" ? t(locale, "continueX") : provider.label}
+              </Button>
+            ))}
+          </>
         ) : (
           <p className="text-sm text-muted">{t(locale, "accountOff")}</p>
         )}
