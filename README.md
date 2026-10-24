@@ -4,7 +4,7 @@ Picker de referências bíblicas. Escolha livro, capítulo e versos; copie um te
 
 Live: [verse2note.com](https://verse2note.com)
 
-Português, English, Español. PWA offline. Conta opcional (Google, X ou e-mail).
+Português, English, Español. PWA offline. Conta opcional (Google ou e-mail).
 
 ## Local
 
@@ -62,7 +62,7 @@ O regresso do app de iPhone não entra nesta lista. A Apple e o Google só vêem
 
 ## App iOS
 
-O site continua a ser o site. O app de iPhone é uma capa nativa (Capacitor) cuja janela abre `https://verse2note.com`. Ícone, ecrã de abertura, avisos da Apple, folha de partilha e abertura da Bíblia (YouVersion e outras) são nativos. O login com Google ou X abre o navegador do sistema e volta para o app, porque a Apple e o Google recusam esse login dentro da janela embutida. E-mail e senha continuam na janela do app. O regresso do login traz só um código de uso único, preso a um segredo que fica no app.
+O site continua a ser o site. O app de iPhone é uma capa nativa (Capacitor) cuja janela abre `https://verse2note.com`. Ícone, ecrã de abertura, avisos da Apple, folha de partilha e abertura da Bíblia (YouVersion e outras) são nativos. O login com Google abre o navegador do sistema e volta para o app, porque a Apple e o Google recusam esse login dentro da janela embutida. E-mail e senha continuam na janela do app. O regresso do login traz só um código de uso único, preso a um segredo que fica no app.
 
 Quem usa o site no navegador não vê diferença. As funções nativas só acordam dentro do app.
 

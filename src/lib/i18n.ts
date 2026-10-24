@@ -141,7 +141,6 @@ const strings = {
     signingOut: "Saindo…",
     signOutFailed: "Não deu para sair. Tenta outra vez.",
     continueGoogle: "Continuar com Google",
-    continueX: "Continuar com X",
     linkedMethods: "Como entrar",
     linkedOn: "Conectado",
     linkAdd: "Adicionar",
@@ -157,7 +156,7 @@ const strings = {
     accountPassword: "Senha (mín. 8)",
     accountWait: "Aguarde…",
     accountError: "Não deu para entrar. Confira o e-mail e a senha.",
-    accountPopup: "Permita pop-ups neste site para entrar com Google ou X.",
+    accountPopup: "Permita pop-ups neste site para entrar com Google.",
     haveAccount: "Já tenho conta",
     noAccount: "Criar conta com e-mail",
     navBooks: "Versículos",
@@ -313,7 +312,7 @@ const strings = {
     helpPlans:
       "Planos são leituras de capítulos inteiros (um ano, evangelhos…). Entre para escolher um plano; ele aparece em Meus planos. No máximo 2 dias marcados por dia.",
     helpAccount:
-      "Conta é opcional (Google, X ou e-mail) para Meus planos, listas, amigos e o perfil. Ao criar, escolha nome, @ e e-mail. Sem conta o seletor fica neste aparelho. A API para IA não usa conta.",
+      "Conta é opcional (Google ou e-mail) para Meus planos, listas, amigos e o perfil. Ao criar, escolha nome, @ e e-mail. Sem conta o seletor fica neste aparelho. A API para IA não usa conta.",
     helpImport:
       "No caderno, + → Importar. Cole um texto ou um arquivo (PDF, Word, Markdown). Referências viram pílulas. No Android instalado, Compartilhar → Verse2Note. No iPhone, copie ou envie o arquivo.",
     helpNotifications:
@@ -583,7 +582,6 @@ const strings = {
     signingOut: "Signing out…",
     signOutFailed: "Could not sign out. Try again.",
     continueGoogle: "Continue with Google",
-    continueX: "Continue with X",
     linkedMethods: "Sign-in methods",
     linkedOn: "Connected",
     linkAdd: "Add",
@@ -599,7 +597,7 @@ const strings = {
     accountPassword: "Password (min. 8)",
     accountWait: "Please wait…",
     accountError: "Could not sign in. Check the email and password.",
-    accountPopup: "Allow pop-ups on this site to continue with Google or X.",
+    accountPopup: "Allow pop-ups on this site to continue with Google.",
     haveAccount: "I already have an account",
     noAccount: "Create an account with email",
     navBooks: "Verses",
@@ -755,7 +753,7 @@ const strings = {
     helpPlans:
       "Plans are whole-chapter readings (a year, the Gospels…). Sign in to start a plan; it shows up under My plans. At most 2 days checked per real day.",
     helpAccount:
-      "An account is optional (Google, X, or email) for My plans, lists, friends, and your profile. Sign-up asks for name, @, and email. Without an account the picker stays on this device. The AI API does not use an account.",
+      "An account is optional (Google or email) for My plans, lists, friends, and your profile. Sign-up asks for name, @, and email. Without an account the picker stays on this device. The AI API does not use an account.",
     helpImport:
       "In the notebook, + → Import. Paste text or a file (PDF, Word, Markdown). References become pills. On installed Android, Share → Verse2Note. On iPhone, copy or send the file.",
     helpNotifications:
@@ -1025,7 +1023,6 @@ const strings = {
     signingOut: "Saliendo…",
     signOutFailed: "No se pudo salir. Inténtalo de nuevo.",
     continueGoogle: "Continuar con Google",
-    continueX: "Continuar con X",
     linkedMethods: "Cómo entrar",
     linkedOn: "Conectado",
     linkAdd: "Añadir",
@@ -1041,7 +1038,7 @@ const strings = {
     accountPassword: "Contraseña (mín. 8)",
     accountWait: "Espera…",
     accountError: "No se pudo entrar. Revisa el correo y la contraseña.",
-    accountPopup: "Permite las ventanas emergentes para entrar con Google o X.",
+    accountPopup: "Permite las ventanas emergentes para entrar con Google.",
     haveAccount: "Ya tengo cuenta",
     noAccount: "Crear cuenta con correo",
     navBooks: "Versículos",
@@ -1197,7 +1194,7 @@ const strings = {
     helpPlans:
       "Los planes son lecturas de capítulos enteros (un año, los evangelios…). Entra para elegir un plan; aparece en Mis planes. Como máximo 2 días marcados por día.",
     helpAccount:
-      "La cuenta es opcional (Google, X o correo) para Mis planes, listas, amigos y el perfil. Al crear, elige nombre, @ y correo. Sin cuenta el selector queda en este dispositivo. La API para IA no usa cuenta.",
+      "La cuenta es opcional (Google o correo) para Mis planes, listas, amigos y el perfil. Al crear, elige nombre, @ y correo. Sin cuenta el selector queda en este dispositivo. La API para IA no usa cuenta.",
     helpImport:
       "En el cuaderno, + → Importar. Pega un texto o un archivo (PDF, Word, Markdown). Las referencias se vuelven pastillas. En Android instalado, Compartir → Verse2Note. En iPhone, copia o envía el archivo.",
     helpNotifications:

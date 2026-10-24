@@ -3,7 +3,6 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { GOOGLE_PROVIDER_ID } from "@/lib/auth/google";
 import { getGoogleSignInEnabled } from "@/lib/auth/google-status";
-import { BROKER_UI_PROVIDERS } from "@/lib/auth/providers";
 import { t } from "@/lib/i18n";
 import { safeNext } from "@/lib/invite";
 import { cleanEmail, cleanHandle, cleanName, profileIsComplete } from "@/lib/profile";
@@ -202,32 +201,18 @@ function Login() {
 
       <div className="mt-8 flex flex-col gap-2">
         {authEnabled ? (
-          <>
-            {google ? (
-              <Button
-                type="button"
-                variant="secondary"
-                className="w-full" size="lg"
-                disabled={busy}
-                onClick={() => void onSocial(GOOGLE_PROVIDER_ID)}
-              >
-                <GoogleMark />
-                {t(locale, "continueGoogle")}
-              </Button>
-            ) : null}
-            {BROKER_UI_PROVIDERS.map((provider) => (
-              <Button
-                key={provider.providerId}
-                type="button"
-                variant="secondary"
-                className="w-full" size="lg"
-                disabled={busy}
-                onClick={() => void onSocial(provider.providerId)}
-              >
-                {provider.idp === "twitter" ? t(locale, "continueX") : provider.label}
-              </Button>
-            ))}
-          </>
+          google ? (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full" size="lg"
+              disabled={busy}
+              onClick={() => void onSocial(GOOGLE_PROVIDER_ID)}
+            >
+              <GoogleMark />
+              {t(locale, "continueGoogle")}
+            </Button>
+          ) : null
         ) : (
           <p className="text-sm text-muted">{t(locale, "accountOff")}</p>
         )}

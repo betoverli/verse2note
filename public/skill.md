@@ -52,7 +52,7 @@ Category ids: `doctrine`, `jesus`, `personal`, `church-life`, `home`, `seasons`,
 
 ## Human accounts vs agents
 
-Google / X / email accounts exist only in the Verse2Note web app (profile, My plans, Bible-app prefs). **Do not** send cookies, tokens, or a login to `/api/*` or `/api/mcp`. Those endpoints are public and anonymous.
+Google / email accounts exist only in the Verse2Note web app (profile, My plans, Bible-app prefs). **Do not** send cookies, tokens, or a login to `/api/*` or `/api/mcp`. Those endpoints are public and anonymous.
 
 ```
 GET {origin}/api/plans?locale=pt

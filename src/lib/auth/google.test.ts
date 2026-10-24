@@ -7,7 +7,7 @@ import {
   GOOGLE_PROVIDER_ID,
   googleOAuthFromEnv,
 } from "./google.ts";
-import { BROKER_UI_PROVIDERS, GROK_PROVIDERS } from "./providers.ts";
+import { GROK_PROVIDERS } from "./providers.ts";
 
 describe("googleOAuthFromEnv", () => {
   it("is configured only when both client id and secret are non-empty", () => {
@@ -48,14 +48,19 @@ describe("googleOAuthFromEnv", () => {
     assert.equal(GOOGLE_CALLBACK_PATH.includes("grok"), false);
   });
 
-  it("does not offer the broker Google button in the UI list", () => {
-    assert.equal(
-      BROKER_UI_PROVIDERS.some((provider) => provider.idp === "google" || provider.providerId === "grok-google"),
-      false,
-    );
+  it("keeps legacy broker Google and does not register X", () => {
     assert.equal(
       GROK_PROVIDERS.some((provider) => provider.providerId === "grok-google"),
       true,
+    );
+    assert.equal(
+      GROK_PROVIDERS.some(
+        (provider) =>
+          provider.idp === "twitter" ||
+          provider.providerId === "grok-x" ||
+          provider.providerId === "twitter",
+      ),
+      false,
     );
   });
 });

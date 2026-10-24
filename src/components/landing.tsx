@@ -28,7 +28,7 @@ const JSON_LD = {
     "Multiple Bible apps",
     "160 themed collections in 14 categories",
     "34 reading plans of whole chapters",
-    "Optional Google / X / email account for groups, notes and My plans",
+    "Optional Google / email account for groups, notes and My plans",
     "API, skill and MCP for AI agents (no login)",
     "Works offline after first open",
   ],
