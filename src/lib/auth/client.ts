@@ -3,6 +3,7 @@ import { createAuthClient } from "better-auth/react";
 import { runPreSignInSignOut, runSignOut } from "../../../scripts/sign-out-plan.mjs";
 import { GOOGLE_PROVIDER_ID } from "./google";
 import { GROK_PROVIDERS } from "./providers";
+import { BEARER_KEY, bearerFromStores, sanitizeBearerToken } from "./bearer-store";
 import { clearSessionUser } from "./session-cache";
 import { clearOutbox } from "@/lib/outbox";
 import { isNativeApp } from "@/lib/native/runtime";
@@ -15,8 +16,10 @@ import { useAppStore } from "@/lib/store";
  * preview the app is an embedded iframe with PARTITIONED cookies, so after a
  * popup sign-in it can't read the session cookie — it authenticates with a
  * bearer token instead (captured from the popup, see `signIn`). The `onRequest`
- * hook attaches that token when present; when deployed (cookie auth) no token
- * is stored, so nothing changes.
+ * hook attaches that token when present. The website keeps using the HttpOnly
+ * cookie and does not store a token. The iOS shell does: its Google session
+ * never lands in the WebView cookie jar, and that jar can be empty after a
+ * kill, so the same bearer is kept in localStorage.
  *
  * To sign out call `signOut()` below, NOT `authClient.signOut()`: the raw call
  * leaves the bearer token in place, and `onRequest` keeps re-attaching it, so
@@ -29,6 +32,15 @@ export const authClient = createAuthClient({
       const token = getBearerToken();
       if (token) ctx.headers.set("Authorization", `Bearer ${token}`);
       return ctx;
+    },
+    onSuccess(ctx) {
+      // Email sign-in (and session refresh) put the signed session on
+      // `set-auth-token`. The WebView cookie may not survive the next kill,
+      // so the native app keeps this copy. The website must not: that header
+      // would turn the HttpOnly cookie into a script-readable token.
+      if (!isNativeApp()) return;
+      const token = sanitizeBearerToken(ctx.response.headers.get("set-auth-token"));
+      if (token) setBearerToken(token);
     },
   },
 });
@@ -45,18 +57,25 @@ export const authEnabled = import.meta.env.VITE_AUTH_ENABLED !== "false";
 /** The upstream providers to render sign-in buttons for. */
 export { GROK_PROVIDERS };
 
-// ── Live-preview bearer token ────────────────────────────────────────────────
-// The embedded preview iframe has partitioned cookies, so we keep the session's
-// bearer token in sessionStorage and attach it to every Better Auth request (and
-// to server functions, via `@/lib/auth/middleware`). Empty everywhere except the
-// preview after a popup sign-in, so the cookie path is untouched elsewhere.
-const BEARER_KEY = "grok-auth.bearer-token";
+// ── Bearer token ─────────────────────────────────────────────────────────────
+// Live preview: partitioned cookies, so the session rides sessionStorage and
+// dies with the iframe. Native app: Google never sets a WebView cookie, and
+// the email cookie is an HttpOnly `__Host-` cookie WKWebView may drop on kill.
+// localStorage survives that kill (the same store as the notebook). The
+// website keeps using the cookie and does not write this key.
 
-/** The stored preview bearer token, or null. */
+/** The stored bearer token, or null. */
 export function getBearerToken(): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.sessionStorage.getItem(BEARER_KEY);
+    const native = isNativeApp();
+    const found = bearerFromStores(
+      native,
+      window.localStorage.getItem(BEARER_KEY),
+      window.sessionStorage.getItem(BEARER_KEY),
+    );
+    if (found.promote && found.token) window.localStorage.setItem(BEARER_KEY, found.token);
+    return found.token;
   } catch {
     return null;
   }
@@ -64,8 +83,15 @@ export function getBearerToken(): string | null {
 
 function setBearerToken(token: string | null): void {
   if (typeof window === "undefined") return;
+  const next = sanitizeBearerToken(token);
   try {
-    if (token) window.sessionStorage.setItem(BEARER_KEY, token);
+    if (isNativeApp()) {
+      if (next) window.localStorage.setItem(BEARER_KEY, next);
+      else window.localStorage.removeItem(BEARER_KEY);
+      window.sessionStorage.removeItem(BEARER_KEY);
+      return;
+    }
+    if (next) window.sessionStorage.setItem(BEARER_KEY, next);
     else window.sessionStorage.removeItem(BEARER_KEY);
   } catch {
     /* storage unavailable — ignore */

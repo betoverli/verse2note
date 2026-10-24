@@ -1,5 +1,6 @@
 import UIKit
 import Capacitor
+import WebKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -21,4 +22,19 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
         SceneDelegateProxy.shared.scene(scene, continue: userActivity)
     }
+
+    func sceneWillResignActive(_ scene: UIScene) {
+        flushWebViewCookies()
+    }
+
+    func sceneDidEnterBackground(_ scene: UIScene) {
+        flushWebViewCookies()
+    }
+}
+
+/// WKWebView writes cookies asynchronously. Reading the store is what pushes
+/// that write to disk, so an HttpOnly session cookie is still there after the
+/// process is killed. `__Host-` cookies cannot be recreated from JavaScript.
+private func flushWebViewCookies() {
+    WKWebsiteDataStore.default().httpCookieStore.getAllCookies { _ in }
 }
