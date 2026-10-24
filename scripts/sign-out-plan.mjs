@@ -77,7 +77,7 @@ export function settleWithin(start, timeoutMs) {
  * @property {boolean} hasBearer Whether a preview bearer token is stored.
  * @property {() => unknown} requestSignOut Ask the server to end the session; must reject on a failed response.
  * @property {() => void} clearToken Drop the stored bearer token.
- * @property {() => void} redirect Leave the page.
+ * @property {() => void | Promise<void>} redirect Leave the page. May be async so native cookie cleanup finishes first.
  * @property {number} [timeoutMs]
  */
 
@@ -106,7 +106,7 @@ export async function runSignOut({
       await settleWithin(requestSignOut, timeoutMs ?? signOutTimeoutMs(livePreview));
     }
     clearToken();
-    redirect();
+    await redirect();
     return;
   }
 
@@ -119,7 +119,7 @@ export async function runSignOut({
     );
   }
   clearToken();
-  redirect();
+  await redirect();
 }
 
 /**

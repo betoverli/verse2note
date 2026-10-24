@@ -39,9 +39,13 @@ export type CurrentUserState = {
  * Current user + loading state. Same behavior in live preview and when deployed:
  *   - Auth enabled -> the real signed-in user; `user` is `null` while
  *                            the session resolves (`isPending: true`) and when
- *                            signed out (`isPending: false`). Session comes from
- *                            Better Auth `useSession()` → `/api/auth/get-session`
- *                            (cookie when deployed; bearer in live preview).
+ *                            signed out (`isPending: false`). A cached identity
+ *                            may fill `user` during that load, but `isPending`
+ *                            stays true so a leftover profile is not treated as
+ *                            a confirmed login. Session comes from Better Auth
+ *                            `useSession()` → `/api/auth/get-session`
+ *                            (cookie when deployed; bearer in the native app
+ *                            and in live preview).
  *   - Auth disabled (`VITE_AUTH_ENABLED=false`) -> `DEV_USER`, never pending.
  *
  * Protect a route by waiting out `isPending` before acting on `user` —
@@ -90,7 +94,10 @@ export function useCurrentUserState(): CurrentUserState {
   }
   const cached = readSessionUser();
   if (cached && (isPending || !online)) {
-    return { user: cached, isPending: false };
+    // Offline, the cache is the session we have. While the check is still in
+    // flight, it is only a leftover identity — keep isPending so the profile
+    // gate does not treat it as a confirmed login.
+    return { user: cached, isPending };
   }
   if (!isPending && online) clearSessionUser();
   return { user: null, isPending };

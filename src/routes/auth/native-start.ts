@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { configuredTeamId } from "@/lib/native/aasa.server";
 import { pkceCookieHeader } from "@/lib/native/pkce-cookie";
 import { isPkceMaterial } from "@/lib/native/pkce";
-import { nativeReturnTo, parseReturnMode } from "@/lib/native/return-to";
+import { canonicalNativeStart, nativeReturnTo, parseReturnMode } from "@/lib/native/return-to";
 import { GOOGLE_PROVIDER_ID, googleOAuthFromEnv } from "@/lib/auth/google";
 import { beginOAuthSignIn } from "@/lib/auth/oauth-start.server";
 import { GROK_PROVIDERS } from "@/lib/auth/providers";
@@ -22,6 +22,17 @@ export const Route = createFileRoute("/auth/native-start")({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        const canonical = canonicalNativeStart(request.url);
+        if (canonical) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              location: canonical,
+              "cache-control": "no-store",
+              "referrer-policy": "no-referrer",
+            },
+          });
+        }
         const url = new URL(request.url);
         const providerId = url.searchParams.get("providerId")?.trim() ?? "";
         const challenge = url.searchParams.get("code_challenge")?.trim() ?? "";

@@ -118,6 +118,25 @@ test("deployed: a confirmed sign-out clears the token, then redirects", async ()
   assert.deepEqual(h.order, ["clear", "redirect"]);
 });
 
+test("deployed: an async redirect finishes before sign-out resolves", async () => {
+  let stage = "start";
+  await runSignOut({
+    livePreview: false,
+    hasBearer: false,
+    requestSignOut: async () => {
+      stage = "requested";
+    },
+    clearToken: () => {
+      stage = "cleared";
+    },
+    redirect: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      stage = "redirected";
+    },
+  });
+  assert.equal(stage, "redirected");
+});
+
 test("deployed: a sign-out that never settles throws and does NOT redirect", async () => {
   const h = deployed({ requestSignOut: hangs });
   await assert.rejects(h.run(), /still signed in/);

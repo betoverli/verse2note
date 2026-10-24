@@ -8,7 +8,14 @@ import { pkceCookieHeader, readPkceCookie } from "./pkce-cookie.ts";
 import { isPkceMaterial, newPkceVerifier, pkceChallenge, samePkce, verifierMatches } from "./pkce.ts";
 import { isScriptedCrossSite } from "../auth/fetch-metadata.ts";
 import { nativeDoneLocation } from "./done-redirect.ts";
-import { isAllowedReturn, nativeReturnTo, preferredNativeReturnMode, shouldFallBackToScheme } from "./return-to.ts";
+import {
+  canonicalNativeStart,
+  isAllowedReturn,
+  nativeOAuthStartOrigin,
+  nativeReturnTo,
+  preferredNativeReturnMode,
+  shouldFallBackToScheme,
+} from "./return-to.ts";
 import { NATIVE_SESSION_COOKIE, sessionTokenFromCookie } from "./session-cookie.ts";
 
 const token = "session-token-that-must-not-be-stored-raw";
@@ -99,6 +106,37 @@ describe("https auth session fallback", () => {
 
   it("asks the installed app for the custom scheme", () => {
     assert.equal(preferredNativeReturnMode(), "scheme");
+  });
+});
+
+describe("native oauth start host", () => {
+  it("sends Google through verse2note.com, including from another deployment host", () => {
+    assert.equal(nativeOAuthStartOrigin("https://verse2note.com/login"), "https://verse2note.com");
+    assert.equal(nativeOAuthStartOrigin("https://www.verse2note.com/app"), "https://verse2note.com");
+    assert.equal(
+      nativeOAuthStartOrigin("https://verse2note.vercel.app/login"),
+      "https://verse2note.com",
+    );
+    assert.equal(nativeOAuthStartOrigin("http://localhost:8080/login"), "http://localhost:8080");
+    assert.equal(
+      nativeOAuthStartOrigin("https://preview.grok-sandbox.com/login"),
+      "https://preview.grok-sandbox.com",
+    );
+    assert.equal(nativeOAuthStartOrigin("verse2note://localhost/login"), "https://verse2note.com");
+  });
+
+  it("bounces a non-canonical native-start to verse2note.com before Google", () => {
+    const query = "?providerId=google&code_challenge=abc&return=scheme";
+    assert.equal(canonicalNativeStart(`https://verse2note.com/auth/native-start${query}`), null);
+    assert.equal(canonicalNativeStart(`http://localhost:8080/auth/native-start${query}`), null);
+    assert.equal(
+      canonicalNativeStart(`https://verse2note.vercel.app/auth/native-start${query}`),
+      `https://verse2note.com/auth/native-start${query}`,
+    );
+    assert.equal(
+      canonicalNativeStart(`https://www.verse2note.com/auth/native-start${query}`),
+      `https://verse2note.com/auth/native-start${query}`,
+    );
   });
 });
 
