@@ -1,8 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Verse2Note">
-  <rect width="32" height="32" rx="7" fill="#121110"/>
-  <rect x="8" y="7" width="16" height="18" rx="1.6" fill="#e8dcc8"/>
-  <path fill="#1c1a18" d="M8 8.6A1.6 1.6 0 0 1 9.6 7H12.4v18H9.6A1.6 1.6 0 0 1 8 23.4Z"/>
-  <rect x="11.3" y="7" width="1.15" height="18" fill="#a89f93"/>
-  <rect x="14.6" y="13.1" width="6.5" height="1.4" rx="0.6" fill="#1c1a18"/>
-  <rect x="14.6" y="16.4" width="4.5" height="1.2" rx="0.55" fill="#1c1a18"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Verse2Note">
+  <style>
+    .page { fill: #f5ede0; }
+    .spine { fill: #ac9784; }
+    .rule { fill: #c8c0af; }
+    .ribbon { fill: #3291ed; }
+    @media (prefers-color-scheme: dark) {
+      .page { fill: #2d2d2d; }
+      .spine { fill: #131313; }
+      .rule { fill: #969694; }
+    }
+  </style>
+  <rect class="page" width="1024" height="1024"/>
+  <rect class="spine" width="276" height="1024"/>
+  <rect class="rule" x="276" y="391" width="516" height="5"/>
+  <rect class="rule" x="276" y="464" width="516" height="5"/>
+  <rect class="rule" x="276" y="537" width="516" height="5"/>
+  <path class="ribbon" d="M853 250 H969 V1004 L911 948 L853 1004 Z"/>
 </svg>
