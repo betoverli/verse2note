@@ -9,6 +9,51 @@ export type NativeReturnMode = "https" | "scheme";
 export const UNIVERSAL_RETURN_PATH = "/auth/native-return";
 export const UNIVERSAL_RETURN_ORIGIN = "https://verse2note.com";
 
+/**
+ * Host the system browser must open for Google.
+ *
+ * Better Auth sets `redirect_uri` from the request host
+ * (`{origin}/api/auth/callback/google`). A WebView on any other host —
+ * a Vercel deployment URL, for example — would send Google a callback that
+ * is not the one registered for verse2note.com. Local and sandbox origins
+ * stay put so those environments can register their own callback.
+ */
+export function nativeOAuthStartOrigin(pageUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(pageUrl);
+  } catch {
+    return UNIVERSAL_RETURN_ORIGIN;
+  }
+  const host = url.hostname.toLowerCase();
+  if (host === "verse2note.com" || host === "www.verse2note.com") return UNIVERSAL_RETURN_ORIGIN;
+  const http = url.protocol === "http:" || url.protocol === "https:";
+  if (
+    http &&
+    (host === "localhost" || host === "127.0.0.1" || host === "[::1]" || host.endsWith(".grok-sandbox.com"))
+  ) {
+    return url.origin;
+  }
+  return UNIVERSAL_RETURN_ORIGIN;
+}
+
+/**
+ * Where a non-canonical `/auth/native-start` request must go before Google
+ * is contacted. Null means this request's host is already the one Better
+ * Auth will put in `redirect_uri`.
+ */
+export function canonicalNativeStart(requestUrl: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(requestUrl);
+  } catch {
+    return null;
+  }
+  const origin = nativeOAuthStartOrigin(url.href);
+  if (origin === url.origin) return null;
+  return new URL(`${url.pathname}${url.search}`, origin).toString();
+}
+
 export function parseReturnMode(value: string | null | undefined): NativeReturnMode {
   return value === "https" ? "https" : "scheme";
 }

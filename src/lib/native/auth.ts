@@ -4,6 +4,7 @@ import { claimNativeHandoff } from "@/lib/native/handoff";
 import { newPkceVerifier, pkceChallenge } from "@/lib/native/pkce";
 import {
   isAllowedReturn,
+  nativeOAuthStartOrigin,
   preferredNativeReturnMode,
   shouldFallBackToScheme,
   type NativeReturnMode,
@@ -38,7 +39,10 @@ function asAuthError(error: unknown): Error {
 }
 
 function nativeStartUrl(providerId: string, challenge: string, mode: NativeReturnMode): string {
-  const start = new URL("/auth/native-start", window.location.origin);
+  // Always the canonical host when the page is not a local/sandbox origin.
+  // Google's redirect_uri is that host plus /api/auth/callback/google — never
+  // /auth/native-done, /auth/native-return, or the custom scheme.
+  const start = new URL("/auth/native-start", nativeOAuthStartOrigin(window.location.href));
   start.searchParams.set("providerId", providerId);
   start.searchParams.set("code_challenge", challenge);
   start.searchParams.set("return", mode);

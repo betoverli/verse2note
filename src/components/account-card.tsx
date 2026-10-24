@@ -1,6 +1,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -58,7 +59,10 @@ export function AccountCard() {
           disabled={signingOut}
           onClick={() => {
             setSigningOut(true);
-            void signOut().catch(() => setSigningOut(false));
+            void signOut().catch(() => {
+              setSigningOut(false);
+              toast.error(t(locale, "signOutFailed"));
+            });
           }}
         >
           {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}

@@ -10,8 +10,12 @@
  * stays hidden. Email/password sign-in is unaffected.
  *
  * Full redirect URI registered in Google Cloud Console:
- * `{origin}/api/auth/callback/google`
- * (production origin today: https://verse2note.vercel.app).
+ * `https://verse2note.com/api/auth/callback/google`
+ * Better Auth builds it as `{origin}/api/auth/callback/google` from the
+ * request host. It is never `/auth/native-done`, `/auth/native-return`,
+ * or the `verse2note` scheme. The native app opens
+ * `https://verse2note.com/auth/native-start` so a WebView on another host
+ * cannot send Google a different callback.
  */
 
 export const GOOGLE_PROVIDER_ID = "google" as const;
