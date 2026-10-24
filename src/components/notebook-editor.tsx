@@ -129,11 +129,14 @@ function useVisualViewport() {
     if (!vv) return;
     const update = () => {
       const overlap = Math.max(0, window.innerHeight - vv.height);
-      setState({
+      const next = {
         offsetTop: overlap > 120 ? vv.offsetTop : 0,
         keyboard: overlap > 120,
         overlap,
-      });
+      };
+      setState((prev) =>
+        prev.offsetTop === next.offsetTop && prev.keyboard === next.keyboard && prev.overlap === next.overlap ? prev : next,
+      );
     };
     vv.addEventListener("resize", update);
     vv.addEventListener("scroll", update);

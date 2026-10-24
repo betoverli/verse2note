@@ -7,6 +7,7 @@ import WebKit
 class Verse2NoteBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(NativeAuthPlugin())
+        tuneDocumentScroll()
         let source = """
         (function () {
           try {
@@ -26,6 +27,31 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         """
         let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         webView?.configuration.userContentController.addUserScript(script)
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        tuneDocumentScroll()
+        // The hosted page loads after this, and WebKit can put bounce back
+        // to Capacitor's default until the document has finished.
+        for delay in [0.35, 1.2] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.tuneDocumentScroll()
+            }
+        }
+    }
+
+    /// Capacitor builds the WKWebView with `scrollView.bounces = false`, so a
+    /// flick dies at the edge and feels stuck. One vertical UIScrollView bounce
+    /// matches a native list. Horizontal bounce stays off so a row swipe does
+    /// not rubber-band the page.
+    private func tuneDocumentScroll() {
+        guard let scroll = webView?.scrollView else { return }
+        scroll.bounces = true
+        scroll.alwaysBounceVertical = true
+        scroll.alwaysBounceHorizontal = false
+        scroll.isDirectionalLockEnabled = true
+        scroll.decelerationRate = .normal
     }
 }
 

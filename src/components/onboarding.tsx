@@ -47,7 +47,7 @@ export function Onboarding({ onBack }: { onBack?: () => void }) {
   }
 
   return (
-    <main className="mx-auto flex h-dvh max-h-dvh w-full max-w-lg flex-col overflow-hidden px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6">
+    <main className="clip-box mx-auto flex h-dvh max-h-dvh w-full max-w-lg flex-col px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-[calc(env(safe-area-inset-bottom)+1.5rem)] sm:px-6">
       <Wordmark size="lg" />
       <h1 className="mt-6 font-display text-3xl tracking-tight text-fg italic">{title()}</h1>
       <p className="mt-2 max-w-md text-sm text-muted">

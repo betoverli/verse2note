@@ -95,13 +95,9 @@ html.dark .sheet-invert {
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
     background-color: color-mix(in srgb, var(--color-bg) 72%, transparent);
     background-image: none;
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 0.5px solid var(--color-separator);
     isolation: isolate;
     overflow: visible;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
     -webkit-font-smoothing: auto;
   }
 
@@ -169,6 +165,12 @@ html.dark .sheet-invert {
     .tab-bar {
       bottom: calc(100dvh - 100lvh);
     }
+  }
+
+  /* In the Capacitor shell there is no Safari toolbar. dvh and lvh diverge
+     while the WebView rubber-bands, which yanks the bar and fights the drag. */
+  html.native-ios .tab-bar {
+    bottom: 0;
   }
 
   html.keyboard-open .tab-bar {
@@ -310,6 +312,7 @@ html.dark .sheet-invert {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
+    touch-action: manipulation;
     caret-color: var(--color-accent);
     counter-reset: note-ol;
     font-size: 17px;
@@ -454,8 +457,13 @@ html.dark .sheet-invert {
     color: var(--color-subtle);
   }
 
+  .clip-box,
   .ios-group {
     overflow: hidden;
+    overflow: clip;
+  }
+
+  .ios-group {
     border-radius: 16px;
     background: var(--color-surface);
   }
@@ -497,6 +505,7 @@ html.dark .sheet-invert {
 
   .ios-fields {
     overflow: hidden;
+    overflow: clip;
     border-radius: 12px;
     background: var(--color-surface);
   }
@@ -537,6 +546,21 @@ html.dark .sheet-invert {
     animation: ios-sheet-in 0.34s cubic-bezier(0.32, 0.72, 0, 1);
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  /* Real nested scrollers in the iOS shell. clip above is for boxes that
+     only round corners — hidden would make each of them a scrollport and
+     the WebView would rubber-band the row instead of the page. */
+  html.native-ios .overflow-y-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+  }
+
+  html.native-ios .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
   }
 
   @keyframes ios-sheet-dim {
@@ -574,6 +598,10 @@ html.has-tab-bar {
 }
 
 @layer base {
+  html.native-ios {
+    touch-action: manipulation;
+  }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
