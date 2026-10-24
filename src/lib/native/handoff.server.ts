@@ -1,5 +1,6 @@
 import { getRequest } from "@tanstack/react-start/server";
-import { assertSameSiteRequest } from "@/lib/auth/isolation.server";
+import { isScriptedCrossSite } from "@/lib/auth/fetch-metadata";
+import { assertSameSiteRequest, CrossSiteRequestError } from "@/lib/auth/isolation.server";
 import { readSessionToken } from "@/lib/auth/server";
 import { getSql } from "@/lib/db";
 import { allowRequest, clientKey } from "@/lib/rate-limit";
@@ -11,8 +12,24 @@ import { nativeReturnTo, type NativeReturnMode } from "@/lib/native/return-to";
 
 const TTL_MS = 90_000;
 
+/** Cookie jar for a route handler. Server functions omit this and use the request context. */
+export type HandoffRequest = {
+  cookieHeader: string | null;
+  token: string | null;
+  method: string;
+  headers: Headers;
+};
+
 function cookieHeader(): string | null {
   return getRequest()?.headers.get("cookie") ?? null;
+}
+
+function guard(source?: HandoffRequest): void {
+  if (!source) {
+    assertSameSiteRequest();
+    return;
+  }
+  if (isScriptedCrossSite(source.method, source.headers)) throw new CrossSiteRequestError();
 }
 
 function returnMode(): NativeReturnMode {
@@ -21,7 +38,10 @@ function returnMode(): NativeReturnMode {
 
 let loggedKey = false;
 
-function refuseKey(reason: "missing" | "invalid-dedicated"): { ok: false; redirect: string } {
+function refuseKey(
+  reason: "missing" | "invalid-dedicated",
+  mode: NativeReturnMode,
+): { ok: false; redirect: string } {
   if (!loggedKey) {
     loggedKey = true;
     const detail =
@@ -30,20 +50,21 @@ function refuseKey(reason: "missing" | "invalid-dedicated"): { ok: false; redire
         : "Falta NATIVE_AUTH_HANDOFF_KEY e também BETTER_AUTH_SECRET.";
     console.error(`Login nativo recusado: ${detail} A sessão não foi gravada.`);
   }
-  return { ok: false, redirect: nativeReturnTo(returnMode(), { error: true }) };
+  return { ok: false, redirect: nativeReturnTo(mode, { error: true }) };
 }
 
 /** Called from the system login browser, which holds the session cookie. */
-export async function mintHandoff(userId: string) {
-  assertSameSiteRequest();
-  const pkce = readPkceCookie(cookieHeader());
+export async function mintHandoff(userId: string, source?: HandoffRequest) {
+  guard(source);
+  const header = source ? source.cookieHeader : cookieHeader();
+  const pkce = readPkceCookie(header);
   const mode = pkce?.mode ?? "scheme";
   const fail = { ok: false as const, redirect: nativeReturnTo(mode, { error: true }) };
   if (!pkce) return fail;
-  const token = readSessionToken();
+  const token = source ? source.token : readSessionToken();
   if (!token || token.length > 4000) return fail;
   const resolved = currentHandoffKey();
-  if (!resolved.ok) return refuseKey(resolved.reason);
+  if (!resolved.ok) return refuseKey(resolved.reason, mode);
   if (!allowRequest(`native-mint:${userId}`, 12, 60 * 60_000)) return fail;
   const code = newHandoffCode();
   const sealed = sealSessionToken(token, resolved.key);
