@@ -72,7 +72,7 @@ function HeaderTitle({ title }: { title?: string }) {
         ref={textRef}
         key={title}
         className={cn(
-          "mx-auto w-max max-w-none text-center text-[17px] leading-snug font-semibold whitespace-nowrap text-fg",
+          "mx-auto w-max max-w-none text-center text-[17px] leading-snug font-semibold tracking-[-0.02em] whitespace-nowrap text-fg",
           shift && "header-title-marquee",
         )}
         style={style}
@@ -118,12 +118,12 @@ export function AppHeader({
   }, [showSearch]);
 
   return (
-    <header className={cn("app-header z-20 bg-bg px-2 pb-2", pinned ? "relative" : "sticky top-0 -mx-4 sm:-mx-6 sm:px-3")}>
+    <header className={cn("app-header z-20", pinned ? "relative" : "sticky top-0 -mx-4 sm:-mx-6")}>
       <div className={cn("flex min-h-12 items-center gap-1", compact && "hidden")}>
         <div className="window-controls-pad" aria-hidden />
         <div className="flex w-12 shrink-0 items-center justify-start">
           {backTo ? (
-            <Button variant="ghost" size="icon" asChild className="relative z-10 size-12 -ml-1 text-fg [&_svg]:size-6">
+            <Button variant="ghost" size="icon" asChild className="relative z-10 size-11 -ml-1.5 text-accent [&_svg]:size-6">
               {backTo.includes("$") && backParams ? (
                 <Link to={backTo} params={backParams} aria-label={t(locale, "back")}>
                   <BackIcon />
@@ -155,7 +155,7 @@ export function AppHeader({
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="search"
-              className="h-10 w-full rounded-md bg-surface px-3 text-base text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-search-cancel-button]:hidden"
+              className="h-9 w-full rounded-[10px] bg-fill px-3 text-[17px] text-fg placeholder:text-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-search-cancel-button]:hidden"
             />
           </div>
         ) : titleField ? (
@@ -169,7 +169,7 @@ export function AppHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-12 text-fg [&_svg]:size-6"
+                className="size-11 text-accent [&_svg]:size-5"
                 aria-label={t(locale, "back")}
                 onClick={() => {
                   search.onChange("");
@@ -182,7 +182,7 @@ export function AppHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-12 text-fg [&_svg]:size-6"
+                className="size-11 text-accent [&_svg]:size-5"
                 aria-label={search.placeholder}
                 onClick={() => setSearchOpen(true)}
               >

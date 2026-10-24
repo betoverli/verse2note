@@ -7,7 +7,7 @@ import { ThemeSync } from "@/components/theme-sync";
 import { AppShell } from "@/components/app-shell";
 import appCss from "../styles.css?url";
 
-const THEME_BOOT = `(function(){try{var p=JSON.parse(localStorage.getItem("cita-settings")||"{}");var s=p.state||{};var t=s.theme||"system";var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);var r=d?"dark":"light";document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",d?"#121110":"#f4efe6");var loc=s.locale;if(loc!=="pt"&&loc!=="en"&&loc!=="es"){var c=(document.cookie.match(/(?:^|; )v2n-locale=(pt|en|es)/)||[])[1];if(c)loc=c;else{var lang=(navigator.language||"pt").toLowerCase();loc=lang.indexOf("en")===0?"en":lang.indexOf("es")===0?"es":"pt";}}document.documentElement.lang=loc;document.documentElement.setAttribute("data-locale",loc);}catch(e){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";document.documentElement.lang="pt";}})();`;
+const THEME_BOOT = `(function(){try{var p=JSON.parse(localStorage.getItem("cita-settings")||"{}");var s=p.state||{};var t=s.theme||"system";var d=t==="dark"||(t!=="light"&&window.matchMedia("(prefers-color-scheme: dark)").matches);var r=d?"dark":"light";document.documentElement.classList.add(r);document.documentElement.style.colorScheme=r;var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute("content",d?"#000000":"#f2f2f7");var loc=s.locale;if(loc!=="pt"&&loc!=="en"&&loc!=="es"){var c=(document.cookie.match(/(?:^|; )v2n-locale=(pt|en|es)/)||[])[1];if(c)loc=c;else{var lang=(navigator.language||"pt").toLowerCase();loc=lang.indexOf("en")===0?"en":lang.indexOf("es")===0?"es":"pt";}}document.documentElement.lang=loc;document.documentElement.setAttribute("data-locale",loc);}catch(e){document.documentElement.classList.add("dark");document.documentElement.style.colorScheme="dark";document.documentElement.lang="pt";}})();`;
 
 function Recover({ title, action }: { title: string; action: string }) {
   return (
@@ -19,8 +19,8 @@ function Recover({ title, action }: { title: string; action: string }) {
         alignItems: "center",
         justifyContent: "center",
         gap: 16,
-        background: "#121110",
-        color: "#f3eee6",
+        background: "#000000",
+        color: "#ffffff",
         padding: 24,
         fontFamily: "system-ui, sans-serif",
       }}
@@ -30,8 +30,8 @@ function Recover({ title, action }: { title: string; action: string }) {
         href="/app"
         style={{
           borderRadius: 999,
-          background: "#e8dcc8",
-          color: "#1a1714",
+          background: "#0a84ff",
+          color: "#ffffff",
           padding: "10px 16px",
           fontSize: 14,
           fontWeight: 600,
@@ -50,7 +50,7 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content" },
       { title: "Verse2Note" },
-      { name: "theme-color", content: "#121110" },
+      { name: "theme-color", content: "#000000" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "Verse2Note" },

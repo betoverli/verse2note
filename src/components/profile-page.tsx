@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Award, BarChart3, Bell, BookOpen, CircleHelp, Globe, Pencil, Share2, Sun, Users } from "lucide-react";
+import { Award, BarChart3, Bell, BookOpen, ChevronRight, CircleHelp, Globe, Pencil, Share2, Sun, Users } from "lucide-react";
 import { authEnabled, signOut } from "@/lib/auth/client";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -149,22 +149,21 @@ function SettingCards({ earned }: { earned: number }) {
   ];
 
   return (
-    <ul className="grid grid-cols-2 gap-3">
+    <ul className="ios-group" data-inset="icon">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <li key={card.to}>
             <Link
               to={card.to}
-              className="flex min-h-[8.25rem] flex-col items-start justify-between rounded-lg bg-surface p-4 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              className="flex min-h-11 items-center gap-3 px-4 py-2.5 text-fg active:bg-fill"
             >
-              <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
-                <Icon className="size-5" />
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-accent text-accent-fg">
+                <Icon className="size-4" />
               </span>
-              <span>
-                <span className="block text-sm font-medium leading-snug">{card.title}</span>
-                <span className="mt-1 block text-xs text-muted">{card.subtitle}</span>
-              </span>
+              <span className="min-w-0 flex-1 truncate text-[17px] leading-snug">{card.title}</span>
+              <span className="max-w-[42%] truncate text-right text-[15px] text-muted">{card.subtitle}</span>
+              <ChevronRight className="size-4 shrink-0 text-subtle" />
             </Link>
           </li>
         );
@@ -228,10 +227,10 @@ export function ProfileView() {
         <div className="h-24 rounded-lg bg-surface" aria-hidden="true" />
       ) : user ? (
         <section className="flex flex-col items-center gap-3 pt-2">
-          <ProfileAvatar id={avatarId} url={avatarUrl} className="size-20 bg-elevated" iconClassName="size-8" />
+          <ProfileAvatar id={avatarId} url={avatarUrl} className="size-24 bg-elevated" iconClassName="size-10" />
           {handle ? (
             <div className="flex items-center gap-0.5">
-              <Link to="/u/$handle" params={{ handle }} className="font-display text-xl italic text-fg">
+              <Link to="/u/$handle" params={{ handle }} className="text-[22px] font-semibold tracking-[-0.02em] text-fg">
                 @{handle}
               </Link>
               <Button
@@ -252,12 +251,12 @@ export function ProfileView() {
       ) : (
         <section className="flex flex-col gap-3">
           <p className="text-pretty text-sm leading-relaxed text-muted">{t(locale, "profileGuest")}</p>
-          <Button className="w-full" asChild>
+          <Button className="w-full" size="lg" asChild>
             <Link to="/login" search={{ create: false }}>
               {t(locale, "signIn")}
             </Link>
           </Button>
-          <Button variant="secondary" className="w-full" asChild>
+          <Button variant="secondary" className="w-full" size="lg" asChild>
             <Link to="/login" search={{ create: true }}>
               {t(locale, "createAccount")}
             </Link>
@@ -268,87 +267,95 @@ export function ProfileView() {
       <SettingCards earned={badges.length} />
 
       {admin ? (
-        <Link
-          to="/admin"
-          className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
-        >
-          <span className="flex size-10 items-center justify-center rounded-md bg-elevated text-muted">
-            <BarChart3 className="size-5" />
-          </span>
-          <span>
-            <span className="block text-sm font-medium">{t(locale, "adminTitle")}</span>
-            <span className="mt-1 block text-xs text-muted">{t(locale, "adminHint")}</span>
-          </span>
-        </Link>
+        <ul className="ios-group" data-inset="icon">
+          <li>
+            <Link to="/admin" className="flex min-h-11 items-center gap-3 px-4 py-2.5 text-fg active:bg-fill">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-[8px] bg-accent text-accent-fg">
+                <BarChart3 className="size-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[17px]">{t(locale, "adminTitle")}</span>
+                <span className="block truncate text-[13px] text-muted">{t(locale, "adminHint")}</span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-subtle" />
+            </Link>
+          </li>
+        </ul>
       ) : null}
 
       {user && authEnabled && !gateSession ? (
-        <div className="flex flex-col gap-2">
-          <Button
-            variant="ghost"
-            className="w-full text-muted"
-            disabled={signingOut}
-            onClick={() => {
-              setSigningOut(true);
-              void signOut().catch(() => {
-                setSigningOut(false);
-                toast.error(t(locale, "signOutFailed"));
-              });
-            }}
-          >
-            {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full text-muted"
-            disabled={signingOut}
-            onClick={() => {
-              void exportMyData()
-                .then((data) => {
-                  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = "verse2note-data.json";
-                  a.click();
-                  URL.revokeObjectURL(url);
-                })
-                .catch(() => toast.error(t(locale, "linkSendFail")));
-            }}
-          >
-            {t(locale, "exportData")}
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full text-[#8b3a32]"
-            disabled={signingOut}
-            onClick={() => {
-              if (!confirm(t(locale, "deleteAccountAsk"))) return;
-              setSigningOut(true);
-              void deleteMyAccount()
-                .then((result) => {
-                  if (!result?.ok) {
+        <ul className="ios-group">
+          <li>
+            <button
+              type="button"
+              className="flex min-h-11 w-full items-center px-4 text-left text-[17px] text-fg active:bg-fill disabled:opacity-40"
+              disabled={signingOut}
+              onClick={() => {
+                setSigningOut(true);
+                void signOut().catch(() => {
+                  setSigningOut(false);
+                  toast.error(t(locale, "signOutFailed"));
+                });
+              }}
+            >
+              {signingOut ? t(locale, "signingOut") : t(locale, "signOut")}
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="flex min-h-11 w-full items-center px-4 text-left text-[17px] text-fg active:bg-fill disabled:opacity-40"
+              disabled={signingOut}
+              onClick={() => {
+                void exportMyData()
+                  .then((data) => {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "verse2note-data.json";
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  })
+                  .catch(() => toast.error(t(locale, "linkSendFail")));
+              }}
+            >
+              {t(locale, "exportData")}
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="flex min-h-11 w-full items-center px-4 text-left text-[17px] text-danger active:bg-fill disabled:opacity-40"
+              disabled={signingOut}
+              onClick={() => {
+                if (!confirm(t(locale, "deleteAccountAsk"))) return;
+                setSigningOut(true);
+                void deleteMyAccount()
+                  .then((result) => {
+                    if (!result?.ok) {
+                      setSigningOut(false);
+                      toast.error(t(locale, "linkSendFail"));
+                      return;
+                    }
+                    clearMyGroupsCache();
+                    useAppStore.getState().clearAccount();
+                    toast.success(t(locale, "accountDeleted"));
+                    void signOut().catch(() => {
+                      setSigningOut(false);
+                      toast.error(t(locale, "signOutFailed"));
+                    });
+                  })
+                  .catch(() => {
                     setSigningOut(false);
                     toast.error(t(locale, "linkSendFail"));
-                    return;
-                  }
-                  clearMyGroupsCache();
-                  useAppStore.getState().clearAccount();
-                  toast.success(t(locale, "accountDeleted"));
-                  void signOut().catch(() => {
-                    setSigningOut(false);
-                    toast.error(t(locale, "signOutFailed"));
                   });
-                })
-                .catch(() => {
-                  setSigningOut(false);
-                  toast.error(t(locale, "linkSendFail"));
-                });
-            }}
-          >
-            {t(locale, "deleteAccount")}
-          </Button>
-        </div>
+              }}
+            >
+              {t(locale, "deleteAccount")}
+            </button>
+          </li>
+        </ul>
       ) : null}
     </div>
   );
@@ -402,7 +409,7 @@ export function ProfileEdit() {
   return (
     <div className="flex flex-col gap-8">
       <section className="space-y-3">
-        <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "avatar")}</h2>
+        <h2 className="ios-caption">{t(locale, "avatar")}</h2>
         <div className="grid grid-cols-6 gap-2">
           {photoUrl ? (
             <button
@@ -440,7 +447,7 @@ export function ProfileEdit() {
 
       <section className="space-y-3">
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "handle")}</span>
+          <span className="px-1 text-[13px] text-muted">{t(locale, "handle")}</span>
           <div className="relative">
             <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-muted">@</span>
             <Input
@@ -458,7 +465,7 @@ export function ProfileEdit() {
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "firstName")}</span>
+            <span className="px-1 text-[13px] text-muted">{t(locale, "firstName")}</span>
             <Input
               value={firstName}
               onChange={(event) => setProfile({ firstName: event.target.value })}
@@ -466,12 +473,12 @@ export function ProfileEdit() {
             />
           </label>
           <label className="block space-y-1.5">
-            <span className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "lastName")}</span>
+            <span className="px-1 text-[13px] text-muted">{t(locale, "lastName")}</span>
             <Input value={lastName} onChange={(event) => setProfile({ lastName: event.target.value })} />
           </label>
         </div>
         <label className="block space-y-1.5">
-          <span className="text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "accountEmail")}</span>
+          <span className="px-1 text-[13px] text-muted">{t(locale, "accountEmail")}</span>
           <Input
             type="email"
             value={profileEmail}
@@ -480,7 +487,7 @@ export function ProfileEdit() {
             required
           />
         </label>
-        {error ? <p className="text-sm text-accent">{error}</p> : null}
+        {error ? <p className="text-[15px] text-danger">{error}</p> : null}
         <Button className="w-full" disabled={saving || !profileIsComplete({ handle, firstName, profileEmail })} onClick={() => void onSave()}>
           {saving ? t(locale, "accountWait") : t(locale, "saveProfile")}
         </Button>

@@ -8,8 +8,8 @@ export function resolvedTheme(theme: Theme): "light" | "dark" {
 }
 
 export const THEME_COLOR = {
-  light: "#f4efe6",
-  dark: "#121110",
+  light: "#f2f2f7",
+  dark: "#000000",
 } as const;
 
 export function applyTheme(theme: Theme) {

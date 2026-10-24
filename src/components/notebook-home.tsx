@@ -144,7 +144,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
   if (gone) return null;
 
   return (
-    <div ref={wrap} className="relative overflow-hidden rounded-lg shadow-[var(--shadow-border)]">
+    <div ref={wrap} className="relative overflow-hidden">
       <div
         ref={shareBg}
         className="pointer-events-none absolute inset-0 flex items-center justify-start bg-accent px-5 text-accent-fg opacity-0"
@@ -156,7 +156,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
       </div>
       <div
         ref={deleteBg}
-        className="pointer-events-none absolute inset-0 flex items-center justify-end bg-[#8b3a32] px-5 text-[#f3eee6] opacity-0"
+        className="pointer-events-none absolute inset-0 flex items-center justify-end bg-danger px-5 text-white opacity-0"
         aria-hidden
       >
         <span ref={deleteIcon} className="inline-flex">
@@ -166,18 +166,18 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
       <div
         ref={layer}
         role="link"
-        className="relative bg-surface will-change-transform"
+        className="relative bg-surface will-change-transform active:bg-fill"
         style={{ touchAction: "pan-y" }}
         onClick={() => {
           if (Math.abs(x.current) > 12) return;
           void navigate({ to: "/notebook/$id", params: { id: note.id } });
         }}
       >
-        <div className="flex min-h-16 items-center gap-3 px-4 py-3 text-fg">
+        <div className="flex min-h-11 items-center gap-3 px-4 py-3 text-fg">
           <NoteDay iso={note.happenedAt} />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-medium">{note.title || t(locale, "notebookMeeting")}</span>
-            {preview ? <span className="mt-0.5 block truncate text-xs text-muted">{preview}</span> : null}
+            <span className="block truncate text-[17px] leading-snug">{note.title || t(locale, "notebookMeeting")}</span>
+            {preview ? <span className="mt-0.5 block truncate text-[15px] text-muted">{preview}</span> : null}
           </span>
           {note.speakerId ? (
             <span
@@ -207,7 +207,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
                 {t(locale, "linkCancel")}
               </Button>
               <Button
-                className="flex-1 bg-[#8b3a32] text-[#f3eee6] hover:bg-[#8b3a32]/90"
+                className="flex-1 bg-danger text-white hover:bg-danger/90"
                 onClick={() => {
                   setAskDelete(false);
                   setGone(true);
@@ -284,8 +284,8 @@ export function NotebookHome({ query }: { query: string }) {
               setSpeakerId(null);
             }}
             className={cn(
-              "min-h-9 shrink-0 rounded-full px-3 text-xs font-medium",
-              filter === item.id ? "bg-accent text-accent-fg" : "bg-surface text-muted",
+              "min-h-11 shrink-0 rounded-full px-4 text-[15px] font-medium",
+              filter === item.id ? "bg-accent text-accent-fg" : "bg-fill text-fg",
             )}
           >
             {item.label}
@@ -300,7 +300,7 @@ export function NotebookHome({ query }: { query: string }) {
               key={item}
               type="button"
               onClick={() => setTag(item)}
-              className={cn("rounded-full px-3 py-1 text-xs", tag === item ? "bg-accent text-accent-fg" : "bg-surface text-muted")}
+              className={cn("min-h-11 rounded-full px-4 text-[15px]", tag === item ? "bg-accent text-accent-fg" : "bg-fill text-fg")}
             >
               #{item}
             </button>
@@ -316,8 +316,8 @@ export function NotebookHome({ query }: { query: string }) {
               type="button"
               onClick={() => setSpeakerId(item.id)}
               className={cn(
-                "flex items-center gap-2 rounded-full px-3 py-1 text-xs",
-                speakerId === item.id ? "bg-accent text-accent-fg" : "bg-surface text-muted",
+                "flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px]",
+                speakerId === item.id ? "bg-accent text-accent-fg" : "bg-fill text-fg",
               )}
             >
               <span className="size-2 rounded-full" style={{ background: item.color }} />
@@ -327,7 +327,7 @@ export function NotebookHome({ query }: { query: string }) {
           <button
             type="button"
             onClick={() => setPeople(true)}
-            className="flex items-center gap-1 rounded-full bg-surface px-3 py-1 text-xs text-muted"
+            className="flex min-h-11 items-center gap-1 rounded-full bg-fill px-4 text-[15px] text-fg"
             aria-label={t(locale, "notebookRenameSpeaker")}
           >
             <Pencil className="size-3" />
@@ -351,10 +351,10 @@ export function NotebookHome({ query }: { query: string }) {
                 <Link
                   to="/n/$id"
                   params={{ id: item.id }}
-                  className="flex min-h-16 items-center gap-3 rounded-lg bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)]"
+                  className="flex min-h-11 items-center gap-3 px-4 py-3 text-fg active:bg-fill"
                 >
                   <NoteDay iso={item.happenedAt} />
-                  <span className="truncate text-sm font-medium">{item.title || t(locale, "notebookMeeting")}</span>
+                  <span className="truncate text-[17px]">{item.title || t(locale, "notebookMeeting")}</span>
                 </Link>
               ) : (
                 <NoteCard note={item} groups={noteGroups[item.id] ?? []} />
@@ -365,7 +365,7 @@ export function NotebookHome({ query }: { query: string }) {
       )}
 
       <Button
-        className="fixed right-4 z-20 size-12 rounded-full"
+        className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
         style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
         onClick={() => setCompose(true)}
         aria-label={t(locale, "notebookNew")}

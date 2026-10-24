@@ -92,7 +92,7 @@ export function TabBar() {
   return (
     <nav
       ref={ref}
-      className="tab-bar fixed inset-x-0 z-40 border-t border-border/70 bg-bg/88 backdrop-blur-xl"
+      className="tab-bar fixed inset-x-0 z-40"
       aria-label={t(locale, "appName")}
     >
       <ul className="mx-auto flex max-w-4xl">
@@ -106,11 +106,11 @@ export function TabBar() {
                 aria-current={active ? "page" : undefined}
                 data-tour={tab.tour}
                 className={cn(
-                  "flex min-h-12 flex-col items-center justify-center gap-0.5 pt-1 text-[10px] font-medium",
-                  active ? "text-fg" : "text-subtle",
+                  "flex min-h-[49px] flex-col items-center justify-center gap-0.5 pt-1 text-[10px] font-medium tracking-[-0.01em]",
+                  active ? "text-accent" : "text-muted",
                 )}
               >
-                <Icon className={cn("size-5", active ? "stroke-[2.25]" : "stroke-[1.75]")} />
+                <Icon className={cn("size-6", active ? "stroke-[2.25]" : "stroke-[1.75]")} />
                 {t(locale, tab.key)}
               </Link>
             </li>

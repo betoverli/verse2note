@@ -11,7 +11,7 @@ export function noteDay(iso: string) {
 
 export function NoteDay({ iso }: { iso: string }) {
   return (
-    <span className="w-9 shrink-0 text-center text-xl leading-none font-semibold tabular-nums text-fg">
+    <span className="w-9 shrink-0 text-center text-[22px] leading-none font-semibold tracking-[-0.02em] tabular-nums text-accent">
       {noteDay(iso)}
     </span>
   );
@@ -67,11 +67,13 @@ export function NoteDateGroups<T>({
     <div className="flex flex-col gap-8">
       {years.map((year) => (
         <section key={year.year} className="flex flex-col gap-5">
-          <h2 className="text-lg font-semibold text-fg">{year.year}</h2>
+          <h2 className="px-4 text-[22px] font-bold tracking-[-0.02em] text-fg">{year.year}</h2>
           {year.months.map((month) => (
             <div key={month.key} className="flex flex-col gap-2">
-              <h3 className="px-1 text-xs font-medium tracking-wide text-muted capitalize">{month.label}</h3>
-              <ul className="flex flex-col gap-2">{month.items.map(render)}</ul>
+              <h3 className="ios-caption capitalize">{month.label}</h3>
+              <ul className="ios-group" data-inset="date">
+                {month.items.map(render)}
+              </ul>
             </div>
           ))}
         </section>

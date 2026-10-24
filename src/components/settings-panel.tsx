@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { ArrowLeft, Monitor, Moon, Sun } from "lucide-react";
+import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import type { Locale } from "@/lib/bible/books";
 import { bookById } from "@/lib/bible/books";
 import { formatPassage, type CiteBook, type CiteSep } from "@/lib/bible/passage";
@@ -13,7 +13,6 @@ import { AboutPage } from "@/components/about-page";
 import { BibleAppList } from "@/components/bible-app-list";
 import { BibleAppOptions } from "@/components/bible-app-options";
 import { Choice } from "@/components/choice";
-import { cn } from "@/lib/utils";
 
 const LOCALES: Locale[] = ["pt", "en", "es"];
 const COPY_FORMATS: CopyFormat[] = ["rich", "markdown", "plain"];
@@ -39,10 +38,10 @@ const THEME_ICON = {
 
 function Section({ title, lead, children }: { title: string; lead?: string; children?: ReactNode }) {
   return (
-    <section className="space-y-3">
+    <section className="space-y-2">
       <div className="space-y-1">
-        <h2 className="text-xs font-medium tracking-wide text-muted uppercase">{title}</h2>
-        {lead ? <p className="text-sm text-subtle">{lead}</p> : null}
+        <h2 className="ios-caption">{title}</h2>
+        {lead ? <p className="px-4 text-[13px] leading-snug text-subtle">{lead}</p> : null}
       </div>
       {children}
     </section>
@@ -154,7 +153,7 @@ export function AppearanceSettings() {
   const setTheme = useAppStore((s) => s.setTheme);
   return (
     <Section title={t(locale, "appearance")} lead={theme === "system" ? t(locale, "themeSystemHint") : undefined}>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="ios-segment" role="group" aria-label={t(locale, "appearance")}>
         {THEMES.map((item) => {
           const Icon = THEME_ICON[item];
           const active = theme === item;
@@ -164,15 +163,10 @@ export function AppearanceSettings() {
               type="button"
               onClick={() => setTheme(item)}
               aria-pressed={active}
-              className={cn(
-                "flex min-h-20 w-full flex-col items-center justify-center gap-2 rounded-md px-2 py-3 text-center transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.99]",
-                active
-                  ? "bg-accent text-accent-fg"
-                  : "bg-surface text-fg shadow-[var(--shadow-border)] hover:bg-elevated",
-              )}
+              className="flex min-h-11 flex-1 flex-col items-center justify-center gap-1 px-2 py-2 text-center text-[13px] font-medium"
             >
               <Icon className="size-5" />
-              <span className="text-sm font-medium">{t(locale, THEME_LABEL[item])}</span>
+              <span>{t(locale, THEME_LABEL[item])}</span>
             </button>
           );
         })}
@@ -214,9 +208,9 @@ export function BibleSettings() {
         <button
           type="button"
           onClick={() => setAppView(optionsFrom)}
-          className="flex min-h-11 w-fit items-center gap-2 text-sm text-muted transition-colors hover:text-fg"
+          className="flex min-h-11 w-fit items-center gap-0.5 text-[17px] text-accent"
         >
-          <ArrowLeft className="size-4" />
+          <ChevronLeft className="size-6" />
           {t(locale, "bibleApp")}
         </button>
         <div className="flex items-center gap-3">
@@ -243,9 +237,9 @@ export function BibleSettings() {
         <button
           type="button"
           onClick={() => setAppView("main")}
-          className="flex min-h-11 w-fit items-center gap-2 text-sm text-muted transition-colors hover:text-fg"
+          className="flex min-h-11 w-fit items-center gap-0.5 text-[17px] text-accent"
         >
-          <ArrowLeft className="size-4" />
+          <ChevronLeft className="size-6" />
           {t(locale, "bibleApp")}
         </button>
         <Section title={t(locale, "changeBible")}>
@@ -260,43 +254,38 @@ export function BibleSettings() {
   return (
     <div className="flex flex-col gap-8">
       <Section title={t(locale, "bibleApp")}>
-        <button
-          type="button"
-          onClick={() => {
-            if (!extra) return;
-            setOptionsFrom("main");
-            setAppView("options");
-          }}
-          className="flex w-full items-start gap-3 rounded-md bg-accent px-4 py-3 text-left text-accent-fg"
-        >
-          <img
-            src={appIcon(app.id)}
-            alt=""
-            width={36}
-            height={36}
-            draggable={false}
-            className="mt-0.5 size-9 shrink-0 rounded-sm bg-elevated object-cover"
-          />
-          <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium">{app.names[locale]}</span>
-              <span className="text-xs uppercase opacity-70">
-                {app.hasWeb ? t(locale, "webBadge") : null}
-                {app.hasWeb && app.hasNative ? " · " : null}
-                {app.hasNative ? t(locale, "nativeBadge") : null}
-              </span>
+        <div className="ios-group" data-inset="icon">
+          <button
+            type="button"
+            onClick={() => {
+              if (!extra) return;
+              setOptionsFrom("main");
+              setAppView("options");
+            }}
+            className="flex min-h-[60px] w-full items-center gap-3 px-4 py-2.5 text-left text-fg active:bg-fill"
+          >
+            <img
+              src={appIcon(app.id)}
+              alt=""
+              width={36}
+              height={36}
+              draggable={false}
+              className="size-9 shrink-0 rounded-[8px] bg-elevated object-cover"
+            />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-[17px]">{app.names[locale]}</span>
+              <span className="block truncate text-[13px] text-muted">{summary ?? app.blurb[locale]}</span>
             </span>
-            <span className="mt-0.5 block text-xs opacity-70">{summary ?? app.blurb[locale]}</span>
-          </span>
-          {extra ? <span className="mt-1 text-xs opacity-80">{t(locale, "appOptions")}</span> : null}
-        </button>
-        <button
-          type="button"
-          onClick={() => setAppView("list")}
-          className="flex min-h-11 w-full items-center justify-center rounded-md bg-surface text-sm font-medium text-fg shadow-[var(--shadow-border)]"
-        >
-          {t(locale, "changeBible")}
-        </button>
+            {extra ? <ChevronRight className="size-4 shrink-0 text-subtle" /> : null}
+          </button>
+          <button
+            type="button"
+            onClick={() => setAppView("list")}
+            className="flex min-h-11 w-full items-center px-4 text-left text-[17px] text-accent active:bg-fill"
+          >
+            {t(locale, "changeBible")}
+          </button>
+        </div>
       </Section>
       <CiteFormatSection />
       <Section title={t(locale, "copyFormat")} lead={clipboardDropsHtmlLinks() ? t(locale, "copyAndroidHint") : undefined}>

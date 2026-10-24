@@ -13,7 +13,7 @@ export function PlanList({ items, from }: { items: ReadingPlan[]; from?: string 
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <ul className="ios-group">
       {items.map((item) => {
         const done = planProgress[item.id]?.length ?? 0;
         return (
@@ -22,17 +22,17 @@ export function PlanList({ items, from }: { items: ReadingPlan[]; from?: string 
               to="/reading/$id"
               params={{ id: item.id }}
               search={from ? { from } : {}}
-              className="flex min-h-11 items-center justify-between gap-3 rounded-md bg-surface px-4 py-3 text-fg shadow-[var(--shadow-border)] transition-[background-color,transform] duration-150 ease-out hover:bg-elevated active:scale-[0.99]"
+              className="flex min-h-11 items-center justify-between gap-3 px-4 py-3 text-fg active:bg-fill"
             >
-              <span>
-                <span className="block text-sm font-medium">{item.names[locale]}</span>
-                <span className="mt-0.5 block text-xs text-muted">
+              <span className="min-w-0">
+                <span className="block truncate text-[17px]">{item.names[locale]}</span>
+                <span className="mt-0.5 block text-[13px] text-muted">
                   {done > 0
                     ? `${done} / ${item.days.length} ${t(locale, "days")}`
                     : `${item.days.length} ${t(locale, "days")}`}
                 </span>
               </span>
-              <ChevronRight className="size-4 shrink-0 text-muted" />
+              <ChevronRight className="size-4 shrink-0 text-subtle" />
             </Link>
           </li>
         );

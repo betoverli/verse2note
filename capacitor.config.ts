@@ -13,13 +13,13 @@ const config: CapacitorConfig = {
   appId: "com.verse2note.app",
   appName: "Verse2Note",
   webDir: "native/www",
-  backgroundColor: "#121110",
+  backgroundColor: "#000000",
   appendUserAgent: "Verse2NoteIOS",
   ios: {
     // The site already pads with env(safe-area-inset-*). Automatic insets
     // would add that padding a second time under the status bar.
     contentInset: "never",
-    backgroundColor: "#121110",
+    backgroundColor: "#000000",
     appendUserAgent: "Verse2NoteIOS",
     scheme: "verse2note",
   },
@@ -44,7 +44,7 @@ const config: CapacitorConfig = {
     SplashScreen: {
       launchAutoHide: true,
       launchShowDuration: 800,
-      backgroundColor: "#121110",
+      backgroundColor: "#000000",
       showSpinner: false,
       splashFullScreen: true,
       splashImmersive: true,
@@ -52,7 +52,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       overlaysWebView: true,
       style: "DARK",
-      backgroundColor: "#121110",
+      backgroundColor: "#000000",
     },
     PushNotifications: {
       presentationOptions: ["badge", "sound", "alert"],

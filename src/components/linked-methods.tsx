@@ -204,7 +204,7 @@ export function LinkedMethods() {
           )}
         </li>
       </ul>
-      {error ? <p className="text-sm text-accent">{error}</p> : null}
+      {error ? <p className="text-[15px] text-danger">{error}</p> : null}
     </section>
   );
 }
