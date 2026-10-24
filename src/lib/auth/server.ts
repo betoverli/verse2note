@@ -5,10 +5,12 @@
  * local email/password, flip the flag in `./email-password` only (see auth skill).
  *
  * The app runs its own Better Auth at `/api/auth/*`, so the session cookie stays
- * on this app's own origin. X still federates to the shared **Grok auth broker**
- * (`GROK_AUTH_ISSUER`) via the `genericOAuth` plugin. Google does not: when
- * `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set, Better Auth's built-in
- * Google social provider is registered (callback `/api/auth/callback/google`).
+ * on this app's own origin. The legacy `grok-google` broker identity still
+ * federates to the shared **Grok auth broker** (`GROK_AUTH_ISSUER`) via the
+ * `genericOAuth` plugin. X is not registered. Native Google does not use the
+ * broker: when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set, Better
+ * Auth's built-in Google social provider is registered (callback
+ * `/api/auth/callback/google`).
  * If those env vars are missing, Google is omitted and the rest of auth still boots.
  *
  * Tri-mode:
@@ -184,7 +186,7 @@ const databaseUrl = env("DATABASE_URL");
 
 // Static broker OAuth endpoints (skip OIDC discovery on every sign-in / callback).
 // Discovery would cost an extra network hop to the broker before the popup can
-// even redirect to Google/X — the live-preview popup felt stuck on the app for
+// even redirect to the upstream — the live-preview popup felt stuck on the app for
 // that whole round-trip. These paths match the broker's discovery document.
 const issuerBase = grokIssuer.replace(/\/+$/, "");
 const grokAuthorizationUrl = `${issuerBase}/api/auth/oauth2/authorize`;
@@ -273,12 +275,11 @@ export const auth = betterAuth({
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
 
-  // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
-  // as trusted first-party identities. The broker owns identity and X emails are
-  // synthetic/unverified, so WITHOUT this a login can fail with
-  // `account_not_linked` (Better Auth refuses to attach an untrusted, unverified
-  // identity to an existing user). Google and X carry DISTINCT emails, so this
-  // never merges them into one user — they stay separate identities.
+  // Encrypt broker-issued OAuth tokens at rest, and treat registered broker
+  // identities as trusted first-party identities. WITHOUT this a login can fail
+  // with `account_not_linked` (Better Auth refuses to attach an untrusted,
+  // unverified identity to an existing user). Google and a password account
+  // stay separate identities.
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
@@ -291,12 +292,12 @@ export const auth = betterAuth({
       // Password accounts are never email-verified (no mailer). Require the
       // local email to be verified before linking, so an attacker cannot
       // register victim@gmail.com then ride the victim's later Google login.
-      // Google/X still create their own users; X does not share Google emails.
+      // Google still creates its own user when the local email is unverified.
       requireLocalEmailVerified: true,
-      // Explicit "add Google/X/email" from a signed-in profile links the new
+      // Explicit "add Google or email" from a signed-in profile links the new
       // identity onto the current user. Google uses Better Auth `linkSocial`
-      // (`/api/auth/callback/google`); X still uses `/oauth2/link`. Those
-      // identities do not share an email, so linking must allow it.
+      // (`/api/auth/callback/google`). Those identities do not share an email,
+      // so linking must allow it.
       allowDifferentEmails: true,
     },
   },
@@ -347,8 +348,8 @@ export const auth = betterAuth({
   plugins: [
     gateIdentitySessions(),
 
-    // One genericOAuth provider per upstream (when auth is on), all federating
-    // to the broker with the SAME client and differing only by the `idp` hint.
+    // One genericOAuth provider per remaining broker identity (when auth is on).
+    // X is not in `GROK_PROVIDERS`, so Better Auth does not register it.
     ...(grokOAuthPlugin ? [grokOAuthPlugin] : []),
 
     // Accept `Authorization: Bearer <session-token>` as an alternative to the

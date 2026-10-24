@@ -9,7 +9,7 @@ type Copy = {
 const COPY: Record<Locale, Copy> = {
   pt: {
     title: "Privacidade",
-    updated: "Atualizado em 13 de setembro de 2026",
+    updated: "Atualizado em 24 de outubro de 2026",
     sections: [
       {
         title: "Quem somos",
@@ -17,7 +17,7 @@ const COPY: Record<Locale, Copy> = {
       },
       {
         title: "O que guardamos",
-        body: "Sem conta: só o que fica neste aparelho (idioma, app da Bíblia, notas locais). Com conta: e-mail e nome do Google, X ou cadastro; handle, nome, foto; preferências; notas e speakers; coleções; planos; grupos e membros; vínculos; inscrição de avisos (endpoint do aparelho); caixa de avisos. Não usamos analytics de terceiros nem anúncios.",
+        body: "Sem conta: só o que fica neste aparelho (idioma, app da Bíblia, notas locais). Com conta: e-mail e nome do Google ou do cadastro; handle, nome, foto; preferências; notas e speakers; coleções; planos; grupos e membros; vínculos; inscrição de avisos (endpoint do aparelho); caixa de avisos. Não usamos analytics de terceiros nem anúncios.",
       },
       {
         title: "Para que",
@@ -25,7 +25,7 @@ const COPY: Record<Locale, Copy> = {
       },
       {
         title: "Com quem",
-        body: "Google ou X, se você entrar por eles. Neon (banco). Serviços de web push (Apple, Google, Mozilla, Microsoft) se ligar avisos neste aparelho. A API pública para IA (/api, MCP) não lê a sua conta, notas ou grupos.",
+        body: "Google, se você entrar por ele. Neon (banco). Serviços de web push (Apple, Google, Mozilla, Microsoft) se ligar avisos neste aparelho. A API pública para IA (/api, MCP) não lê a sua conta, notas ou grupos.",
       },
       {
         title: "O que é público",
@@ -43,7 +43,7 @@ const COPY: Record<Locale, Copy> = {
   },
   en: {
     title: "Privacy",
-    updated: "Updated 13 September 2026",
+    updated: "Updated 24 October 2026",
     sections: [
       {
         title: "Who we are",
@@ -51,7 +51,7 @@ const COPY: Record<Locale, Copy> = {
       },
       {
         title: "What we store",
-        body: "With no account: only what stays on this device (language, Bible app, local notes). With an account: email and name from Google, X, or sign-up; handle, name, photo; preferences; notes and speakers; collections; plans; groups and members; friend links; push subscription; in-app alerts. No third-party analytics or ads.",
+        body: "With no account: only what stays on this device (language, Bible app, local notes). With an account: email and name from Google or sign-up; handle, name, photo; preferences; notes and speakers; collections; plans; groups and members; friend links; push subscription; in-app alerts. No third-party analytics or ads.",
       },
       {
         title: "Why",
@@ -59,7 +59,7 @@ const COPY: Record<Locale, Copy> = {
       },
       {
         title: "Who else",
-        body: "Google or X if you sign in with them. Neon (database). Web-push services (Apple, Google, Mozilla, Microsoft) if you enable alerts on this device. The public AI API (/api, MCP) does not read your account, notes, or groups.",
+        body: "Google if you sign in with it. Neon (database). Web-push services (Apple, Google, Mozilla, Microsoft) if you enable alerts on this device. The public AI API (/api, MCP) does not read your account, notes, or groups.",
       },
       {
         title: "What is public",
@@ -77,7 +77,7 @@ const COPY: Record<Locale, Copy> = {
   },
   es: {
     title: "Privacidad",
-    updated: "Actualizado el 13 de septiembre de 2026",
+    updated: "Actualizado el 24 de octubre de 2026",
     sections: [
       {
         title: "Quiénes somos",
@@ -85,7 +85,7 @@ const COPY: Record<Locale, Copy> = {
       },
       {
         title: "Qué guardamos",
-        body: "Sin cuenta: solo lo que queda en este aparato (idioma, app de Biblia, notas locales). Con cuenta: correo y nombre de Google, X o registro; handle, nombre, foto; preferencias; notas y speakers; colecciones; planes; grupos y miembros; vínculos; suscripción de avisos; bandeja de avisos. No usamos analítica de terceros ni anuncios.",
+        body: "Sin cuenta: solo lo que queda en este aparato (idioma, app de Biblia, notas locales). Con cuenta: correo y nombre de Google o del registro; handle, nombre, foto; preferencias; notas y speakers; colecciones; planes; grupos y miembros; vínculos; suscripción de avisos; bandeja de avisos. No usamos analítica de terceros ni anuncios.",
       },
       {
         title: "Para qué",
@@ -93,7 +93,7 @@ const COPY: Record<Locale, Copy> = {
       },
       {
         title: "Con quién",
-        body: "Google o X, si entras con ellos. Neon (base de datos). Servicios de web push (Apple, Google, Mozilla, Microsoft) si activas avisos en este aparato. La API pública para IA (/api, MCP) no lee tu cuenta, notas ni grupos.",
+        body: "Google, si entras con él. Neon (base de datos). Servicios de web push (Apple, Google, Mozilla, Microsoft) si activas avisos en este aparato. La API pública para IA (/api, MCP) no lee tu cuenta, notas ni grupos.",
       },
       {
         title: "Qué es público",

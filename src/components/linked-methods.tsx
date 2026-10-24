@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { addEmailPassword } from "@/lib/account-methods";
 import { authClient } from "@/lib/auth/client";
 import { GOOGLE_PROVIDER_ID } from "@/lib/auth/google";
-import { BROKER_UI_PROVIDERS, GROK_PROVIDERS } from "@/lib/auth/providers";
 import { useGoogleSignInEnabled } from "@/lib/auth/use-google-sign-in";
 import { hasGateSessionMarker } from "@/lib/auth/gate-session-marker";
 import { t } from "@/lib/i18n";
@@ -12,14 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 type AccountRow = { providerId: string };
-
-function labelFor(providerId: string, locale: "pt" | "en" | "es") {
-  if (providerId === "credential") return t(locale, "accountEmail");
-  if (providerId === GOOGLE_PROVIDER_ID || providerId === "grok-google") return t(locale, "continueGoogle");
-  const provider = GROK_PROVIDERS.find((item) => item.providerId === providerId);
-  if (provider?.idp === "twitter") return t(locale, "continueX");
-  return providerId;
-}
 
 export function LinkedMethods() {
   const locale = useAppStore((s) => s.locale);
@@ -62,23 +53,16 @@ export function LinkedMethods() {
   // configured and not yet attached, offer Add so the signed-in user can link it.
   const googleLinked = nativeGoogle || (legacyGoogle && !googleEnabled);
 
-  async function onLink(providerId: string) {
+  async function onLinkGoogle() {
     setError(null);
-    setBusy(providerId);
+    setBusy(GOOGLE_PROVIDER_ID);
     try {
-      const { data, error: fail } =
-        providerId === GOOGLE_PROVIDER_ID
-          ? await authClient.linkSocial({
-              provider: GOOGLE_PROVIDER_ID,
-              callbackURL: "/profile/edit",
-              errorCallbackURL: "/profile/edit",
-              disableRedirect: true,
-            })
-          : await authClient.oauth2.link({
-              providerId,
-              callbackURL: "/profile/edit",
-              errorCallbackURL: "/profile/edit",
-            });
+      const { data, error: fail } = await authClient.linkSocial({
+        provider: GOOGLE_PROVIDER_ID,
+        callbackURL: "/profile/edit",
+        errorCallbackURL: "/profile/edit",
+        disableRedirect: true,
+      });
       if (fail) {
         setError(fail.message || t(locale, "accountError"));
         setBusy(null);
@@ -138,33 +122,13 @@ export function LinkedMethods() {
                 size="sm"
                 variant="secondary"
                 disabled={Boolean(busy)}
-                onClick={() => void onLink(GOOGLE_PROVIDER_ID)}
+                onClick={() => void onLinkGoogle()}
               >
                 {busy === GOOGLE_PROVIDER_ID ? t(locale, "accountWait") : t(locale, "linkAdd")}
               </Button>
             )}
           </li>
         ) : null}
-        {BROKER_UI_PROVIDERS.map((provider) => {
-          const connected = has(provider.providerId);
-          return (
-            <li key={provider.providerId} className="flex min-h-14 items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
-              <span className="text-sm font-medium text-fg">{labelFor(provider.providerId, locale)}</span>
-              {connected ? (
-                <span className="text-xs text-muted">{t(locale, "linkedOn")}</span>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={Boolean(busy)}
-                  onClick={() => void onLink(provider.providerId)}
-                >
-                  {busy === provider.providerId ? t(locale, "accountWait") : t(locale, "linkAdd")}
-                </Button>
-              )}
-            </li>
-          );
-        })}
         <li className="rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-border)]">
           <div className="flex min-h-8 items-center justify-between gap-3">
             <span className="text-sm font-medium text-fg">{t(locale, "accountEmail")}</span>

@@ -5,7 +5,7 @@ import { auth } from "./server";
  * Start the OAuth redirect for a sign-in button.
  *
  * Native Google uses Better Auth's social endpoint (`/api/auth/callback/google`).
- * Broker providers (X, and the legacy `grok-google` id) stay on generic OAuth.
+ * The legacy `grok-google` broker id stays on generic OAuth. X is not registered.
  */
 export function beginOAuthSignIn(
   request: Request,

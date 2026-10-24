@@ -117,8 +117,8 @@ type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: s
  * Start sign-in with one provider.
  *
  * `google` is Better Auth's native Google social provider (callback
- * `/api/auth/callback/google`). Any other id federates through the Grok auth
- * broker (`GROK_PROVIDERS`).
+ * `/api/auth/callback/google`). Any other id must be a broker provider in
+ * `GROK_PROVIDERS` (legacy `grok-google` only; X is not registered).
  *
  * - **Live preview** (`*.grok-sandbox.com` iframe): opens a POPUP to
  *   `/auth/popup`, served by the template Vite plugin (see `vite.config.ts` +
