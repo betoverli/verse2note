@@ -80,16 +80,19 @@ describe("native underlap", () => {
   it("does not reserve a solid header band behind the native top bar", () => {
     assert.doesNotMatch(css, /height:\s*var\(--native-top-inset\)/);
     assert.match(css, /html\.native-ios\.native-top main\.screen > \.screen-body > \.screen-content/);
-    assert.match(css, /padding-top:\s*calc\(var\(--native-top-inset, 0px\) \+ var\(--screen-pad, 0px\)\)/);
+    assert.match(css, /padding-top:\s*max\(0px, calc\(var\(--native-top-inset, 0px\) - 12px\)\)/);
+    assert.match(css, /html\.native-ios\.native-top::before/);
+    assert.match(css, /-webkit-backdrop-filter:\s*saturate\(180%\) blur\(22px\)/);
   });
 
-  it("keeps search inside the title row instead of a second strip", () => {
+  it("keeps search inside the title row and does not paint a glass slab", () => {
     assert.match(swift, /private let barHeight: CGFloat = 44/);
     assert.doesNotMatch(swift, /searchVisible \? 52/);
     assert.match(swift, /magnifyingglass/);
-    assert.match(swift, /topPlate\.isOpaque = false/);
-    assert.match(swift, /topPlate\.backgroundColor = \.clear/);
+    assert.doesNotMatch(swift, /topPlate/);
+    assert.doesNotMatch(swift, /tabPlate/);
     assert.match(swift, /configureWithTransparentBackground\(\)/);
+    assert.match(swift, /backgroundEffect = nil/);
   });
 });
 

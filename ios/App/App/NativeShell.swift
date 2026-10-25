@@ -65,6 +65,12 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         scroll.alwaysBounceHorizontal = false
         scroll.isDirectionalLockEnabled = true
         scroll.decelerationRate = .normal
+        // A safe-area content inset would shrink the page above the tab
+        // pill and leave the controller's background as a band underneath.
+        scroll.contentInsetAdjustmentBehavior = .never
+        scroll.contentInset = .zero
+        scroll.verticalScrollIndicatorInsets = .zero
+        V2NGlassMaterial.prepareWebScrollView(scroll)
     }
 }
 

@@ -28,6 +28,19 @@
     return [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterial];
 }
 
++ (void)prepareWebScrollView:(UIScrollView *)scrollView {
+#if defined(__IPHONE_26_0)
+    if (@available(iOS 26.0, *)) {
+        scrollView.topEdgeEffect.hidden = YES;
+        scrollView.bottomEdgeEffect.hidden = YES;
+        scrollView.leftEdgeEffect.hidden = YES;
+        scrollView.rightEdgeEffect.hidden = YES;
+    }
+#else
+    (void)scrollView;
+#endif
+}
+
 + (void)applyFabStyleToButton:(UIButton *)button {
     UIImageSymbolConfiguration *icon = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightSemibold];
     UIImage *plus = [UIImage systemImageNamed:@"plus" withConfiguration:icon];

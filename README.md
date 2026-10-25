@@ -70,20 +70,20 @@ Quem usa o site no navegador não vê diferença. As funções nativas só acord
 
 No iPhone a capa desenha uma barra de navegação mínima (título e botões), a barra de abas (Versículos, Grupos, Caderno, Planos, Perfil) e os botões de nova nota / novo grupo por cima da página, em UIKit. O toque volta para o site: mudar de aba, voltar, o sino, importar, e criar nota ou grupo. A busca do Caderno, dos Planos, dos Grupos e das coleções é um ícone de lupa nessa barra. Tocar abre o campo no lugar do título. Não há uma segunda faixa de busca sempre visível.
 
-A lista desenha-se **por baixo** das duas barras. O vidro deixa ver o que está a passar, em vez de um retângulo opaco. A folga para o primeiro e o último item vai dentro do conteúdo que rola, não numa faixa vazia atrás do vidro. A cópia em HTML esconde-se enquanto o chrome nativo está no ecrã, para não haver duas barras. O editor de uma nota fica em HTML — a barra dele tem ferramentas que não são uma barra de navegação.
+A lista desenha-se **por baixo** do título e por baixo da barra de abas. Uma placa `UIGlassEffect` por cima da web view não vê a página: pinta um retângulo liso. Foi isso que o build 43 mostrou — cabeçalho branco opaco, e uma faixa branca debaixo da pílula das abas. A capa deixa as barras transparentes. O desfoque de cima está na página (`backdrop-filter`), que vê a grelha de verdade. No iOS 26 a pílula das abas é a do sistema, sem uma segunda faixa atrás. A cópia em HTML esconde-se enquanto o chrome nativo está no ecrã. O editor de uma nota fica em HTML.
 
-- **iOS 26 ou mais novo, binário feito com o SDK do iOS 26 (Xcode 26):** vidro de verdade (`UIGlassEffect`) numa só camada, por baixo de uma barra de navegação transparente. O botão + usa o vidro proeminente do sistema.
-- **iOS 15 a 25, ou um binário compilado com um Xcode mais antigo:** barra de abas clássica e desfoque nativo (`UIBlurEffect`) na barra de cima, mais um botão preenchido. Não é um filtro CSS.
+- **iOS 26 ou mais novo, binário feito com o SDK do iOS 26 (Xcode 26):** título e botões nativos, sem placa. A pílula das abas é a do sistema. O + usa o vidro proeminente. O desfoque atrás do título vem do site.
+- **iOS 15 a 25, ou um binário compilado com um Xcode mais antigo:** a mesma barra transparente. O desfoque de cima e o da barra de abas vêm do site, porque o desfoque UIKit também não vê a web view. O + é um botão preenchido.
 - **Site no navegador e Android:** o plugin não existe. Continuam as barras em HTML/CSS, incluindo o campo de busca no sítio onde sempre esteve. Não fica um buraco vazio.
 
-Isto exige **as duas coisas** depois do merge: um **binário novo no TestFlight** e **publicar o site**. O vidro vive na capa; o conteúdo por baixo das barras vive no site. Uma só das duas não chega:
+Isto exige **as duas coisas** outra vez, depois do merge: um **binário novo no TestFlight** e **publicar o site**. A capa tira as placas opacas. O site desenha o desfoque e deixa a grelha entrar debaixo das barras. Uma só das duas não chega:
 
-- Site novo + app que já está no telemóvel: o app antigo não tem o plugin novo, e as barras HTML ficam.
-- App novo + site antigo: a capa já mostra a lupa e o vidro, mas o site antigo ainda reserva a faixa por baixo das barras, e o vidro continua a ver um fundo liso.
+- Site novo + app do build 43: as placas opacas continuam por cima da página.
+- App novo + site do build 43: as placas somem, mas o desfoque de cima e o encaixe da grelha debaixo do título ainda não estão.
 
 O salto da lista continua só no miolo (`.screen-body`). As barras nativas são irmãs da web view, não andam com o puxão. O login com Google, o cookie de sessão e o regresso `verse2note://` não mudam.
 
-Para ver: instale o build novo **e** o site novo num simulador ou iPhone. No iOS 26 o vidro acompanha a lista que passa por baixo; no iOS 18 a barra é o material clássico, também translúcido. Confirme que a barra de cima é só título e botões, que a busca só aparece depois da lupa, e que ao puxar uma lista o conteúdo passa por baixo das abas. Confirme as cinco abas, o voltar, o sino, o + de nova nota e o + de novo grupo. A barra de cima e a de baixo ficam quietas no puxão. Entre com Google e confirme que a sessão continua depois de fechar o app. No Safari e no Android as barras são as de sempre, com o campo de busca visível.
+Para ver: instale o build novo **e** o site novo. Em Versículos, a grelha entra debaixo do título (já no repouso, um pouco) e debaixo da pílula das abas. Não há uma faixa branca de ponta a ponta por baixo da pílula. Role a grelha: os livros passam desfocados atrás do título, e o título não anda com o puxão. Caderno, Planos e Grupos: a busca só depois da lupa. O sino, voltar, as cinco abas, o + de nota e o + de grupo continuam. Uma nota abre com a barra HTML. Entre com Google e confirme a sessão. No Safari e no Android a busca continua visível no cabeçalho.
 
 Não é preciso um Mac para o dia a dia. O GitHub Actions compila num Mac da nuvem. O fluxo escolhe o Xcode 26 mais recente cuja plataforma de simulador está mesmo instalada na imagem — a app do Xcode 26.1 pode existir sem o runtime do iOS 26.1, e nesse caso o vidro entra na mesma por um Xcode 26 mais novo. Sem nenhum SDK 26 com runtime, o binário fica no chrome clássico.
 
