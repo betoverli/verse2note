@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { ProfileScreen } from "@/components/screen";
 import { ProfileEdit } from "@/components/profile-page";
 import { t } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
@@ -20,9 +21,9 @@ export const Route = createFileRoute("/profile/edit")({
 function ProfileEditRoute() {
   const locale = useAppStore((s) => s.locale);
   return (
-    <>
+    <ProfileScreen>
       <AppHeader title={t(locale, "editProfile")} backTo="/profile" />
       <ProfileEdit />
-    </>
+    </ProfileScreen>
   );
 }

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { ProfileScreen } from "@/components/screen";
 import { BadgeGrid } from "@/components/badge-grid";
 import { getMyBadges } from "@/lib/badge-stats";
 import { BADGE_IDS, type BadgeId } from "@/lib/badges";
@@ -24,7 +25,7 @@ function ProfileBadges() {
   const locked = BADGE_IDS.filter((id) => !badges.includes(id));
 
   return (
-    <>
+    <ProfileScreen>
       <AppHeader title={t(locale, "badges")} backTo="/profile" />
       <div className="flex flex-col gap-10">
         <section className="space-y-4">
@@ -42,6 +43,6 @@ function ProfileBadges() {
           </section>
         ) : null}
       </div>
-    </>
+    </ProfileScreen>
   );
 }

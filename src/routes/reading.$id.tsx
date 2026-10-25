@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { ReadingPlanDetail } from "@/components/reading-plan-detail";
 import { planById, planCategoryById, planLead } from "@/lib/bible/reading-plans";
 import { t } from "@/lib/i18n";
@@ -36,9 +37,9 @@ function ReadingPlanRoute() {
   const backLabel = category ? category.names[locale] : from === "all" ? t(locale, "allPlans") : t(locale, "reading");
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader title={plan.names[locale]} backTo={backTo} backParams={backParams} backLabel={backLabel} />
       <ReadingPlanDetail plan={plan} />
-    </main>
+    </Screen>
   );
 }

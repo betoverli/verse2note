@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { NotebookEditor } from "@/components/notebook-editor";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { t } from "@/lib/i18n";
@@ -68,7 +69,7 @@ function SharedNoteRoute() {
 
   if (mine) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
+      <main className="note-screen mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
         <NotebookEditor note={mine} fromGroup={g} />
       </main>
     );
@@ -77,42 +78,51 @@ function SharedNoteRoute() {
   const note = payload?.note;
   if (payload === undefined) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
+      <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
         <AppHeader
           title={t(locale, "notebook")}
           backTo={g ? "/groups/$id" : "/notebook"}
           backParams={g ? { id: g } : undefined}
         />
-      </main>
+      </Screen>
     );
   }
   if (!note) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 sm:px-6">
+      <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 sm:px-6">
         <AppHeader
           title={t(locale, "notebook")}
           backTo={g ? "/groups/$id" : "/notebook"}
           backParams={g ? { id: g } : undefined}
         />
         <p className="text-sm text-muted">{t(locale, "notebookEmpty")}</p>
-      </main>
+      </Screen>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-8 sm:px-6">
-      <NotebookEditor note={note} readOnly speakerList={payload?.speakers ?? []} fromGroup={g} />
-      <Button
-        onClick={() => {
-          const copy = remixNote(note, payload?.speakers ?? []);
-          if (copy) void navigate({ to: "/notebook/$id", params: { id: copy.id }, search: g ? { g } : undefined });
-        }}
-      >
-        {t(locale, "notebookRemix")}
-      </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/notebook">{t(locale, "back")}</Link>
-      </Button>
+    <main className="note-screen mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
+      <NotebookEditor
+        note={note}
+        readOnly
+        speakerList={payload?.speakers ?? []}
+        fromGroup={g}
+        footer={
+          <div className="mt-4 flex flex-col gap-3 pb-8">
+            <Button
+              onClick={() => {
+                const copy = remixNote(note, payload?.speakers ?? []);
+                if (copy) void navigate({ to: "/notebook/$id", params: { id: copy.id }, search: g ? { g } : undefined });
+              }}
+            >
+              {t(locale, "notebookRemix")}
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/notebook">{t(locale, "back")}</Link>
+            </Button>
+          </div>
+        }
+      />
     </main>
   );
 }

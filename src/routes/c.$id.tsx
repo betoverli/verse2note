@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { SharedCollectionView, UserCollectionDetail } from "@/components/user-collection-detail";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getGrantedCollection, getMyCollection, getSharedCollection, type UserCollection } from "@/lib/user-collections";
@@ -8,6 +9,9 @@ import { t } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
+
+const shell =
+  "mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6";
 
 export const Route = createFileRoute("/c/$id")({
   component: UserCollectionRoute,
@@ -85,17 +89,17 @@ function UserCollectionRoute() {
 
   if (isPending || collection === undefined) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+      <Screen className={shell}>
         <AppHeader title={t(locale, "myCollections")} backTo="/collections" />
         <div className="h-40 rounded-lg bg-surface" aria-hidden="true" />
-      </main>
+      </Screen>
     );
   }
 
   if (!collection) {
     if (!user) {
       return (
-        <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+        <Screen className={shell}>
           <AppHeader title={t(locale, "myCollections")} backTo="/collections" />
           <p className="text-sm text-muted">{t(locale, "collectionLogin")}</p>
           <Button asChild>
@@ -103,22 +107,18 @@ function UserCollectionRoute() {
               {t(locale, "signIn")}
             </Link>
           </Button>
-        </main>
+        </Screen>
       );
     }
     return <Navigate to="/collections" />;
   }
 
+  if (mine) return <UserCollectionDetail collection={collection} />;
+
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
-      {mine ? (
-        <UserCollectionDetail collection={collection} />
-      ) : (
-        <>
-          <AppHeader title={collection.title} backTo="/collections" />
-          <SharedCollectionView collection={collection} />
-        </>
-      )}
-    </main>
+    <Screen className={shell}>
+      <AppHeader title={collection.title} backTo="/collections" />
+      <SharedCollectionView collection={collection} />
+    </Screen>
   );
 }

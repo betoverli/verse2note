@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { LinkPreview } from "@/components/link-preview";
 import { NotifyBell } from "@/components/notify-bell";
 import { Picker } from "@/components/picker";
@@ -30,7 +31,7 @@ function AppPage() {
   const book = bookId ? bookById(bookId) : undefined;
 
   return (
-    <main
+    <Screen
       className={cn(
         "mx-auto flex min-h-dvh w-full max-w-4xl flex-col gap-6 px-4 pt-0 sm:px-6",
         dock ? "pb-[calc(var(--tab-bar-height)+16rem)]" : "pb-[calc(var(--tab-bar-height)+1rem)]",
@@ -43,6 +44,6 @@ function AppPage() {
       <VerseSectionTabs />
       <Picker />
       <LinkPreview />
-    </main>
+    </Screen>
   );
 }

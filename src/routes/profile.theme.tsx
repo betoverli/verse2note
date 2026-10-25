@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { ProfileScreen } from "@/components/screen";
 import { AppearanceSettings } from "@/components/settings-panel";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
@@ -11,9 +12,9 @@ export const Route = createFileRoute("/profile/theme")({
 function ProfileTheme() {
   const locale = useAppStore((s) => s.locale);
   return (
-    <>
+    <ProfileScreen>
       <AppHeader title={t(locale, "appearance")} backTo="/profile" />
       <AppearanceSettings />
-    </>
+    </ProfileScreen>
   );
 }

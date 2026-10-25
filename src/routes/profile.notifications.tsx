@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { ProfileScreen } from "@/components/screen";
 import { NotifySettings } from "@/components/notify-settings";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
@@ -11,9 +12,9 @@ export const Route = createFileRoute("/profile/notifications")({
 function ProfileNotifications() {
   const locale = useAppStore((s) => s.locale);
   return (
-    <>
+    <ProfileScreen>
       <AppHeader title={t(locale, "notifications")} backTo="/profile" />
       <NotifySettings />
-    </>
+    </ProfileScreen>
   );
 }

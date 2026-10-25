@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { BadgeGrid } from "@/components/badge-grid";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/lib/avatars";
@@ -106,7 +107,7 @@ function PublicProfileRoute() {
   const name = profile ? [profile.firstName, profile.lastName].filter(Boolean).join(" ") : "";
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-lg flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
       <AppHeader title={profile ? `@${profile.handle}` : t(locale, "profile")} backTo="/" />
       {profile === undefined ? (
         <div className="h-40 rounded-lg bg-surface" aria-hidden="true" />
@@ -133,6 +134,6 @@ function PublicProfileRoute() {
           </div>
         </div>
       )}
-    </main>
+    </Screen>
   );
 }

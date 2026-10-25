@@ -4,6 +4,7 @@ import { useAppStore } from "@/lib/store";
 import { NumberGrid } from "@/components/number-grid";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { scrollPageTo } from "@/lib/page-scroll";
 
 function BookButton({
   book,
@@ -95,7 +96,7 @@ export function Picker() {
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.scrollTo({ top: 0, behavior: reduce ? "instant" : "smooth" });
+    scrollPageTo(0, reduce ? "instant" : "smooth");
   }, [step]);
 
   return (

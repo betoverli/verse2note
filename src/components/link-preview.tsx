@@ -13,6 +13,7 @@ import {
 } from "@/lib/copy-rich";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
+import { ViewportFixed } from "@/components/viewport-fixed";
 import { Button } from "@/components/ui/button";
 import { SaveToCollectionButton } from "@/components/save-to-collection";
 import { appendToToday } from "@/lib/notebook-local";
@@ -156,6 +157,7 @@ export function LinkPreview() {
   if (!current && list.length === 0) return null;
 
   return (
+    <ViewportFixed>
     <div className="pointer-events-none fixed inset-x-0 z-30 px-3 pb-3" style={{ bottom: "var(--tab-bar-height)" }}>
       <aside
         className="pointer-events-auto mx-auto max-w-4xl rounded-xl bg-elevated p-2 shadow-[var(--shadow-border)]"
@@ -290,5 +292,6 @@ export function LinkPreview() {
         ) : null}
       </aside>
     </div>
+    </ViewportFixed>
   );
 }

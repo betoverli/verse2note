@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { planById } from "@/lib/bible/reading-plans";
 import { rememberInvite } from "@/lib/invite";
@@ -74,7 +75,7 @@ function JoinPlanRoute() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader title={plan?.names[locale] ?? t(locale, "planTogether")} backTo="/reading" />
       {preview === undefined || isPending ? (
         <div className="h-32 rounded-lg bg-surface" aria-hidden="true" />
@@ -112,6 +113,6 @@ function JoinPlanRoute() {
           </Button>
         </div>
       )}
-    </main>
+    </Screen>
   );
 }

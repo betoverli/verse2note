@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { NotebookEditor } from "@/components/notebook-editor";
 import { t } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
@@ -26,7 +27,7 @@ function NotebookNoteRoute() {
   const note = useAppStore((s) => s.notes.find((item) => item.id === id));
   if (!note) {
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-8 sm:px-6">
+      <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-8 sm:px-6">
         <AppHeader
           title={t(locale, "notebook")}
           backTo={g ? "/groups/$id" : "/notebook"}
@@ -38,11 +39,11 @@ function NotebookNoteRoute() {
             {t(locale, "back")}
           </Link>
         </Button>
-      </main>
+      </Screen>
     );
   }
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
+    <main className="note-screen mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
       <NotebookEditor note={note} fromGroup={g} />
     </main>
   );
