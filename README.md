@@ -83,7 +83,7 @@ O salto da lista continua só no miolo (`.screen-body`). As barras nativas são 
 
 Para ver: instale o build novo num simulador ou iPhone. No iOS 26 o vidro acompanha o que passa por baixo; no iOS 18 a barra é o material clássico. Confirme as cinco abas, a busca do caderno e dos planos, o voltar, o sino, o + de nova nota e o + de novo grupo. Puxe uma lista e veja que a barra de cima e a de baixo ficam quietas. Entre com Google e confirme que a sessão continua depois de fechar o app. No Safari e no Android as barras são as de sempre.
 
-Não é preciso um Mac para o dia a dia. O GitHub Actions compila num Mac da nuvem. Se a imagem tiver o Xcode 26, o fluxo selecciona-o para o vidro entrar no binário.
+Não é preciso um Mac para o dia a dia. O GitHub Actions compila num Mac da nuvem. O fluxo escolhe o Xcode 26 mais recente cuja plataforma de simulador está mesmo instalada na imagem — a app do Xcode 26.1 pode existir sem o runtime do iOS 26.1, e nesse caso o vidro entra na mesma por um Xcode 26 mais novo. Sem nenhum SDK 26 com runtime, o binário fica no chrome clássico.
 
 ### O endereço é http ou https?
 

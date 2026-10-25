@@ -25,17 +25,7 @@ jobs:
       - name: Dependências
         run: npm ci
       - name: Xcode com SDK do iOS 26
-        run: |
-          set -euo pipefail
-          # UIGlassEffect só entra no binário quando se compila com o SDK do iOS 26.
-          # Num Xcode mais antigo o mesmo código cai no UITabBar / desfoque clássico.
-          for app in /Applications/Xcode_26.1.app /Applications/Xcode_26.0.app /Applications/Xcode_26.app; do
-            if [ -d "$app" ]; then
-              sudo xcode-select -s "$app"
-              break
-            fi
-          done
-          xcodebuild -version
+        run: node scripts/select-xcode.mjs
       - name: Verificar o projeto
         run: npm run ios:check
       - name: Sync do Capacitor
@@ -71,15 +61,7 @@ jobs:
       - name: Dependências
         run: npm ci
       - name: Xcode com SDK do iOS 26
-        run: |
-          set -euo pipefail
-          for app in /Applications/Xcode_26.1.app /Applications/Xcode_26.0.app /Applications/Xcode_26.app; do
-            if [ -d "$app" ]; then
-              sudo xcode-select -s "$app"
-              break
-            fi
-          done
-          xcodebuild -version
+        run: node scripts/select-xcode.mjs
       - name: Sync do Capacitor
         run: npx cap sync ios
       - name: Confirmar segredos
