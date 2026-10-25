@@ -790,9 +790,9 @@ html.native-ios .screen-pad-8 {
 }
 
 /* The native title row is taken out of the column so `.screen-body` runs
-   under the status bar and the bar. The inset is padding on the scrolling
-   content, not on the scrollport, so a pull scrolls rows through the glass.
-   The same is true of the tab-bar padding, which already sits on this node. */
+   under the status bar and the buttons. Clearance is on the scrolling
+   content and stops short of the bar, so the first row is already under
+   the frost. End padding for the tab pill stays on this same node. */
 html.native-ios.native-top main.screen > .app-header {
   position: absolute;
   inset: 0 auto auto 0;
@@ -811,8 +811,59 @@ html.native-ios.native-top main.screen > .app-header {
   background-color: transparent;
 }
 
+html.native-ios.native-tabs main.screen > .screen-body {
+  padding-bottom: 0;
+}
+
 html.native-ios.native-top main.screen > .screen-body > .screen-content {
-  padding-top: calc(var(--native-top-inset, 0px) + var(--screen-pad, 0px));
+  padding-top: max(0px, calc(var(--native-top-inset, 0px) - 12px));
+}
+
+/* Frost that can see the web content. A UIKit glass plate over the web
+   view cannot, and paints a solid strip instead. Native title and buttons
+   sit above this layer. The mask keeps the bottom edge from reading as a
+   second hard bar. */
+html.native-ios.native-top::before {
+  content: "";
+  position: fixed;
+  z-index: 30;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: calc(var(--native-top-inset, 0px) + 10px);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-bg) 28%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent);
+  mask-image: linear-gradient(to bottom, #000 62%, transparent);
+}
+
+/* iOS 15–25 has no floating tab pill. Blur the real rows behind a clear
+   tab bar. iOS 26 uses the system pill and must not get a second band. */
+html.native-ios.native-tabs[data-liquid-glass="classic"]::after {
+  content: "";
+  position: fixed;
+  z-index: 30;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--native-tab-inset, 0px);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-bg) 35%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html.native-ios.native-top::before,
+  html.native-ios.native-tabs[data-liquid-glass="classic"]::after {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+    background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  }
 }
 
 html.native-ios main.note-screen {

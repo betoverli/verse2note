@@ -10,6 +10,10 @@ NS_ASSUME_NONNULL_BEGIN
 + (BOOL)sdkHasLiquidGlass;
 + (nullable UIVisualEffect *)effectWithInteractive:(BOOL)interactive;
 + (void)applyFabStyleToButton:(UIButton *)button;
+/// iOS 26 paints a scroll-edge blur on the web view's own scroll view.
+/// That view does not scroll (the page scroller does), so the blur would
+/// sit on the top and the bottom as a permanent band. Hide it.
++ (void)prepareWebScrollView:(UIScrollView *)scrollView;
 @end
 
 NS_ASSUME_NONNULL_END

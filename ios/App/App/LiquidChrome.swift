@@ -3,15 +3,17 @@ import UIKit
 
 /// Native chrome drawn above the WKWebView.
 ///
-/// iOS 26, built with the iOS 26 SDK: the system bar materials are Liquid
-/// Glass, and the + button is prominent glass.
-/// iOS 15–25 (and any binary built with an older SDK): a real `UITabBar`
-/// and `UINavigationBar` with the system chrome material. No CSS.
+/// iOS 26, built with the iOS 26 SDK: clear bars, the system tab pill, and
+/// a prominent-glass + button. iOS 15–25: the same clear bars and a filled
+/// + button. UIKit blur cannot sample this web view, so the frost is CSS
+/// in the page (`html.native-ios.native-top::before`, and a bottom scrim
+/// only when the shell reports classic glass).
 ///
-/// The bars are siblings of the web view. Each bar has one material: on
-/// iOS 26 that is `UIGlassEffect`, otherwise the system chrome blur. The
-/// page draws underneath, so the material refracts the list. An empty
-/// reserved band behind the effect is what made the glass look painted on.
+/// The bars are siblings of the web view. A full-bleed `UIGlassEffect`
+/// plate does not sample WKWebView — it paints a flat slab. That slab was
+/// the opaque header and the white band under the iOS 26 tab pill (build
+/// 43). The bars stay clear. The page blurs the rows that scroll under the
+/// title, and iOS 26 keeps the system tab pill with nothing behind it.
 ///
 /// Search is a magnifying-glass button in the title row. Tapping it swaps
 /// that row for a search field. It never adds a second strip.
@@ -22,8 +24,6 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
 
     private weak var owner: UIViewController?
     private let host = ChromePassView()
-    private let topPlate = UIVisualEffectView()
-    private let tabPlate = UIVisualEffectView()
     private let navBar = UINavigationBar()
     private let searchBar = UISearchBar()
     private lazy var searchSlot = SearchSlot(bar: searchBar)
@@ -70,12 +70,6 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
             controller.view.addSubview(host)
         }
 
-        topPlate.isUserInteractionEnabled = false
-        topPlate.isOpaque = false
-        topPlate.backgroundColor = .clear
-        tabPlate.isUserInteractionEnabled = false
-        tabPlate.isOpaque = false
-        tabPlate.backgroundColor = .clear
         applyMaterials()
         navBar.prefersLargeTitles = false
         navBar.tintColor = accent
@@ -96,9 +90,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         tabBar.isTranslucent = true
 
         tabBar.isHidden = true
-        tabPlate.isHidden = true
         navBar.isHidden = true
-        topPlate.isHidden = true
 
         V2NGlassMaterial.applyFabStyle(to: fab)
         fab.addTarget(self, action: #selector(fabTapped), for: .touchUpInside)
@@ -110,7 +102,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
             fab.layer.shadowOffset = CGSize(width: 0, height: 8)
         }
 
-        for view in [topPlate, navBar, tabPlate, tabBar, fab] as [UIView] {
+        for view in [navBar, tabBar, fab] as [UIView] {
             host.addSubview(view)
         }
         layout()
@@ -125,22 +117,15 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         let safe = view.safeAreaInsets
         let width = view.bounds.width
 
-        let topHeight = topInset(safe.top)
         if topVisible {
-            topPlate.isHidden = false
-            topPlate.frame = CGRect(x: 0, y: 0, width: width, height: topHeight)
             navBar.isHidden = false
             navBar.frame = CGRect(x: 0, y: safe.top, width: width, height: barHeight)
         } else {
-            topPlate.isHidden = true
             navBar.isHidden = true
         }
 
         let tabHeight = tabBody + safe.bottom
-        let tabFrame = CGRect(x: 0, y: view.bounds.height - tabHeight, width: width, height: tabHeight)
-        tabPlate.frame = tabFrame
-        tabBar.frame = tabFrame
-        tabPlate.isHidden = tabBar.isHidden || !glass
+        tabBar.frame = CGRect(x: 0, y: view.bounds.height - tabHeight, width: width, height: tabHeight)
 
         let fabSize: CGFloat = 56
         let fabX = width - safe.right - 16 - fabSize
@@ -175,7 +160,6 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         applyTabs(model.tabs, selected: model.selectedTab)
         let drawTabs = model.tabsVisible && !model.keyboard
         tabBar.isHidden = !drawTabs
-        tabPlate.isHidden = !drawTabs || !glass
 
         if searchBar.placeholder != model.searchPlaceholder {
             searchBar.placeholder = model.searchPlaceholder
@@ -209,14 +193,14 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         topVisible ? safeTop + barHeight : 0
     }
 
-    /// One material per bar. The navigation bar stays transparent and the
-    /// plate behind it carries the glass or the classic blur, including the
-    /// status-bar area. A second material on the bar itself stacks into a
-    /// solid strip. The tab bar keeps the system material on older iOS and
-    /// uses the same single plate on iOS 26.
+    /// Clear bar backgrounds. iOS 26 still draws the floating tab pill and
+    /// glass circles on the buttons. A rectangular material behind them is
+    /// what showed up as the solid header and the band under the pill.
     private func applyMaterials() {
         let clear = UINavigationBarAppearance()
         clear.configureWithTransparentBackground()
+        clear.backgroundColor = .clear
+        clear.backgroundEffect = nil
         clear.shadowColor = .clear
         clear.titleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 17, weight: .semibold),
@@ -227,24 +211,18 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         if #available(iOS 15.0, *) {
             navBar.compactScrollEdgeAppearance = clear
         }
+        navBar.backgroundColor = .clear
+        navBar.isTranslucent = true
 
         let tabAppearance = UITabBarAppearance()
-        if glass, let effect = V2NGlassMaterial.effect(withInteractive: true) {
-            tabPlate.effect = effect
-            tabAppearance.configureWithTransparentBackground()
-            tabAppearance.shadowColor = .clear
-        } else {
-            tabPlate.effect = nil
-            tabAppearance.configureWithDefaultBackground()
-        }
+        tabAppearance.configureWithTransparentBackground()
+        tabAppearance.backgroundColor = .clear
+        tabAppearance.backgroundEffect = nil
+        tabAppearance.shadowColor = .clear
         tabBar.standardAppearance = tabAppearance
         tabBar.scrollEdgeAppearance = tabAppearance
-
-        if glass, let effect = V2NGlassMaterial.effect(withInteractive: false) {
-            topPlate.effect = effect
-        } else {
-            topPlate.effect = UIBlurEffect(style: .systemChromeMaterial)
-        }
+        tabBar.backgroundColor = .clear
+        tabBar.isTranslucent = true
     }
 
     private func applyTabs(_ tabs: [LiquidChromeTab], selected: String) {
