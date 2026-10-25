@@ -20,6 +20,10 @@ export type LiquidChromePayload = {
   title: string;
   back: boolean;
   backLabel: string;
+  /**
+   * The screen offers search. The native bar shows a magnifying glass and
+   * opens the field in the title row. This does not reserve a second strip.
+   */
   searchVisible: boolean;
   searchText: string;
   searchPlaceholder: string;

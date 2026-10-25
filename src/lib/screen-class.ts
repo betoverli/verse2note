@@ -1,8 +1,10 @@
 /**
  * Split a page shell's classes so the header stays a sibling of the scroller.
- * Bottom padding moves into the scroller (it has to clear the tab bar while
- * the list moves). The gap stays on the shell for the browser, and the
- * matching `screen-pad-*` class recreates that gap inside the iOS scroller.
+ * Bottom padding moves into the scrolling content. It clears the tab bar
+ * at the end of the list, and it scrolls away so rows can pass under a
+ * translucent native tab bar. The gap stays on the shell for the browser,
+ * and the matching `screen-pad-*` class recreates that gap inside the iOS
+ * scroller.
  */
 export function partitionScreenClass(className = ""): { main: string; body: string } {
   const tokens = className.trim().split(/\s+/).filter(Boolean);
