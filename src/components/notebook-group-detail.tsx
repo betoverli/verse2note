@@ -2,6 +2,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, Settings } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
+import { ViewportFixed } from "@/components/viewport-fixed";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ProfileAvatar } from "@/lib/avatars";
 import { t } from "@/lib/i18n";
@@ -28,6 +30,7 @@ import { Choice } from "@/components/choice";
 import { ActionSheet } from "@/components/viewport-sheet";
 import { flushOutbox } from "@/lib/outbox";
 import { removeMyGroup, peekGroupNotes, peekMyGroups, setGroupNotesCache, upsertMyGroup } from "@/lib/groups-cache";
+import { scrollPageTo } from "@/lib/page-scroll";
 import { cn } from "@/lib/utils";
 
 export function NotebookGroupDetail({ id }: { id: string }) {
@@ -47,7 +50,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
   useEffect(() => {
     if (typeof document === "undefined") return;
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    window.scrollTo(0, 0);
+    scrollPageTo(0);
   }, [id]);
 
   const reload = useCallback(async () => {
@@ -116,40 +119,40 @@ export function NotebookGroupDetail({ id }: { id: string }) {
 
   if (isPending && !user) {
     return (
-      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
+      <Screen className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
-      </main>
+      </Screen>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-[calc(var(--tab-bar-height)+2rem)] sm:px-6">
+      <Screen className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 pb-[calc(var(--tab-bar-height)+2rem)] sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
         <p className="text-sm text-muted">{t(locale, "notebookGroupLogin")}</p>
-      </main>
+      </Screen>
     );
   }
 
   if (group === undefined) {
     return (
-      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
+      <Screen className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
-      </main>
+      </Screen>
     );
   }
 
   if (!group) {
     return (
-      <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
+      <Screen className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-4 px-4 pt-0 sm:px-6">
         <AppHeader title={t(locale, "notebookGroups")} backTo="/groups" />
         <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p>
-      </main>
+      </Screen>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+5rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+5rem)] sm:px-6">
       <AppHeader
         title={group.name}
         backTo="/groups"
@@ -297,11 +300,13 @@ export function NotebookGroupDetail({ id }: { id: string }) {
       ) : null}
 
       {canPost && !settings && tab === "notes" ? (
-        <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={() => void openNew()} aria-label={t(locale, "notebookNew")}>
-          <Plus />
-        </Button>
+        <ViewportFixed>
+          <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={() => void openNew()} aria-label={t(locale, "notebookNew")}>
+            <Plus />
+          </Button>
+        </ViewportFixed>
       ) : null}
-    </main>
+    </Screen>
   );
 }
 

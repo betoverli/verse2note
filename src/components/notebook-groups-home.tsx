@@ -12,6 +12,7 @@ import {
 } from "@/lib/notebook-groups";
 import { peekMyGroups, setMyGroupsCache, upsertMyGroup } from "@/lib/groups-cache";
 import { useAppStore } from "@/lib/store";
+import { ViewportFixed } from "@/components/viewport-fixed";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
 import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
@@ -222,14 +223,16 @@ export function NotebookGroupsHome({ query }: { query: string }) {
           ))}
         </ul>
       ) : null}
-      <Button
-        className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
-        style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-        onClick={() => setCreate(true)}
-        aria-label={t(locale, "notebookGroupNew")}
-      >
-        <Plus />
-      </Button>
+      <ViewportFixed>
+        <Button
+          className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
+          style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
+          onClick={() => setCreate(true)}
+          aria-label={t(locale, "notebookGroupNew")}
+        >
+          <Plus />
+        </Button>
+      </ViewportFixed>
     </div>
   );
 }

@@ -18,7 +18,9 @@
   --color-success: #30d158;
   --color-danger: #ff453a;
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", ui-sans-serif, system-ui,
+    sans-serif;
   --font-display: "Cormorant Garamond", "Iowan Old Style", Palatino, ui-serif, Georgia, serif;
 
   --radius-sm: 8px;
@@ -685,5 +687,97 @@ html.has-tab-bar {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* iOS shell: the document does not scroll. The top bar is a sibling of
+   `.screen-body`, and only that column rubber-bands. `overflow: clip` on
+   the shell does not create another scrollport (hidden would). */
+html.native-ios:has(main.screen),
+html.native-ios:has(main.note-screen),
+html.native-ios.scroll-locked,
+html.native-ios:has(main.screen) body,
+html.native-ios:has(main.note-screen) body,
+html.native-ios.scroll-locked body {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.screen-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+html.native-ios main.screen,
+html.native-ios main.note-screen {
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  overflow: clip;
+  gap: 0;
+  padding-bottom: 0;
+}
+
+html.native-ios main.screen > .app-header {
+  position: relative;
+  top: auto;
+  flex: none;
+}
+
+html.native-ios main.screen > .screen-body,
+html.native-ios main.note-screen > .screen-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  background: var(--color-bg);
+}
+
+html.native-ios .screen-pad-4 {
+  padding-top: 1rem;
+}
+
+html.native-ios .screen-pad-6 {
+  padding-top: 1.5rem;
+}
+
+html.native-ios .screen-pad-8 {
+  padding-top: 2rem;
+}
+
+html.native-ios main.note-screen {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+html.native-ios main.note-screen > .note-chrome {
+  position: relative;
+  top: auto !important;
+  right: auto;
+  left: auto;
+  flex: none;
+  width: 100%;
+}
+
+html.native-ios main.note-screen > .note-chrome-spacer {
+  display: none;
+}
+
+html.native-ios main.note-screen > .screen-body {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  html.native-ios main.note-screen > .screen-body {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }

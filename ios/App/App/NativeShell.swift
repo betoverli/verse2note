@@ -41,14 +41,16 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         }
     }
 
-    /// Capacitor builds the WKWebView with `scrollView.bounces = false`, so a
-    /// flick dies at the edge and feels stuck. One vertical UIScrollView bounce
-    /// matches a native list. Horizontal bounce stays off so a row swipe does
-    /// not rubber-band the page.
+    /// The page rubber-band lives on the middle scroller (`.screen-body`),
+    /// not on this view. Bouncing the WKWebView scroll view translates the
+    /// whole layer, so the top bar and the tab bar move with the pull.
+    /// Capacitor's own default is `bounces = false`; re-apply it because a
+    /// later layout pass can turn the flag back on. Horizontal bounce stays
+    /// off so a row swipe does not rubber-band the page.
     private func tuneDocumentScroll() {
         guard let scroll = webView?.scrollView else { return }
-        scroll.bounces = true
-        scroll.alwaysBounceVertical = true
+        scroll.bounces = false
+        scroll.alwaysBounceVertical = false
         scroll.alwaysBounceHorizontal = false
         scroll.isDirectionalLockEnabled = true
         scroll.decelerationRate = .normal

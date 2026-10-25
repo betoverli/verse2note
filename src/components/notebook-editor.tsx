@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Bold, BookOpen, Ellipsis, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { detectTrailingRef, emptyLine, newNoteId, noteIsBare, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
@@ -12,6 +12,7 @@ import { NotebookGroupPublishList } from "@/components/notebook-group-publish";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import { useNativeScrollLock } from "@/lib/page-scroll";
 import { cn } from "@/lib/utils";
 import type { Passage } from "@/lib/bible/passage";
 
@@ -170,12 +171,15 @@ export function NotebookEditor({
   readOnly,
   speakerList,
   fromGroup,
+  footer,
 }: {
   note: Note;
   readOnly?: boolean;
   speakerList?: Speaker[];
   fromGroup?: string;
+  footer?: ReactNode;
 }) {
+  useNativeScrollLock();
   const locale = useAppStore((s) => s.locale);
   const copyLocale = useAppStore((s) => s.copyLocale);
   const citeBook = useAppStore((s) => s.citeBook);
@@ -490,7 +494,7 @@ export function NotebookEditor({
     <>
       <div
         ref={chromeRef}
-        className="fixed inset-x-0 z-40"
+        className="note-chrome fixed inset-x-0 z-40"
         style={{ top: vv.offsetTop }}
       >
         <AppHeader
@@ -540,7 +544,8 @@ export function NotebookEditor({
           }
         />
       </div>
-      <div style={{ height: chromeH }} aria-hidden />
+      <div className="note-chrome-spacer" style={{ height: chromeH }} aria-hidden />
+      <div className="screen-body">
       <div className="flex flex-col gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <NotebookDoc
           ref={docApi}
@@ -570,6 +575,8 @@ export function NotebookEditor({
           }}
           onRemoveSpeaker={removeSpeaker}
         />
+      </div>
+      {footer}
       </div>
 
       {metaSheet ? (

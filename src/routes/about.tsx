@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { AboutPage } from "@/components/about-page";
 import { t } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
@@ -21,9 +22,9 @@ function AboutRoute() {
   const locale = useAppStore((s) => s.locale);
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
       <AppHeader title={t(locale, "aboutTitle")} backTo="/" />
       <AboutPage />
-    </main>
+    </Screen>
   );
 }

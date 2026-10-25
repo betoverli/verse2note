@@ -13,6 +13,7 @@ import { AboutPage } from "@/components/about-page";
 import { BibleAppList } from "@/components/bible-app-list";
 import { BibleAppOptions } from "@/components/bible-app-options";
 import { Choice } from "@/components/choice";
+import { scrollPageTo } from "@/lib/page-scroll";
 
 const LOCALES: Locale[] = ["pt", "en", "es"];
 const COPY_FORMATS: CopyFormat[] = ["rich", "markdown", "plain"];
@@ -189,7 +190,7 @@ export function BibleSettings() {
   const summary = appSummary(locale, appId, translationId, preferNative);
 
   useEffect(() => {
-    if (appView !== "main") window.scrollTo({ top: 0, behavior: "auto" });
+    if (appView !== "main") scrollPageTo(0);
   }, [appView]);
 
   function pickApp(id: string) {

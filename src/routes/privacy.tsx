@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { privacyCopy } from "@/lib/privacy";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
@@ -18,7 +19,7 @@ function PrivacyRoute() {
   const locale = useAppStore((s) => s.locale);
   const copy = privacyCopy(locale);
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-8 px-4 pt-0 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:px-6">
       <AppHeader title={copy.title} backTo="/" />
       <p className="text-xs tracking-wide text-muted uppercase">{copy.updated}</p>
       <div className="flex flex-col gap-8">
@@ -29,6 +30,6 @@ function PrivacyRoute() {
           </section>
         ))}
       </div>
-    </main>
+    </Screen>
   );
 }

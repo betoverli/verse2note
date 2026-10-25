@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { PlanList } from "@/components/plan-list";
 import { planCategoryById, plansInCategory } from "@/lib/bible/reading-plans";
 import { t } from "@/lib/i18n";
@@ -28,9 +29,9 @@ function ReadingCategoryRoute() {
   if (!category) return <Navigate to="/reading" />;
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader title={category.names[locale]} backTo="/reading" backLabel={t(locale, "reading")} />
       <PlanList items={plansInCategory(categoryId, locale)} from={categoryId} />
-    </main>
+    </Screen>
   );
 }

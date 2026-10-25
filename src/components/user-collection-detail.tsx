@@ -18,6 +18,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { AppHeader } from "@/components/app-header";
+import { Screen } from "@/components/screen";
 import { SendToFriendButton } from "@/components/send-to-friend";
 
 function toCopyItem(
@@ -269,7 +270,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
   }
 
   return (
-    <>
+    <Screen className="mx-auto flex min-h-dvh w-full max-w-3xl flex-col gap-6 px-4 pt-0 pb-[calc(var(--tab-bar-height)+1.5rem)] sm:px-6">
       <AppHeader
         title={title}
         backTo="/collections"
@@ -347,7 +348,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
       </div>
       )}
     </div>
-    </>
+    </Screen>
   );
 }
 

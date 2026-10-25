@@ -14,6 +14,7 @@ import {
   passageFromDataset,
 } from "@/lib/notebook-html";
 import { consumeTrigger, isLineHtmlEmpty, placeCaret } from "@/components/notebook-line";
+import { scrollPageBy } from "@/lib/page-scroll";
 import { useAppStore } from "@/lib/store";
 
 function lineElFromSel() {
@@ -291,8 +292,8 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     const headerBottom = header?.getBoundingClientRect().bottom ?? 0;
     const topLimit = Math.max(viewTop, headerBottom) + 12;
     const bottomLimit = viewBottom - 16;
-    if (rect.top < topLimit) window.scrollBy(0, rect.top - topLimit);
-    else if (rect.bottom > bottomLimit) window.scrollBy(0, rect.bottom - bottomLimit);
+    if (rect.top < topLimit) scrollPageBy(rect.top - topLimit);
+    else if (rect.bottom > bottomLimit) scrollPageBy(rect.bottom - bottomLimit);
   }
 
   function snapshot(): LineSnap {

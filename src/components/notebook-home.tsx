@@ -12,6 +12,7 @@ import { useAppStore } from "@/lib/store";
 import { SendToFriendButton } from "@/components/send-to-friend";
 import { ActionSheet } from "@/components/viewport-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
+import { ViewportFixed } from "@/components/viewport-fixed";
 import { Button } from "@/components/ui/button";
 import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
 import { lockSwipe } from "@/lib/swipe-axis";
@@ -364,14 +365,16 @@ export function NotebookHome({ query }: { query: string }) {
         />
       )}
 
-      <Button
-        className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
-        style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-        onClick={() => openNew()}
-        aria-label={t(locale, "notebookNew")}
-      >
-        <Plus />
-      </Button>
+      <ViewportFixed>
+        <Button
+          className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
+          style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
+          onClick={() => openNew()}
+          aria-label={t(locale, "notebookNew")}
+        >
+          <Plus />
+        </Button>
+      </ViewportFixed>
       {people ? <NotebookSpeakerSheet open onClose={() => setPeople(false)} /> : null}
     </div>
   );
