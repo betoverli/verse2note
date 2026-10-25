@@ -66,7 +66,24 @@ O site continua a ser o site. O app de iPhone é uma capa nativa (Capacitor) cuj
 
 Quem usa o site no navegador não vê diferença. As funções nativas só acordam dentro do app.
 
-Não é preciso um Mac para o dia a dia. O GitHub Actions compila num Mac da nuvem.
+### Liquid Glass (barra de cima, abas e botão +)
+
+No iPhone a capa desenha a barra de navegação, a barra de abas (Versículos, Grupos, Caderno, Planos, Perfil) e os botões de nova nota / novo grupo por cima da página, em UIKit. O toque volta para o site: mudar de aba, voltar, buscar, o sino, importar, e criar nota ou grupo. A cópia em HTML esconde-se enquanto o chrome nativo está no ecrã, para não haver duas barras. O editor de uma nota fica em HTML — a barra dele tem ferramentas que não são uma barra de navegação.
+
+- **iOS 26 ou mais novo, binário feito com o SDK do iOS 26 (Xcode 26):** vidro de verdade. A barra de cima e a de abas usam `UIGlassEffect`. O botão + usa o vidro proeminente do sistema.
+- **iOS 15 a 25, ou um binário compilado com um Xcode mais antigo:** barra de abas e de navegação clássicas, com o desfoque nativo (`UIBlurEffect`), e um botão preenchido. Não é um filtro CSS.
+- **Site no navegador e Android:** o plugin não existe. Continuam as barras em HTML/CSS.
+
+Isto exige um **binário novo no TestFlight**. Publicar só o site não desenha o vidro: o efeito vive na capa. As combinações antigas continuam usáveis:
+
+- Site novo + app que já está no telemóvel: o site pede o plugin, o app antigo não o tem, e as barras HTML ficam.
+- App novo + site antigo: a capa não mostra barras nativas até o site pedir. Ficam as barras HTML.
+
+O salto da lista continua só no miolo (`.screen-body`). As barras nativas são irmãs da web view, não andam com o puxão. O login com Google, o cookie de sessão e o regresso `verse2note://` não mudam.
+
+Para ver: instale o build novo num simulador ou iPhone. No iOS 26 o vidro acompanha o que passa por baixo; no iOS 18 a barra é o material clássico. Confirme as cinco abas, a busca do caderno e dos planos, o voltar, o sino, o + de nova nota e o + de novo grupo. Puxe uma lista e veja que a barra de cima e a de baixo ficam quietas. Entre com Google e confirme que a sessão continua depois de fechar o app. No Safari e no Android as barras são as de sempre.
+
+Não é preciso um Mac para o dia a dia. O GitHub Actions compila num Mac da nuvem. Se a imagem tiver o Xcode 26, o fluxo selecciona-o para o vidro entrar no binário.
 
 ### O endereço é http ou https?
 

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ChevronLeft, Search, X } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { bindHeader } from "@/lib/native/chrome-store";
 import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,8 @@ export function AppHeader({
   extra,
   compact,
   pinned,
+  nativeBar = true,
+  nativeSymbol,
 }: {
   title?: string;
   backTo?: BackTo;
@@ -104,12 +107,31 @@ export function AppHeader({
   extra?: ReactNode;
   compact?: boolean;
   pinned?: boolean;
+  /** When false, the iOS shell keeps this header in HTML (note editor). */
+  nativeBar?: boolean;
+  /** SF Symbol for the native trailing button. The tap still hits `trailing`. */
+  nativeSymbol?: string;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [apple, setApple] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  const keepWebHeader = Boolean(titleField) || compact || !nativeBar;
   useEffect(() => setApple(isAppleUa()), []);
+  useLayoutEffect(() => {
+    if (keepWebHeader) return;
+    const current = searchRef.current;
+    return bindHeader({
+      title: title ?? "",
+      back: Boolean(backTo),
+      backLabel: t(locale, "back"),
+      search: current ? { value: current.value, placeholder: current.placeholder } : null,
+      onSearch: (value) => searchRef.current?.onChange(value),
+      trailingSymbol: nativeSymbol ?? null,
+    });
+  }, [keepWebHeader, title, backTo, nativeSymbol, search?.value, search?.placeholder, locale]);
   const BackIcon = apple ? ChevronLeft : ArrowLeft;
 
   function cancelSearch() {
@@ -120,17 +142,17 @@ export function AppHeader({
 
   return (
     <header className={cn("app-header z-20", pinned ? "relative" : "sticky top-0 -mx-4 sm:-mx-6")}>
-      <div className={cn("flex min-h-12 items-center gap-1", compact && "hidden")}>
+      <div className={cn("header-row flex min-h-12 items-center gap-1", compact && "hidden")}>
         <div className="window-controls-pad" aria-hidden />
-        <div className="flex w-12 shrink-0 items-center justify-start">
+        <div className="native-back-slot flex w-12 shrink-0 items-center justify-start">
           {backTo ? (
             <Button variant="ghost" size="icon" asChild className="relative z-10 size-11 -ml-1.5 text-accent [&_svg]:size-6">
               {backTo.includes("$") && backParams ? (
-                <Link to={backTo} params={backParams} aria-label={t(locale, "back")}>
+                <Link to={backTo} params={backParams} aria-label={t(locale, "back")} data-native-back="">
                   <BackIcon />
                 </Link>
               ) : (
-                <Link to={backTo} aria-label={t(locale, "back")}>
+                <Link to={backTo} aria-label={t(locale, "back")} data-native-back="">
                   <BackIcon />
                 </Link>
               )}
@@ -142,11 +164,17 @@ export function AppHeader({
         ) : (
           <HeaderTitle title={title} />
         )}
-        <div className="flex min-w-12 shrink-0 items-center justify-end">{trailing}</div>
+        <div
+          className="header-trailing flex min-w-12 shrink-0 items-center justify-end"
+          data-native-trailing=""
+          data-native-symbol={nativeSymbol}
+        >
+          {trailing}
+        </div>
       </div>
       {search ? (
         <form
-          className="flex items-center gap-2 px-1 pb-1.5"
+          className="header-search flex items-center gap-2 px-1 pb-1.5"
           onSubmit={(event) => {
             event.preventDefault();
             inputRef.current?.blur();

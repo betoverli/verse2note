@@ -57,6 +57,7 @@ function SheetFrame({ children, onClose }: { children: ReactNode; onClose: () =>
       className="fixed z-[80] flex items-end justify-center"
       role="dialog"
       aria-modal="true"
+      data-native-chrome="tabs"
       style={{ top: box.top, left: 0, width: "100%", height: box.height || "100%" }}
     >
       <button type="button" className="ios-sheet-backdrop absolute inset-0 bg-black/40" aria-label="Close" onClick={onClose} />

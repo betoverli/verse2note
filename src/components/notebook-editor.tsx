@@ -499,6 +499,7 @@ export function NotebookEditor({
       >
         <AppHeader
           pinned
+          nativeBar={false}
           title={draft.title || t(locale, "notebookMeeting")}
           backTo={fromGroup ? "/groups/$id" : "/notebook"}
           backParams={fromGroup ? { id: fromGroup } : undefined}

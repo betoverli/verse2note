@@ -31,6 +31,7 @@ import { ActionSheet } from "@/components/viewport-sheet";
 import { flushOutbox } from "@/lib/outbox";
 import { removeMyGroup, peekGroupNotes, peekMyGroups, setGroupNotesCache, upsertMyGroup } from "@/lib/groups-cache";
 import { scrollPageTo } from "@/lib/page-scroll";
+import { useNativeFab } from "@/lib/native/use-native-fab";
 import { cn } from "@/lib/utils";
 
 export function NotebookGroupDetail({ id }: { id: string }) {
@@ -117,6 +118,12 @@ export function NotebookGroupDetail({ id }: { id: string }) {
     }
   }
 
+  useNativeFab(
+    t(locale, "notebookNew"),
+    () => void openNew(),
+    Boolean(canPost && !settings && tab === "notes"),
+  );
+
   if (isPending && !user) {
     return (
       <Screen className="mx-auto flex min-h-lvh w-full max-w-3xl flex-col px-4 pt-0 sm:px-6">
@@ -156,6 +163,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
       <AppHeader
         title={group.name}
         backTo="/groups"
+        nativeSymbol={admin ? "gearshape" : undefined}
         trailing={
           admin ? (
             <Button variant="ghost" size="icon" className="size-12 text-fg [&_svg]:size-6" aria-label={t(locale, "settings")} onClick={() => setSettings((value) => !value)}>
@@ -301,7 +309,7 @@ export function NotebookGroupDetail({ id }: { id: string }) {
 
       {canPost && !settings && tab === "notes" ? (
         <ViewportFixed>
-          <Button className="fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={() => void openNew()} aria-label={t(locale, "notebookNew")}>
+          <Button className="native-fab fixed right-4 z-20 size-12 rounded-full" style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }} onClick={() => void openNew()} aria-label={t(locale, "notebookNew")}>
             <Plus />
           </Button>
         </ViewportFixed>

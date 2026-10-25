@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, Component } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode, Component } from "react";
 import { Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { AccountSync } from "@/components/account-sync";
 import { Coachmarks } from "@/components/coachmarks";
@@ -6,7 +6,8 @@ import { NotifyPrompt } from "@/components/notify-prompt";
 import { CompleteProfile } from "@/components/complete-profile";
 import { Onboarding } from "@/components/onboarding";
 import { SplashScreen } from "@/components/splash-screen";
-import { showTabBar, TabBar } from "@/components/tab-bar";
+import { TabBar } from "@/components/tab-bar";
+import { showTabBar } from "@/lib/tabs";
 import { UsagePing } from "@/components/usage-ping";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { takeInvite } from "@/lib/invite";
@@ -80,7 +81,7 @@ export function AppShell() {
     return () => window.clearTimeout(timer);
   }, [publicPage]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.classList.toggle("has-tab-bar", Boolean(tabs));
     return () => document.documentElement.classList.remove("has-tab-bar");
   }, [tabs]);

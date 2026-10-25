@@ -69,6 +69,29 @@ if (!shell.includes('path: "/auth/native-return"') || !shell.includes("Callback.
 if (!shell.includes("Verse2NoteBridgeViewController")) {
   errors.push("O controlador da ponte tem de registrar o plugin de login.");
 }
+if (!shell.includes("registerPluginInstance(LiquidChromePlugin())") || !shell.includes("liquidChrome.attach")) {
+  errors.push("O controlador tem de montar o chrome nativo e registrar o plugin LiquidChrome.");
+}
+const liquid = read("ios/App/App/LiquidChrome.swift");
+if (!liquid.includes("UITabBar") || !liquid.includes("UINavigationBar") || !liquid.includes("UISearchBar")) {
+  errors.push("O chrome nativo tem de usar UITabBar, UINavigationBar e UISearchBar.");
+}
+if (!liquid.includes("bounces") && !shell.includes("scroll.bounces = false")) {
+  errors.push("O chrome nativo não pode voltar a ligar o bounce da WKWebView.");
+}
+const material = read("ios/App/App/LiquidGlassMaterial.m");
+if (!material.includes("UIGlassEffect") || !material.includes("UIBlurEffectStyleSystemChromeMaterial")) {
+  errors.push("O material tem de ter UIGlassEffect e o desfoque clássico.");
+}
+if (!material.includes("__IPHONE_26_0") || !material.includes("prominentGlassButtonConfiguration")) {
+  errors.push("Liquid Glass tem de compilar só com o SDK do iOS 26, com botão de vidro no FAB.");
+}
+if (!project.includes("LiquidChrome.swift in Sources") || !project.includes("LiquidGlassMaterial.m in Sources")) {
+  errors.push("O projeto Xcode não compila o chrome nativo.");
+}
+if (!project.includes('SWIFT_OBJC_BRIDGING_HEADER = "App/App-Bridging-Header.h"')) {
+  errors.push("Falta o bridging header do material de vidro.");
+}
 const scene = read("ios/App/App/SceneDelegate.swift");
 if (!scene.includes("rootViewController = Verse2NoteBridgeViewController()")) {
   errors.push("O SceneDelegate tem de mostrar o controlador que registra o login.");

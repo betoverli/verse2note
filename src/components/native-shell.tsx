@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { NativeChrome } from "@/components/native-chrome";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { isNativeApp } from "@/lib/native/runtime";
 
@@ -17,5 +18,5 @@ export function NativeShell() {
     void import("@/lib/native/shell").then((mod) => mod.resumeNativePushIfNeeded());
   }, [user]);
 
-  return null;
+  return <NativeChrome />;
 }

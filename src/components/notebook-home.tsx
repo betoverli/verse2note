@@ -13,6 +13,7 @@ import { SendToFriendButton } from "@/components/send-to-friend";
 import { ActionSheet } from "@/components/viewport-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { ViewportFixed } from "@/components/viewport-fixed";
+import { useNativeFab } from "@/lib/native/use-native-fab";
 import { Button } from "@/components/ui/button";
 import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
 import { lockSwipe } from "@/lib/swipe-axis";
@@ -265,6 +266,8 @@ export function NotebookHome({ query }: { query: string }) {
     void navigate({ to: "/notebook/$id", params: { id: note.id } });
   }
 
+  useNativeFab(t(locale, "notebookNew"), openNew);
+
   const filters: { id: Filter; label: string }[] = [
     { id: "all", label: t(locale, "notebookAll") },
     { id: "tags", label: t(locale, "notebookTags") },
@@ -367,7 +370,7 @@ export function NotebookHome({ query }: { query: string }) {
 
       <ViewportFixed>
         <Button
-          className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
+          className="native-fab fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
           style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
           onClick={() => openNew()}
           aria-label={t(locale, "notebookNew")}

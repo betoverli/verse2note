@@ -3,10 +3,15 @@ import Capacitor
 import UIKit
 import WebKit
 
-/// Loads the hosted site and registers the login plugin before the page runs.
+/// Loads the hosted site and registers the login and Liquid Glass plugins
+/// before the page runs. The native bars are siblings of the web view.
 class Verse2NoteBridgeViewController: CAPBridgeViewController {
+    private let liquidChrome = LiquidChromeOverlay()
+
     override func capacitorDidLoad() {
+        liquidChrome.attach(to: self)
         bridge?.registerPluginInstance(NativeAuthPlugin())
+        bridge?.registerPluginInstance(LiquidChromePlugin())
         tuneDocumentScroll()
         let source = """
         (function () {
@@ -29,9 +34,15 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         webView?.configuration.userContentController.addUserScript(script)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        liquidChrome.layout()
+    }
+
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         tuneDocumentScroll()
+        liquidChrome.layout()
         // The hosted page loads after this, and WebKit can put bounce back
         // to Capacitor's default until the document has finished.
         for delay in [0.35, 1.2] {

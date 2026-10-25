@@ -39,6 +39,7 @@ function AppPage() {
     >
       <AppHeader
         title={book ? book.names[copyLocale] : t(locale, "navBooks")}
+        nativeSymbol="bell"
         trailing={<NotifyBell />}
       />
       <VerseSectionTabs />

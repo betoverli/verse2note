@@ -180,6 +180,41 @@ html.dark .sheet-invert {
     pointer-events: none;
   }
 
+  /* Native iOS bars sit above the web view. Hide the HTML copies so the
+     title, tabs, and FABs are not drawn twice. The header box stays in the
+     column so `.screen-body` still starts under it and keeps the bounce. */
+  html.native-tabs .tab-bar {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  html.native-top main.screen > .app-header {
+    height: var(--native-top-inset);
+    max-height: var(--native-top-inset);
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+    background-color: transparent;
+    border-bottom-color: transparent;
+  }
+
+  html.native-top main.screen > .app-header::before {
+    display: none;
+  }
+
+  html.native-top main.screen > .app-header .header-title,
+  html.native-top main.screen > .app-header .native-back-slot,
+  html.native-top main.screen > .app-header .header-trailing,
+  html.native-top main.screen > .app-header .header-search {
+    visibility: hidden;
+  }
+
+  html.native-fab-on .native-fab {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
   .badge-seal {
     display: grid;
     width: 5.25rem;
@@ -597,6 +632,10 @@ html.dark .sheet-invert {
 
 html.has-tab-bar {
   --tab-bar-height: calc(3.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+html.native-tabs.has-tab-bar {
+  --tab-bar-height: var(--native-tab-inset, calc(3.25rem + env(safe-area-inset-bottom, 0px)));
 }
 
 @layer base {

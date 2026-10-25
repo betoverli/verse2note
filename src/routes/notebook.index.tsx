@@ -27,6 +27,7 @@ function NotebookIndex() {
       <AppHeader
         title={t(locale, "notebook")}
         search={{ value: query, onChange: setQuery, placeholder: t(locale, "notebookSearch") }}
+        nativeSymbol="square.and.arrow.up"
         trailing={
           <Button variant="ghost" size="icon" asChild className="size-11 text-accent [&_svg]:size-5">
             <Link to="/notebook/import" aria-label={t(locale, "notebookImport")}>
