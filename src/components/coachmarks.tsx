@@ -63,7 +63,7 @@ export function Coachmarks() {
     : window.innerHeight / 2 - 80;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label={t(locale, step.body)}>
+    <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true" aria-label={t(locale, step.body)} data-native-chrome="all">
       <div className="absolute inset-0 bg-black/50" />
       {hole ? (
         <div

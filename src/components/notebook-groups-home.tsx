@@ -13,6 +13,7 @@ import {
 import { peekMyGroups, setMyGroupsCache, upsertMyGroup } from "@/lib/groups-cache";
 import { useAppStore } from "@/lib/store";
 import { ViewportFixed } from "@/components/viewport-fixed";
+import { useNativeFab } from "@/lib/native/use-native-fab";
 import { Button } from "@/components/ui/button";
 import { Choice } from "@/components/choice";
 import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
@@ -99,6 +100,8 @@ export function NotebookGroupsHome({ query }: { query: string }) {
     }, 220);
     return () => window.clearTimeout(handle);
   }, [query, user]);
+
+  useNativeFab(t(locale, "notebookGroupNew"), () => setCreate(true), Boolean(user));
 
   async function make() {
     if (busy) return;
@@ -225,7 +228,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       ) : null}
       <ViewportFixed>
         <Button
-          className="fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
+          className="native-fab fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
           style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
           onClick={() => setCreate(true)}
           aria-label={t(locale, "notebookGroupNew")}

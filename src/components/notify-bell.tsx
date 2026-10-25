@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -9,6 +9,7 @@ import {
   markNotificationsRead,
   type InboxItem,
 } from "@/lib/notify";
+import { touchChrome } from "@/lib/native/chrome-store";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
@@ -42,6 +43,10 @@ export function NotifyBell() {
   useEffect(() => {
     refreshCount();
   }, [refreshCount]);
+
+  useLayoutEffect(() => {
+    touchChrome();
+  }, [count]);
 
   useEffect(() => {
     const onFocus = () => refreshCount();
@@ -100,6 +105,7 @@ export function NotifyBell() {
         className="relative size-12 text-fg [&_svg]:size-6"
         aria-label={t(locale, "notifications")}
         aria-expanded={open}
+        data-native-badge={count > 0 ? String(Math.min(count, 99)) : undefined}
         onClick={() => setOpen(true)}
       >
         <Bell />

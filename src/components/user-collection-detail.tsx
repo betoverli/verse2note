@@ -274,6 +274,7 @@ export function UserCollectionDetail({ collection }: { collection: UserCollectio
       <AppHeader
         title={title}
         backTo="/collections"
+        nativeSymbol="pencil"
         titleField={
           editing ? (
             <input

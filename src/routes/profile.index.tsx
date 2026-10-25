@@ -13,7 +13,7 @@ function ProfileIndex() {
   const locale = useAppStore((s) => s.locale);
   return (
     <ProfileScreen>
-      <AppHeader title={t(locale, "profile")} trailing={<ProfileHeaderActions />} />
+      <AppHeader title={t(locale, "profile")} nativeSymbol="pencil" trailing={<ProfileHeaderActions />} />
       <ProfileView />
     </ProfileScreen>
   );
