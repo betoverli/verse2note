@@ -180,23 +180,17 @@ html.dark .sheet-invert {
     pointer-events: none;
   }
 
-  /* Native iOS bars sit above the web view. Hide the HTML copies so the
-     title, tabs, and FABs are not drawn twice. The header box stays in the
-     column so `.screen-body` still starts under it and keeps the bounce. */
+  /* Native bars float over the web view. Hide the HTML copies so the title,
+     tabs, and FABs are not drawn twice. The header must leave the column:
+     a reserved band behind the glass blurs into a solid strip. */
   html.native-tabs .tab-bar {
     visibility: hidden;
     pointer-events: none;
-  }
-
-  html.native-top main.screen > .app-header {
-    height: var(--native-top-inset);
-    max-height: var(--native-top-inset);
-    min-height: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    overflow: hidden;
+    background: transparent;
     background-color: transparent;
-    border-bottom-color: transparent;
+    border-top-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   html.native-top main.screen > .app-header::before {
@@ -752,6 +746,7 @@ html.native-ios.scroll-locked body {
 
 html.native-ios main.screen,
 html.native-ios main.note-screen {
+  position: relative;
   height: 100dvh;
   max-height: 100dvh;
   min-height: 0;
@@ -780,15 +775,44 @@ html.native-ios main.note-screen > .screen-body {
 }
 
 html.native-ios .screen-pad-4 {
+  --screen-pad: 1rem;
   padding-top: 1rem;
 }
 
 html.native-ios .screen-pad-6 {
+  --screen-pad: 1.5rem;
   padding-top: 1.5rem;
 }
 
 html.native-ios .screen-pad-8 {
+  --screen-pad: 2rem;
   padding-top: 2rem;
+}
+
+/* The native title row is taken out of the column so `.screen-body` runs
+   under the status bar and the bar. The inset is padding on the scrolling
+   content, not on the scrollport, so a pull scrolls rows through the glass.
+   The same is true of the tab-bar padding, which already sits on this node. */
+html.native-ios.native-top main.screen > .app-header {
+  position: absolute;
+  inset: 0 auto auto 0;
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  visibility: hidden;
+  pointer-events: none;
+  background: none;
+  background-color: transparent;
+}
+
+html.native-ios.native-top main.screen > .screen-body > .screen-content {
+  padding-top: calc(var(--native-top-inset, 0px) + var(--screen-pad, 0px));
 }
 
 html.native-ios main.note-screen {

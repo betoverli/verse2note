@@ -23,7 +23,9 @@ export function Screen({ className, children }: { className?: string; children: 
   return (
     <main className={cn("screen", parts.main)}>
       {chrome}
-      <div className={cn("screen-body", parts.body)}>{body}</div>
+      <div className="screen-body">
+        <div className={cn("screen-content flex min-w-0 flex-col", parts.body)}>{body}</div>
+      </div>
     </main>
   );
 }

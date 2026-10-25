@@ -3,39 +3,61 @@ import UIKit
 
 /// Native chrome drawn above the WKWebView.
 ///
-/// iOS 26, built with the iOS 26 SDK: `UIGlassEffect` behind the navigation
-/// bar and the tab bar, and a prominent-glass FAB.
-/// iOS 15–25 (and any binary built with an older SDK): a real `UITabBar`,
-/// a `UINavigationBar`, and `UIBlurEffect.systemChromeMaterial`. No CSS.
+/// iOS 26, built with the iOS 26 SDK: the system bar materials are Liquid
+/// Glass, and the + button is prominent glass.
+/// iOS 15–25 (and any binary built with an older SDK): a real `UITabBar`
+/// and `UINavigationBar` with the system chrome material. No CSS.
 ///
-/// The bars are siblings of the web view, so the rubber-band stays on
-/// `.screen-body` and does not drag this chrome.
+/// The bars are siblings of the web view. Each bar has one material: on
+/// iOS 26 that is `UIGlassEffect`, otherwise the system chrome blur. The
+/// page draws underneath, so the material refracts the list. An empty
+/// reserved band behind the effect is what made the glass look painted on.
+///
+/// Search is a magnifying-glass button in the title row. Tapping it swaps
+/// that row for a search field. It never adds a second strip.
+///
+/// The rubber-band stays on `.screen-body` and does not drag this chrome.
 final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate {
     static weak var current: LiquidChromeOverlay?
 
     private weak var owner: UIViewController?
     private let host = ChromePassView()
     private let topPlate = UIVisualEffectView()
-    private let hairline = UIView()
+    private let tabPlate = UIVisualEffectView()
     private let navBar = UINavigationBar()
     private let searchBar = UISearchBar()
-    private let tabPlate = UIVisualEffectView()
+    private lazy var searchSlot = SearchSlot(bar: searchBar)
     private let tabBar = UITabBar()
     private let fab = UIButton(type: .custom)
     private let navItem = UINavigationItem(title: "")
+    private lazy var searchItem: UIBarButtonItem = {
+        UIBarButtonItem(
+            image: UIImage(systemName: "magnifyingglass"),
+            style: .plain,
+            target: self,
+            action: #selector(searchTapped)
+        )
+    }()
+    private var model = LiquidChromeModel()
     private var tabIDs: [String] = []
     private var tabSignature = ""
     private var trailingSignature = ""
+    private var trailingItem: UIBarButtonItem?
+    private var rightSignature = ""
     private var backSignature = ""
+    private var barIdentity = ""
     private var suppressTabs = false
     private var writingSearch = false
+    private var searchOpen = false
     private var glass = false
     private var topVisible = false
-    private var searchVisible = false
     private var tabsWanted = false
     private var lastTop: CGFloat = -1
     private var lastBottom: CGFloat = -1
     private let accent = UIColor(red: 0, green: 122.0 / 255.0, blue: 1, alpha: 1)
+    /// Title row only. Search does not add a row. Matches the web clearance.
+    private let barHeight: CGFloat = 44
+    private let tabBody: CGFloat = 49
 
     func attach(to controller: UIViewController) {
         owner = controller
@@ -49,24 +71,15 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         }
 
         topPlate.isUserInteractionEnabled = false
+        topPlate.isOpaque = false
+        topPlate.backgroundColor = .clear
         tabPlate.isUserInteractionEnabled = false
-        hairline.isUserInteractionEnabled = false
-        hairline.backgroundColor = UIColor.separator
-
-        let clear = UINavigationBarAppearance()
-        clear.configureWithTransparentBackground()
-        clear.shadowColor = .clear
-        clear.titleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 17, weight: .semibold),
-        ]
-        navBar.standardAppearance = clear
-        navBar.scrollEdgeAppearance = clear
-        navBar.compactAppearance = clear
-        if #available(iOS 15.0, *) {
-            navBar.compactScrollEdgeAppearance = clear
-        }
+        tabPlate.isOpaque = false
+        tabPlate.backgroundColor = .clear
+        applyMaterials()
         navBar.prefersLargeTitles = false
         navBar.tintColor = accent
+        navBar.isTranslucent = true
         navBar.setItems([navItem], animated: false)
 
         searchBar.searchBarStyle = .minimal
@@ -77,21 +90,15 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         searchBar.returnKeyType = .search
         searchBar.tintColor = accent
         searchBar.delegate = self
-        if #available(iOS 13.0, *) {
-            searchBar.searchTextField.backgroundColor = UIColor.secondarySystemFill
-        }
 
         tabBar.delegate = self
         tabBar.tintColor = accent
         tabBar.isTranslucent = true
-        applyTabMaterial()
 
         tabBar.isHidden = true
         tabPlate.isHidden = true
         navBar.isHidden = true
-        searchBar.isHidden = true
         topPlate.isHidden = true
-        hairline.isHidden = true
 
         V2NGlassMaterial.applyFabStyle(to: fab)
         fab.addTarget(self, action: #selector(fabTapped), for: .touchUpInside)
@@ -103,7 +110,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
             fab.layer.shadowOffset = CGSize(width: 0, height: 8)
         }
 
-        for view in [topPlate, hairline, navBar, searchBar, tabPlate, tabBar, fab] as [UIView] {
+        for view in [topPlate, navBar, tabPlate, tabBar, fab] as [UIView] {
             host.addSubview(view)
         }
         layout()
@@ -118,28 +125,21 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         let safe = view.safeAreaInsets
         let width = view.bounds.width
 
+        let topHeight = topInset(safe.top)
         if topVisible {
-            let height = safe.top + 44 + (searchVisible ? 52 : 0)
             topPlate.isHidden = false
-            topPlate.frame = CGRect(x: 0, y: 0, width: width, height: height)
+            topPlate.frame = CGRect(x: 0, y: 0, width: width, height: topHeight)
             navBar.isHidden = false
-            navBar.frame = CGRect(x: 0, y: safe.top, width: width, height: 44)
-            searchBar.isHidden = !searchVisible
-            searchBar.frame = CGRect(x: 0, y: safe.top + 44, width: width, height: 52)
-            hairline.isHidden = glass
-            let scale = view.window?.screen.scale ?? UIScreen.main.scale
-            let hair = 1 / max(scale, 1)
-            hairline.frame = CGRect(x: 0, y: height - hair, width: width, height: hair)
+            navBar.frame = CGRect(x: 0, y: safe.top, width: width, height: barHeight)
         } else {
             topPlate.isHidden = true
             navBar.isHidden = true
-            searchBar.isHidden = true
-            hairline.isHidden = true
         }
 
-        let tabHeight = 49 + safe.bottom
-        tabPlate.frame = CGRect(x: 0, y: view.bounds.height - tabHeight, width: width, height: tabHeight)
-        tabBar.frame = tabPlate.frame
+        let tabHeight = tabBody + safe.bottom
+        let tabFrame = CGRect(x: 0, y: view.bounds.height - tabHeight, width: width, height: tabHeight)
+        tabPlate.frame = tabFrame
+        tabBar.frame = tabFrame
         tabPlate.isHidden = tabBar.isHidden || !glass
 
         let fabSize: CGFloat = 56
@@ -150,7 +150,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
             fab.layer.shadowPath = UIBezierPath(ovalIn: fab.bounds).cgPath
         }
 
-        let top = topVisible ? safe.top + 44 + (searchVisible ? 52 : 0) : 0
+        let top = topInset(safe.top)
         let bottom = tabsWanted ? tabHeight : 0
         if top != lastTop || bottom != lastBottom {
             lastTop = top
@@ -162,44 +162,36 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     func apply(_ model: LiquidChromeModel) -> (top: CGFloat, bottom: CGFloat) {
         let style: UIUserInterfaceStyle = model.appearance == "light" ? .light : .dark
         host.overrideUserInterfaceStyle = style
+        let identity = "\(model.topVisible)|\(model.title)|\(model.selectedTab)|\(model.back)|\(model.searchPlaceholder)"
+        let screenChanged = identity != barIdentity
+        barIdentity = identity
+        self.model = model
         topVisible = model.topVisible
-        searchVisible = model.searchVisible && model.topVisible
         tabsWanted = model.tabsVisible
+        if searchOpen && (screenChanged || !model.searchVisible || !model.topVisible) {
+            dismissSearch(notify: false)
+        }
 
         applyTabs(model.tabs, selected: model.selectedTab)
         let drawTabs = model.tabsVisible && !model.keyboard
         tabBar.isHidden = !drawTabs
         tabPlate.isHidden = !drawTabs || !glass
 
-        navItem.title = model.title
-        let backKey = model.back ? model.backLabel : ""
-        if backKey != backSignature {
-            backSignature = backKey
-            if model.back {
-                let back = UIBarButtonItem(
-                    image: UIImage(systemName: "chevron.backward"),
-                    style: .plain,
-                    target: self,
-                    action: #selector(backTapped)
-                )
-                back.accessibilityLabel = model.backLabel
-                navItem.leftBarButtonItem = back
-            } else {
-                navItem.leftBarButtonItem = nil
-            }
-        }
-        applyTrailing(model)
-
         if searchBar.placeholder != model.searchPlaceholder {
             searchBar.placeholder = model.searchPlaceholder
         }
-        if searchBar.text != model.searchText {
+        // Don't push the field's text while the person is typing — assigning
+        // it drops the cursor. The web echoes the same string back.
+        if searchBar.text != model.searchText && !searchBar.isFirstResponder {
             writingSearch = true
             searchBar.text = model.searchText
             writingSearch = false
         }
-        if !searchVisible {
-            searchBar.resignFirstResponder()
+
+        if searchOpen {
+            presentSearch(focus: false)
+        } else {
+            showIdleBar()
         }
 
         fab.accessibilityLabel = model.fabLabel
@@ -208,23 +200,46 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         owner?.view.layoutIfNeeded()
         layout()
         let safe = owner?.view.safeAreaInsets ?? .zero
-        let top = topVisible ? safe.top + 44 + (searchVisible ? 52 : 0) : 0
-        let bottom = tabsWanted ? 49 + safe.bottom : 0
+        let top = topInset(safe.top)
+        let bottom = tabsWanted ? tabBody + safe.bottom : 0
         return (top, bottom)
     }
 
-    private func applyTabMaterial() {
-        let appearance = UITabBarAppearance()
+    private func topInset(_ safeTop: CGFloat) -> CGFloat {
+        topVisible ? safeTop + barHeight : 0
+    }
+
+    /// One material per bar. The navigation bar stays transparent and the
+    /// plate behind it carries the glass or the classic blur, including the
+    /// status-bar area. A second material on the bar itself stacks into a
+    /// solid strip. The tab bar keeps the system material on older iOS and
+    /// uses the same single plate on iOS 26.
+    private func applyMaterials() {
+        let clear = UINavigationBarAppearance()
+        clear.configureWithTransparentBackground()
+        clear.shadowColor = .clear
+        clear.titleTextAttributes = [
+            .font: UIFont.systemFont(ofSize: 17, weight: .semibold),
+        ]
+        navBar.standardAppearance = clear
+        navBar.scrollEdgeAppearance = clear
+        navBar.compactAppearance = clear
+        if #available(iOS 15.0, *) {
+            navBar.compactScrollEdgeAppearance = clear
+        }
+
+        let tabAppearance = UITabBarAppearance()
         if glass, let effect = V2NGlassMaterial.effect(withInteractive: true) {
             tabPlate.effect = effect
-            appearance.configureWithTransparentBackground()
-            appearance.shadowColor = .clear
+            tabAppearance.configureWithTransparentBackground()
+            tabAppearance.shadowColor = .clear
         } else {
             tabPlate.effect = nil
-            appearance.configureWithDefaultBackground()
+            tabAppearance.configureWithDefaultBackground()
         }
-        tabBar.standardAppearance = appearance
-        tabBar.scrollEdgeAppearance = appearance
+        tabBar.standardAppearance = tabAppearance
+        tabBar.scrollEdgeAppearance = tabAppearance
+
         if glass, let effect = V2NGlassMaterial.effect(withInteractive: false) {
             topPlate.effect = effect
         } else {
@@ -250,15 +265,90 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         suppressTabs = false
     }
 
-    private func applyTrailing(_ model: LiquidChromeModel) {
-        guard model.trailingVisible, !model.trailingSymbol.isEmpty else {
-            trailingSignature = ""
-            navItem.rightBarButtonItem = nil
+    private func showIdleBar() {
+        if navItem.titleView != nil {
+            navItem.titleView = nil
+            rightSignature = ""
+        }
+        searchBar.showsCancelButton = false
+        navItem.title = model.title
+        let backKey = model.back ? model.backLabel : ""
+        if backKey != backSignature || (model.back && navItem.leftBarButtonItem == nil) || (!model.back && navItem.leftBarButtonItem != nil) {
+            backSignature = backKey
+            if model.back {
+                let back = UIBarButtonItem(
+                    image: UIImage(systemName: "chevron.backward"),
+                    style: .plain,
+                    target: self,
+                    action: #selector(backTapped)
+                )
+                back.accessibilityLabel = model.backLabel
+                navItem.leftBarButtonItem = back
+            } else {
+                navItem.leftBarButtonItem = nil
+            }
+        }
+        applyTrailing()
+    }
+
+    private func presentSearch(focus: Bool) {
+        if navItem.titleView !== searchSlot {
+            navItem.title = ""
+            navItem.leftBarButtonItem = nil
+            navItem.rightBarButtonItems = nil
+            backSignature = ""
+            rightSignature = ""
+            searchBar.showsCancelButton = true
+            searchBar.placeholder = model.searchPlaceholder
+            navItem.titleView = searchSlot
+        }
+        if focus {
+            searchBar.becomeFirstResponder()
+        }
+    }
+
+    private func dismissSearch(notify: Bool) {
+        let hadText = !(searchBar.text ?? "").isEmpty
+        searchOpen = false
+        searchBar.resignFirstResponder()
+        if hadText {
+            writingSearch = true
+            searchBar.text = ""
+            writingSearch = false
+        }
+        showIdleBar()
+        if notify && hadText {
+            LiquidChromePlugin.active?.notifyListeners("searchChanged", data: ["text": ""])
+        }
+    }
+
+    private func applyTrailing() {
+        let signature = "\(model.trailingVisible)|\(model.trailingSymbol)|\(model.trailingBadge)|\(model.trailingLabel)|\(model.searchVisible)|\(model.searchPlaceholder)"
+        if signature == rightSignature {
             return
         }
+        rightSignature = signature
+        var items: [UIBarButtonItem] = []
+        if let trailing = trailingButton() {
+            items.append(trailing)
+        }
+        if model.searchVisible && model.topVisible {
+            let label = model.searchPlaceholder.isEmpty ? "Buscar" : model.searchPlaceholder
+            searchItem.accessibilityLabel = label
+            items.append(searchItem)
+        }
+        navItem.rightBarButtonItems = items.isEmpty ? nil : items
+    }
+
+    private func trailingButton() -> UIBarButtonItem? {
+        guard model.trailingVisible, !model.trailingSymbol.isEmpty else {
+            trailingSignature = ""
+            trailingItem = nil
+            return nil
+        }
         let signature = "\(model.trailingSymbol)|\(model.trailingBadge)|\(model.trailingLabel)"
-        if signature == trailingSignature, navItem.rightBarButtonItem != nil {
-            return
+        if signature == trailingSignature, let trailingItem {
+            return trailingItem
         }
         trailingSignature = signature
         let button = UIButton(type: .system)
@@ -282,7 +372,9 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
             pill.isAccessibilityElement = false
             button.addSubview(pill)
         }
-        navItem.rightBarButtonItem = UIBarButtonItem(customView: button)
+        let item = UIBarButtonItem(customView: button)
+        trailingItem = item
+        return item
     }
 
     func tabBar(_ tabBar: UITabBar, didSelect item: UITabBarItem) {
@@ -298,6 +390,16 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
 
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         searchBar.resignFirstResponder()
+    }
+
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        dismissSearch(notify: true)
+    }
+
+    @objc private func searchTapped() {
+        guard model.searchVisible, !searchOpen else { return }
+        searchOpen = true
+        presentSearch(focus: true)
     }
 
     @objc private func backTapped() {
@@ -318,6 +420,29 @@ private final class ChromePassView: UIView {
         let hit = super.hitTest(point, with: event)
         if hit == nil || hit === self { return nil }
         return hit
+    }
+}
+
+/// Asks the navigation bar for the full width between the side buttons so
+/// the search field can replace the title without growing the bar.
+private final class SearchSlot: UIView {
+    let bar: UISearchBar
+
+    init(bar: UISearchBar) {
+        self.bar = bar
+        super.init(frame: CGRect(x: 0, y: 0, width: 240, height: 44))
+        addSubview(bar)
+    }
+
+    required init?(coder: NSCoder) { return nil }
+
+    override var intrinsicContentSize: CGSize {
+        CGSize(width: UIView.layoutFittingExpandedSize.width, height: 44)
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        bar.frame = bounds
     }
 }
 

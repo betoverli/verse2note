@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { chromeVisibility, readTrailing, suspensionFromDom } from "./liquid-chrome.ts";
 import { selectedTabId, showTabBar } from "../tabs.ts";
@@ -69,6 +70,26 @@ describe("suspensionFromDom", () => {
     const tour = documentStub([{ attrs: { "data-native-chrome": "all", role: "dialog" } }]);
     assert.equal(suspensionFromDom(tour), "all");
     assert.equal(suspensionFromDom(documentStub([])), "none");
+  });
+});
+
+describe("native underlap", () => {
+  const css = readFileSync(new URL("../../styles.css", import.meta.url), "utf8");
+  const swift = readFileSync(new URL("../../../ios/App/App/LiquidChrome.swift", import.meta.url), "utf8");
+
+  it("does not reserve a solid header band behind the native top bar", () => {
+    assert.doesNotMatch(css, /height:\s*var\(--native-top-inset\)/);
+    assert.match(css, /html\.native-ios\.native-top main\.screen > \.screen-body > \.screen-content/);
+    assert.match(css, /padding-top:\s*calc\(var\(--native-top-inset, 0px\) \+ var\(--screen-pad, 0px\)\)/);
+  });
+
+  it("keeps search inside the title row instead of a second strip", () => {
+    assert.match(swift, /private let barHeight: CGFloat = 44/);
+    assert.doesNotMatch(swift, /searchVisible \? 52/);
+    assert.match(swift, /magnifyingglass/);
+    assert.match(swift, /topPlate\.isOpaque = false/);
+    assert.match(swift, /topPlate\.backgroundColor = \.clear/);
+    assert.match(swift, /configureWithTransparentBackground\(\)/);
   });
 });
 
