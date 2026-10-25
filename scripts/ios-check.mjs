@@ -92,6 +92,20 @@ if (!project.includes("LiquidChrome.swift in Sources") || !project.includes("Liq
 if (!project.includes('SWIFT_OBJC_BRIDGING_HEADER = "App/App-Bridging-Header.h"')) {
   errors.push("Falta o bridging header do material de vidro.");
 }
+const workflow = read(".github/workflows/ios.yml");
+const selectorUses = workflow.split("node scripts/select-xcode.mjs").length - 1;
+if (selectorUses < 2) {
+  errors.push("Simulador e TestFlight têm de escolher o Xcode com scripts/select-xcode.mjs.");
+}
+if (workflow.includes("Xcode_26.1.app") || workflow.includes("Xcode_26.0.app")) {
+  errors.push(
+    "O fluxo não pode fixar o Xcode 26.0/26.1: a imagem traz a app sem essa plataforma e o xcodebuild sai 70.",
+  );
+}
+const selector = read("scripts/select-xcode.mjs");
+if (!selector.includes("export function chooseXcode") || !selector.includes("sdk.major < 26")) {
+  errors.push("O selector de Xcode tem de exigir o SDK do iOS 26 com runtime de simulador instalado.");
+}
 const scene = read("ios/App/App/SceneDelegate.swift");
 if (!scene.includes("rootViewController = Verse2NoteBridgeViewController()")) {
   errors.push("O SceneDelegate tem de mostrar o controlador que registra o login.");
