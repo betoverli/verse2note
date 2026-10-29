@@ -889,6 +889,43 @@ html.native-ios main.note-screen > .screen-body {
   padding-right: 1rem;
 }
 
+.note-editor-bar-panel {
+  border-radius: 18px;
+  border: 0.5px solid color-mix(in srgb, var(--color-separator) 70%, transparent);
+  background-color: color-mix(in srgb, var(--color-bg) 72%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(22px);
+  backdrop-filter: saturate(180%) blur(22px);
+  box-shadow:
+    0 0.5px 0 color-mix(in srgb, var(--color-fg) 6%, transparent) inset,
+    0 8px 28px color-mix(in srgb, var(--color-fg) 8%, transparent);
+  padding: 0.35rem 0.4rem;
+}
+
+.note-editor-bar-panel .sheet-invert {
+  border-radius: 14px;
+}
+
+html.native-ios main.note-screen > .note-chrome .app-header {
+  border-bottom-color: transparent;
+}
+
+main.note-screen > .note-chrome .app-header .header-title {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+main.note-screen > .note-chrome .app-header {
+  border-bottom-color: transparent;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .note-editor-bar-panel {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: color-mix(in srgb, var(--color-bg) 94%, transparent);
+  }
+}
+
 @media (min-width: 640px) {
   html.native-ios main.note-screen > .screen-body {
     padding-left: 1.5rem;
