@@ -57,6 +57,8 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     private let accent = UIColor(red: 0, green: 122.0 / 255.0, blue: 1, alpha: 1)
     /// Title row only. Search does not add a row. Matches the web clearance.
     private let barHeight: CGFloat = 44
+    /// Extra space below the status bar before the title row (HIG breathing room).
+    private let barTopPad: CGFloat = 6
     private let tabBody: CGFloat = 49
 
     func attach(to controller: UIViewController) {
@@ -119,7 +121,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
 
         if topVisible {
             navBar.isHidden = false
-            navBar.frame = CGRect(x: 0, y: safe.top, width: width, height: barHeight)
+            navBar.frame = CGRect(x: 0, y: safe.top + barTopPad, width: width, height: barHeight)
         } else {
             navBar.isHidden = true
         }
@@ -190,7 +192,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     }
 
     private func topInset(_ safeTop: CGFloat) -> CGFloat {
-        topVisible ? safeTop + barHeight : 0
+        topVisible ? safeTop + barTopPad + barHeight : 0
     }
 
     /// Clear bar backgrounds. iOS 26 still draws the floating tab pill and

@@ -817,6 +817,10 @@ html.native-ios .screen-pad-8 {
   padding-top: 2rem;
 }
 
+html.native-ios {
+  --native-title-gap: 12px;
+}
+
 /* The native title row is taken out of the column so `.screen-body` runs
    under the status bar and the buttons. Clearance is on the scrolling
    content and stops short of the bar, so the first row is already under
@@ -844,7 +848,7 @@ html.native-ios.native-tabs main.screen > .screen-body {
 }
 
 html.native-ios.native-top main.screen > .screen-body > .screen-content {
-  padding-top: max(0px, calc(var(--native-top-inset, 0px) - 12px));
+  padding-top: max(0px, calc(var(--native-top-inset, 0px) + var(--native-title-gap, 12px)));
 }
 
 /* Frost that can see the web content. A UIKit glass plate over the web
