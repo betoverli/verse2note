@@ -43,12 +43,12 @@ export function NotebookGroupPublishList({ note }: { note: Note }) {
   if (!user) return null;
 
   return (
-    <div>
-      <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookGroupPublish")}</p>
-      {rows == null ? <div className="h-12 rounded-md bg-surface" aria-hidden /> : null}
-      {rows && rows.length === 0 ? <p className="text-sm text-muted">{t(locale, "notebookGroupEmpty")}</p> : null}
+    <section className="min-w-0">
+      <h3 className="ios-caption mb-2">{t(locale, "notebookGroupPublish")}</h3>
+      {rows == null ? <div className="ios-group h-12" aria-hidden /> : null}
+      {rows && rows.length === 0 ? <p className="ios-caption">{t(locale, "notebookGroupEmpty")}</p> : null}
       {rows && rows.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="ios-group">
           {rows.map((item) => {
             const locked = item.postPolicy === "admins" && item.myRole !== "admin";
             return (
@@ -57,10 +57,10 @@ export function NotebookGroupPublishList({ note }: { note: Note }) {
                   type="button"
                   disabled={Boolean(busy) || (locked && !item.published)}
                   onClick={() => void toggle(item)}
-                  className="flex min-h-12 w-full items-center justify-between rounded-md bg-surface px-4 text-left text-sm text-fg disabled:opacity-40"
+                  className="flex min-h-[52px] w-full min-w-0 items-center justify-between gap-3 px-4 text-left text-[17px] text-fg active:bg-fill disabled:opacity-40"
                 >
-                  <span className="truncate">{item.name}</span>
-                  <span className="text-xs text-muted">
+                  <span className="min-w-0 truncate">{item.name}</span>
+                  <span className="shrink-0 text-[15px] text-muted">
                     {item.published ? t(locale, "notebookGroupPublished") : locked ? t(locale, "notebookGroupPostAdmins") : ""}
                   </span>
                 </button>
@@ -69,6 +69,6 @@ export function NotebookGroupPublishList({ note }: { note: Note }) {
           })}
         </ul>
       ) : null}
-    </div>
+    </section>
   );
 }

@@ -1,10 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { FileUp } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { NotebookHome } from "@/components/notebook-home";
-import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n";
 import { pageHead } from "@/lib/seo";
 import { useAppStore } from "@/lib/store";
@@ -27,14 +25,6 @@ function NotebookIndex() {
       <AppHeader
         title={t(locale, "notebook")}
         search={{ value: query, onChange: setQuery, placeholder: t(locale, "notebookSearch") }}
-        nativeSymbol="square.and.arrow.up"
-        trailing={
-          <Button variant="ghost" size="icon" asChild className="size-11 text-accent [&_svg]:size-5">
-            <Link to="/notebook/import" aria-label={t(locale, "notebookImport")}>
-              <FileUp />
-            </Link>
-          </Button>
-        }
       />
       <NotebookHome query={query} />
     </Screen>

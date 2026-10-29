@@ -599,93 +599,117 @@ export function NotebookEditor({
 
       {metaSheet ? (
         <ViewportSheet onClose={() => setMetaSheet(false)}>
-          <div className={cn(formSheetClass, "sheet-invert px-4")}>
+          <div className={cn(formSheetClass, "min-w-0 overflow-x-hidden px-4")}>
             <SheetGrabber />
             <p className="mb-4 text-center text-[17px] font-semibold tracking-[-0.02em] text-fg">{t(locale, "settings")}</p>
-            <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookDate")}</p>
-            <input
-              type="date"
-              value={draft.happenedAt}
-              onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
-              aria-label={t(locale, "notebookDate")}
-              className="mb-5 h-12 w-full rounded-md bg-surface px-3 text-base text-fg outline-none"
-            />
-            <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookTags")}</p>
-            <div className="mb-3 flex flex-wrap gap-2">
-              {draft.tags.map((item) => (
+            <div className="flex min-w-0 flex-col gap-6">
+              <section className="min-w-0">
+                <h3 className="ios-caption mb-2">{t(locale, "notebookDate")}</h3>
+                <div className="ios-group min-w-0">
+                  <div className="box-border min-w-0 px-4 py-2">
+                    <input
+                      type="date"
+                      value={draft.happenedAt}
+                      onChange={(event) => patch((current) => ({ ...current, happenedAt: event.target.value }))}
+                      aria-label={t(locale, "notebookDate")}
+                      className="note-meta-date h-11 w-full min-w-0 max-w-full"
+                    />
+                  </div>
+                </div>
+              </section>
+              <section className="min-w-0">
+                <h3 className="ios-caption mb-2">{t(locale, "notebookTags")}</h3>
+                {draft.tags.length > 0 ? (
+                  <div className="mb-2 flex flex-wrap gap-2 px-4">
+                    {draft.tags.map((item) => (
+                      <button
+                        key={item}
+                        type="button"
+                        onClick={() => patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))}
+                        className="flex min-h-9 items-center rounded-full bg-fill px-3 text-[15px] text-fg active:opacity-80"
+                      >
+                        #{item} ×
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <div className="ios-group min-w-0">
+                  <div className="flex min-w-0 items-center gap-2 px-4 py-1">
+                    <input
+                      ref={tagRef}
+                      value={tag}
+                      onChange={(event) => setTag(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        event.preventDefault();
+                        const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                        if (!next) return;
+                        patch((current) =>
+                          current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                        );
+                        setTag("");
+                      }}
+                      placeholder={t(locale, "notebookTagAdd")}
+                      enterKeyHint="done"
+                      className="box-border h-11 min-w-0 flex-1 max-w-full bg-transparent text-[17px] text-fg outline-none placeholder:text-subtle"
+                    />
+                    <Button
+                      size="icon"
+                      className="size-10 shrink-0"
+                      aria-label={t(locale, "notebookTagAdd")}
+                      onClick={() => {
+                        const next = tag.trim().replace(/^#+/, "").slice(0, 24);
+                        if (!next) return;
+                        patch((current) =>
+                          current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
+                        );
+                        setTag("");
+                      }}
+                    >
+                      <Plus />
+                    </Button>
+                  </div>
+                </div>
+              </section>
+              <section className="min-w-0">
+                <h3 className="ios-caption mb-2">{t(locale, "notebookNoteSpeaker")}</h3>
+                <div className="ios-group min-w-0 p-3">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => patch((current) => ({ ...current, speakerId: null }))}
+                      className={`flex min-h-9 items-center rounded-full px-3 text-[15px] active:opacity-80 ${draft.speakerId ? "bg-fill text-fg" : "bg-accent text-accent-fg"}`}
+                    >
+                      {t(locale, "notebookNoteSpeakerNone")}
+                    </button>
+                    {speakers.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          upsertLocalSpeaker(item);
+                          patch((current) => ({ ...current, speakerId: item.id }));
+                        }}
+                        className={`flex min-h-9 items-center gap-2 rounded-full px-3 text-[15px] active:opacity-80 ${draft.speakerId === item.id ? "bg-accent text-accent-fg" : "bg-fill text-fg"}`}
+                      >
+                        <span className="size-2 shrink-0 rounded-full" style={{ background: item.color }} />
+                        {item.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </section>
+              <NotebookGroupPublishList note={draft} />
+              <div className="ios-group min-w-0">
                 <button
-                  key={item}
                   type="button"
-                  onClick={() => patch((current) => ({ ...current, tags: current.tags.filter((tag) => tag !== item) }))}
-                  className="flex min-h-11 items-center rounded-full bg-fill px-4 text-[15px] text-fg"
+                  className="flex min-h-[52px] w-full items-center justify-center text-[17px] font-semibold text-accent active:bg-fill"
+                  onClick={() => setMetaSheet(false)}
                 >
-                  #{item} ×
+                  {t(locale, "collectionDone")}
                 </button>
-              ))}
+              </div>
             </div>
-            <div className="mb-5 flex gap-2">
-              <input
-                ref={tagRef}
-                value={tag}
-                onChange={(event) => setTag(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter") return;
-                  event.preventDefault();
-                  const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                  if (!next) return;
-                  patch((current) =>
-                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                  );
-                  setTag("");
-                }}
-                placeholder={t(locale, "notebookTagAdd")}
-                enterKeyHint="done"
-                className="h-12 min-w-0 flex-1 rounded-md bg-surface px-3 text-base text-fg outline-none"
-              />
-              <Button
-                size="icon"
-                className="size-12"
-                aria-label={t(locale, "notebookTagAdd")}
-                onClick={() => {
-                  const next = tag.trim().replace(/^#+/, "").slice(0, 24);
-                  if (!next) return;
-                  patch((current) =>
-                    current.tags.includes(next) ? current : { ...current, tags: [...current.tags, next] },
-                  );
-                  setTag("");
-                }}
-              >
-                <Plus />
-              </Button>
-            </div>
-            <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookNoteSpeaker")}</p>
-            <div className="mb-5 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => patch((current) => ({ ...current, speakerId: null }))}
-                className={`flex min-h-11 items-center rounded-full px-4 text-[15px] ${draft.speakerId ? "bg-fill text-fg" : "bg-accent text-accent-fg"}`}
-              >
-                {t(locale, "notebookNoteSpeakerNone")}
-              </button>
-              {speakers.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    upsertLocalSpeaker(item);
-                    patch((current) => ({ ...current, speakerId: item.id }));
-                  }}
-                  className={`flex min-h-11 items-center gap-2 rounded-full px-4 text-[15px] ${draft.speakerId === item.id ? "bg-accent text-accent-fg" : "bg-fill text-fg"}`}
-                >
-                  <span className="size-2 rounded-full" style={{ background: item.color }} />
-                  {item.name}
-                </button>
-              ))}
-            </div>
-            <NotebookGroupPublishList note={draft} />
-            <Button className="mt-4 w-full" variant="ghost" onClick={() => setMetaSheet(false)}>
-              {t(locale, "back")}
-            </Button>
           </div>
         </ViewportSheet>
       ) : null}

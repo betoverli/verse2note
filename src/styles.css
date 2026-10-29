@@ -534,6 +534,34 @@ html.dark .sheet-invert {
     color: var(--color-muted);
   }
 
+  .note-meta-date {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg);
+    font-size: 17px;
+    line-height: 1.35;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .note-meta-date::-webkit-date-and-time-value {
+    min-width: 0;
+    max-width: 100%;
+    text-align: start;
+  }
+
+  .note-meta-date::-webkit-calendar-picker-indicator {
+    margin-left: 0.25rem;
+    opacity: 0.65;
+  }
+
   .ios-fields {
     overflow: hidden;
     overflow: clip;
