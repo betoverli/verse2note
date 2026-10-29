@@ -226,7 +226,7 @@ export function NotebookEditor({
     ro.observe(el);
     setChromeH(el.getBoundingClientRect().height);
     return () => ro.disconnect();
-  }, [pending, readOnly, picker]);
+  }, [readOnly]);
 
   function save(next: Note) {
     draftRef.current = next;
@@ -392,23 +392,14 @@ export function NotebookEditor({
     return null;
   })();
 
-  const toolbar = readOnly ? null : (
-    <div
-      className="select-none border-t border-separator px-1 pb-1"
-      onPointerDownCapture={keepTyping}
-      onMouseDownCapture={keepTyping}
-      onTouchStartCapture={keepTyping}
-    >
-      {pending ? (
-        <button
-          type="button"
-          onPointerDown={toolPointer(confirmRef)}
-          className="mb-1 flex min-h-11 w-full items-center justify-center rounded-[12px] bg-accent px-3 text-[15px] font-semibold text-accent-fg"
-        >
-          {t(locale, "notebookConfirmRef")}
-        </button>
-      ) : null}
-      <div className="flex items-center justify-between gap-0.5">
+  const toolCapture = {
+    onPointerDownCapture: keepTyping,
+    onMouseDownCapture: keepTyping,
+    onTouchStartCapture: keepTyping,
+  };
+
+  const toolButtons = readOnly ? null : (
+    <div className="flex items-center justify-between gap-0.5 px-0.5">
         <Button type="button" tabIndex={-1} variant="ghost" size="icon" className="size-11" aria-label={t(locale, "notebookBold")} onPointerDown={toolPointer(() => formatSelection("bold"))}>
           <Bold />
         </Button>
@@ -486,9 +477,10 @@ export function NotebookEditor({
             <X />
           </Button>
         ) : null}
-      </div>
     </div>
   );
+
+  const barBottom = vv.keyboard ? Math.max(vv.overlap, 0) : 0;
 
   return (
     <>
@@ -500,42 +492,15 @@ export function NotebookEditor({
         <AppHeader
           pinned
           nativeBar={false}
-          title={draft.title || t(locale, "notebookMeeting")}
           backTo={fromGroup ? "/groups/$id" : "/notebook"}
           backParams={fromGroup ? { id: fromGroup } : undefined}
           compact={false}
-          extra={
-            picker ? (
-              <NotebookPickerSheet
-                open
-                onClose={() => {
-                  docApi.current?.clearCaret();
-                  setPicker(false);
-                }}
-                onPick={onPickRef}
-              />
-            ) : (
-              toolbar
-            )
-          }
-          titleField={
-            readOnly ? undefined : (
-              <input
-                value={draft.title}
-                tabIndex={-1}
-                enterKeyHint="done"
-                onChange={(event) => patch((current) => ({ ...current, title: event.target.value.slice(0, 80) }))}
-                placeholder={t(locale, "notebookMeeting")}
-                className="h-11 w-full bg-transparent text-center text-[17px] font-semibold tracking-[-0.02em] text-fg outline-none placeholder:text-subtle"
-              />
-            )
-          }
           trailing={
             readOnly ? null : (
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-11 text-fg [&_svg]:size-5"
+                className="size-11 rounded-full border border-separator/80 text-fg [&_svg]:size-5"
                 aria-label={t(locale, "settings")}
                 onClick={() => setMetaSheet(true)}
               >
@@ -547,7 +512,20 @@ export function NotebookEditor({
       </div>
       <div className="note-chrome-spacer" style={{ height: chromeH }} aria-hidden />
       <div className="screen-body">
-      <div className="flex flex-col gap-3 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex flex-col gap-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        {readOnly ? (
+          draft.title ? (
+            <h1 className="pt-1 text-[28px] leading-[1.15] font-bold tracking-[-0.022em] text-fg">{draft.title}</h1>
+          ) : null
+        ) : (
+          <input
+            value={draft.title}
+            enterKeyHint="done"
+            onChange={(event) => patch((current) => ({ ...current, title: event.target.value.slice(0, 80) }))}
+            placeholder={t(locale, "notebookMeeting")}
+            className="w-full bg-transparent pt-1 text-[28px] leading-[1.15] font-bold tracking-[-0.022em] text-fg outline-none placeholder:text-subtle"
+          />
+        )}
         <NotebookDoc
           ref={docApi}
           blocks={draft.blocks}
@@ -579,6 +557,45 @@ export function NotebookEditor({
       </div>
       {footer}
       </div>
+
+      {!readOnly ? (
+        <div
+          className="note-editor-bar fixed inset-x-0 z-40 flex justify-center px-3"
+          style={{
+            bottom: barBottom,
+            paddingBottom: vv.keyboard ? 6 : "max(6px, env(safe-area-inset-bottom))",
+          }}
+        >
+          <div
+            className="note-editor-bar-panel mx-auto w-full max-w-3xl select-none"
+            {...toolCapture}
+          >
+            {picker ? (
+              <NotebookPickerSheet
+                open
+                onClose={() => {
+                  docApi.current?.clearCaret();
+                  setPicker(false);
+                }}
+                onPick={onPickRef}
+              />
+            ) : (
+              <>
+                {pending ? (
+                  <button
+                    type="button"
+                    onPointerDown={toolPointer(confirmRef)}
+                    className="mb-1.5 flex min-h-11 w-full items-center justify-center rounded-[12px] bg-accent px-3 text-[15px] font-semibold text-accent-fg"
+                  >
+                    {t(locale, "notebookConfirmRef")}
+                  </button>
+                ) : null}
+                {toolButtons}
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {metaSheet ? (
         <ViewportSheet onClose={() => setMetaSheet(false)}>

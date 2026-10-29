@@ -290,8 +290,10 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
     const viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
     const header = document.querySelector(".app-header");
     const headerBottom = header?.getBoundingClientRect().bottom ?? 0;
+    const editorBar = document.querySelector(".note-editor-bar");
+    const barTop = editorBar?.getBoundingClientRect().top ?? viewBottom;
     const topLimit = Math.max(viewTop, headerBottom) + 12;
-    const bottomLimit = viewBottom - 16;
+    const bottomLimit = Math.min(viewBottom, barTop) - 16;
     if (rect.top < topLimit) scrollPageBy(rect.top - topLimit);
     else if (rect.bottom > bottomLimit) scrollPageBy(rect.bottom - bottomLimit);
   }
@@ -443,7 +445,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
       role="textbox"
       aria-multiline="true"
       className="note-doc outline-none"
-      style={{ paddingBottom: keyboardPad > 80 ? keyboardPad + 24 : 128 }}
+      style={{ paddingBottom: keyboardPad > 80 ? keyboardPad + 72 : 120 }}
       onFocus={() => {
         focused.current = true;
         onFocusLine(lineElFromSel()?.dataset.lineId ?? null);
