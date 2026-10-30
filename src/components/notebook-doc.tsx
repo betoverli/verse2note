@@ -90,6 +90,50 @@ function placeLineOffset(line: HTMLElement, offset: number) {
   placeAfterContent(line);
 }
 
+const ZWSP_RE = /\u200B/g;
+
+function isBlankText(node: Node | null) {
+  return Boolean(node && node.nodeType === Node.TEXT_NODE && !(node.textContent ?? "").replace(ZWSP_RE, ""));
+}
+
+function asPill(node: Node | null) {
+  if (!(node instanceof HTMLElement)) return null;
+  if (node.classList.contains("ref-pill")) return node;
+  return null;
+}
+
+/** The ref pill touching a collapsed caret on the given side (ignoring zero-width spaces). */
+function pillBesideCaret(back: boolean): HTMLElement | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || !sel.isCollapsed || !sel.anchorNode) return null;
+  const anchor = sel.anchorNode;
+  const anchorEl = anchor instanceof Element ? anchor : anchor.parentElement;
+  const inside = anchorEl?.closest<HTMLElement>(".ref-pill");
+  if (inside) return inside;
+  let sib: Node | null;
+  if (anchor.nodeType === Node.TEXT_NODE) {
+    const text = anchor.textContent ?? "";
+    const part = back ? text.slice(0, sel.anchorOffset) : text.slice(sel.anchorOffset);
+    if (part.replace(ZWSP_RE, "")) return null;
+    sib = back ? anchor.previousSibling : anchor.nextSibling;
+  } else {
+    sib = back ? anchor.childNodes[sel.anchorOffset - 1] ?? null : anchor.childNodes[sel.anchorOffset] ?? null;
+  }
+  while (isBlankText(sib)) sib = back ? sib!.previousSibling : sib!.nextSibling;
+  return asPill(sib);
+}
+
+function armPillStyle(pill: HTMLElement, on: boolean) {
+  if (on) {
+    pill.dataset.armed = "1";
+    pill.style.boxShadow = "0 0 0 2px var(--color-accent, #0a84ff)";
+    pill.style.borderRadius = pill.style.borderRadius || "6px";
+  } else {
+    delete pill.dataset.armed;
+    pill.style.boxShadow = "";
+  }
+}
+
 type LineSnap = { html: string; lineId: string | null; offset: number };
 
 export type NotebookDocHandle = {
@@ -142,6 +186,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   const undoStack = useRef<LineSnap[]>([]);
   const redoStack = useRef<LineSnap[]>([]);
   const structPending = useRef(false);
+  const armedPill = useRef<HTMLElement | null>(null);
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
   const sig = `${blocksSignature(blocks)}:${locale}:${style.book ?? ""}:${style.sep ?? ""}:${speakers.map((item) => item.id + item.name).join()}`;
@@ -248,6 +293,71 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
   }));
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  function disarmPill() {
+    const pill = armedPill.current;
+    armedPill.current = null;
+    if (pill) armPillStyle(pill, false);
+  }
+
+  useEffect(() => {
+    const onSel = () => {
+      const pill = armedPill.current;
+      if (!pill) return;
+      const sel = window.getSelection();
+      const still =
+        pill.isConnected &&
+        sel &&
+        sel.rangeCount > 0 &&
+        (sel.containsNode(pill, true) || pillBesideCaret(true) === pill || pillBesideCaret(false) === pill);
+      if (!still) disarmPill();
+    };
+    document.addEventListener("selectionchange", onSel);
+    return () => document.removeEventListener("selectionchange", onSel);
+  }, []);
+
+  /**
+   * Bible ref pills are atomic: the first Backspace (or Delete) next to one selects it
+   * (highlighted), the second removes it whole. Returns true when the key was handled.
+   */
+  function handlePillDelete(back: boolean) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const armed = armedPill.current;
+    if (armed && armed.isConnected) {
+      const hit = sel.isCollapsed ? pillBesideCaret(back) === armed : sel.containsNode(armed, true);
+      if (hit) {
+        pushStruct();
+        const line = armed.closest<HTMLElement>(".note-line");
+        const spot = document.createTextNode("\u200B");
+        armed.replaceWith(spot);
+        armedPill.current = null;
+        const range = document.createRange();
+        range.setStart(spot, back ? 0 : 1);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        if (line && isLineHtmlEmpty(line)) {
+          line.replaceChildren(document.createElement("br"));
+          placeCaret(line, true);
+        }
+        parse(false);
+        keepVisible();
+        return true;
+      }
+    }
+    if (!sel.isCollapsed) return false;
+    const pill = pillBesideCaret(back);
+    if (!pill) return false;
+    disarmPill();
+    const range = document.createRange();
+    range.selectNode(pill);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    armedPill.current = pill;
+    armPillStyle(pill, true);
+    return true;
+  }
 
   function parse(flushTrigger = true) {
     const el = ref.current;
@@ -485,6 +595,16 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
           emit(true);
           onEnter();
         }
+        if (
+          (event.key === "Backspace" || event.key === "Delete") &&
+          !event.metaKey &&
+          !event.ctrlKey &&
+          !event.altKey &&
+          handlePillDelete(event.key === "Backspace")
+        ) {
+          event.preventDefault();
+          return;
+        }
         const line = lineElFromSel();
         if ((event.key === "Backspace" || event.key === "Delete") && line && isLineHtmlEmpty(line)) {
           event.preventDefault();
@@ -507,6 +627,13 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
           if (enterLock.current) return;
           emit(true);
           onEnter();
+          return;
+        }
+        if (
+          (inputType === "deleteContentBackward" || inputType === "deleteContentForward") &&
+          handlePillDelete(inputType === "deleteContentBackward")
+        ) {
+          event.preventDefault();
           return;
         }
         const line = lineElFromSel();
