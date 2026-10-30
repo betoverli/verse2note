@@ -358,11 +358,13 @@ private struct NativeMenuItem {
 /// Invisible hit target that hosts a pull-down `UIMenu` and reports dismissal.
 private final class MenuAnchorButton: UIButton {
     var onMenuEnded: (() -> Void)?
-    private var selected = false
-    private var opened = false
+    /// Do not name this `selected` — that collides with `UIControl.isSelected` /
+    /// the ObjC `selected` property and fails to compile.
+    private var didChooseItem = false
+    private var menuWasPresented = false
 
     func markSelected() {
-        selected = true
+        didChooseItem = true
     }
 
     override func contextMenuInteraction(
@@ -370,7 +372,7 @@ private final class MenuAnchorButton: UIButton {
         willDisplayMenuFor configuration: UIContextMenuConfiguration,
         animator: UIContextMenuInteractionAnimating?
     ) {
-        opened = true
+        menuWasPresented = true
         super.contextMenuInteraction(interaction, willDisplayMenuFor: configuration, animator: animator)
     }
 
@@ -380,19 +382,19 @@ private final class MenuAnchorButton: UIButton {
         animator: UIContextMenuInteractionAnimating?
     ) {
         super.contextMenuInteraction(interaction, willEndFor: configuration, animator: animator)
-        guard opened else { return }
-        opened = false
-        if selected { return }
+        guard menuWasPresented else { return }
+        menuWasPresented = false
+        if didChooseItem { return }
         // Pull-down menus may not always route through these overrides; the
         // deferred cancel below still covers a dismiss without a tap.
         DispatchQueue.main.async { [weak self] in
-            guard let self, !self.selected else { return }
+            guard let self, !self.didChooseItem else { return }
             self.onMenuEnded?()
         }
     }
 
     deinit {
-        if !selected {
+        if !didChooseItem {
             onMenuEnded?()
         }
     }
