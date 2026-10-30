@@ -43,6 +43,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     private var tabSignature = ""
     private var trailingSignature = ""
     private var trailingItem: UIBarButtonItem?
+    private weak var trailingButtonView: UIButton?
     private var rightSignature = ""
     private var backSignature = ""
     private var barIdentity = ""
@@ -55,6 +56,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     private var lastTop: CGFloat = -1
     private var lastBottom: CGFloat = -1
     private var fabMenuSignature = ""
+    private var trailingMenuSignature = ""
     private let accent = UIColor(red: 0, green: 122.0 / 255.0, blue: 1, alpha: 1)
     /// Title row only. Search does not add a row. Matches the web clearance.
     private let barHeight: CGFloat = 44
@@ -184,6 +186,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         fab.accessibilityLabel = model.fabLabel
         fab.isHidden = !model.fabVisible || model.keyboard
         applyFabMenu(model.fabMenu)
+        applyTrailingMenu(model.trailingMenu)
 
         owner?.view.layoutIfNeeded()
         layout()
@@ -326,6 +329,8 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         guard model.trailingVisible, !model.trailingSymbol.isEmpty else {
             trailingSignature = ""
             trailingItem = nil
+            trailingButtonView = nil
+            trailingMenuSignature = ""
             return nil
         }
         let signature = "\(model.trailingSymbol)|\(model.trailingBadge)|\(model.trailingLabel)"
@@ -333,12 +338,15 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
             return trailingItem
         }
         trailingSignature = signature
+        // Force applyTrailingMenu to re-bind after the button is recreated.
+        trailingMenuSignature = ""
         let button = UIButton(type: .system)
         let image = UIImage(systemName: model.trailingSymbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: 20, weight: .regular))
         button.setImage(image, for: .normal)
         button.tintColor = accent
         button.accessibilityLabel = model.trailingLabel
         button.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+        button.isUserInteractionEnabled = true
         button.addTarget(self, action: #selector(trailingTapped), for: .touchUpInside)
         if !model.trailingBadge.isEmpty {
             let pill = UILabel()
@@ -356,6 +364,8 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         }
         let item = UIBarButtonItem(customView: button)
         trailingItem = item
+        trailingButtonView = button
+        print("[LiquidChrome] trailing button created symbol=\(model.trailingSymbol)")
         return item
     }
 
@@ -389,6 +399,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     }
 
     @objc private func trailingTapped() {
+        print("[LiquidChrome] trailingTap (no UIMenu items)")
         LiquidChromePlugin.active?.notifyListeners("trailingTap", data: [:])
     }
 
@@ -425,6 +436,48 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
         }
         fab.menu = UIMenu(title: "", children: actions)
         fab.showsMenuAsPrimaryAction = true
+        print("[LiquidChrome] FAB UIMenu attached items=\(items.count)")
+    }
+
+    /// Host a UIMenu on the native trailing (…) button — same contract as the FAB.
+    /// The user's own tap presents the menu via `showsMenuAsPrimaryAction`; we
+    /// never call `performPrimaryAction` on a hidden/alpha-0 anchor.
+    private func applyTrailingMenu(_ items: [LiquidChromeFabItem]) {
+        let signature = items.map { "\($0.id)|\($0.title)|\($0.symbol)|\($0.destructive)" }.joined(separator: "\n")
+        if signature == trailingMenuSignature { return }
+        trailingMenuSignature = signature
+        guard let button = trailingButtonView else {
+            if !items.isEmpty {
+                print("[LiquidChrome] trailingMenu pending — button not ready yet (\(items.count) items)")
+            }
+            return
+        }
+        if items.isEmpty {
+            button.showsMenuAsPrimaryAction = false
+            button.menu = nil
+            button.removeTarget(self, action: #selector(trailingTapped), for: .touchUpInside)
+            button.addTarget(self, action: #selector(trailingTapped), for: .touchUpInside)
+            print("[LiquidChrome] trailing UIMenu cleared → trailingTap")
+            return
+        }
+        button.removeTarget(self, action: #selector(trailingTapped), for: .touchUpInside)
+        let actions: [UIMenuElement] = items.map { item in
+            var attributes: UIMenuElement.Attributes = []
+            if item.destructive { attributes.insert(.destructive) }
+            let image = item.symbol.isEmpty ? nil : UIImage(systemName: item.symbol)
+            return UIAction(
+                title: item.title,
+                image: image,
+                identifier: UIAction.Identifier(item.id),
+                attributes: attributes
+            ) { _ in
+                print("[LiquidChrome] trailingMenuSelect id=\(item.id)")
+                LiquidChromePlugin.active?.notifyListeners("trailingMenuSelect", data: ["id": item.id])
+            }
+        }
+        button.menu = UIMenu(title: "", children: actions)
+        button.showsMenuAsPrimaryAction = true
+        print("[LiquidChrome] trailing UIMenu attached items=\(items.count)")
     }
 }
 
@@ -487,6 +540,7 @@ struct LiquidChromeModel {
     var trailingSymbol = ""
     var trailingBadge = ""
     var trailingLabel = ""
+    var trailingMenu: [LiquidChromeFabItem] = []
     var fabVisible = false
     var fabLabel = ""
     var fabMenu: [LiquidChromeFabItem] = []
@@ -573,7 +627,13 @@ public class LiquidChromePlugin: CAPPlugin, CAPBridgedPlugin {
                 symbol: item["symbol"] as? String ?? "circle"
             )
         }
-        model.fabMenu = (call.getArray("fabMenu", JSObject.self) ?? []).compactMap { item in
+        model.fabMenu = Self.menuItems(call.getArray("fabMenu", JSObject.self) ?? [])
+        model.trailingMenu = Self.menuItems(call.getArray("trailingMenu", JSObject.self) ?? [])
+        return model
+    }
+
+    private static func menuItems(_ raw: [JSObject]) -> [LiquidChromeFabItem] {
+        raw.compactMap { item in
             let id = item["id"] as? String ?? ""
             let title = item["title"] as? String ?? ""
             if id.isEmpty || title.isEmpty { return nil }
@@ -592,6 +652,5 @@ public class LiquidChromePlugin: CAPPlugin, CAPBridgedPlugin {
                 destructive: destructive
             )
         }
-        return model
     }
 }

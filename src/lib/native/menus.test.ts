@@ -67,10 +67,16 @@ describe("native menus wiring", () => {
     assert.match(wrapper, /failed\?:\s*boolean/);
     assert.match(wrapper, /PRESENT_HANG_TIMEOUT_MS/);
     assert.match(wrapper, /failed:\s*true/);
-    assert.match(notebook, /result\.failed/);
-    assert.match(notebook, /setMetaSheet\(true\)/);
+    assert.match(wrapper, /\[NativeMenus\] present failed/);
     assert.match(sheet, /result\.failed/);
     assert.match(sheet, /setMode\("web"\)/);
+  });
+
+  it("uses a barely-visible interactive anchor and 400ms alert fallback", () => {
+    assert.match(plugin, /alpha = 0\.01/);
+    assert.match(plugin, /isUserInteractionEnabled = true/);
+    assert.match(plugin, /deadline: \.now\(\) \+ 0\.40/);
+    assert.match(plugin, /\[NativeMenus\]/);
   });
 });
 
@@ -92,5 +98,40 @@ describe("native FAB compose menu", () => {
     assert.match(home, /notebookImport/);
     assert.match(home, /menu:\s*composeMenu/);
     assert.match(home, /ActionSheet/);
+  });
+});
+
+describe("native note … trailing UIMenu", () => {
+  const chrome = readFileSync(new URL("../../../ios/App/App/LiquidChrome.swift", import.meta.url), "utf8");
+  const bridge = readFileSync(new URL("../../components/native-chrome.tsx", import.meta.url), "utf8");
+  const header = readFileSync(new URL("../../components/app-header.tsx", import.meta.url), "utf8");
+  const store = readFileSync(new URL("./chrome-store.ts", import.meta.url), "utf8");
+  const note = readFileSync(new URL("../../components/notebook-editor.tsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../../styles.css", import.meta.url), "utf8");
+
+  it("attaches UIMenu to the Liquid Glass trailing … button like the FAB", () => {
+    assert.match(chrome, /applyTrailingMenu/);
+    assert.match(chrome, /trailingMenuSelect/);
+    assert.match(chrome, /trailingMenu/);
+    assert.match(bridge, /trailingMenuSelect/);
+    assert.match(bridge, /trailingMenu:/);
+    assert.match(store, /trailingMenu\?:/);
+    assert.match(header, /trailingMenu/);
+    assert.match(header, /onTrailingMenuSelect/);
+  });
+
+  it("note editor supplies … items via chrome and keeps a web ActionSheet fallback", () => {
+    assert.match(note, /nativeSymbol=\{readOnly \? undefined : "ellipsis"\}/);
+    assert.match(note, /trailingMenu=/);
+    assert.match(note, /NOTE_MORE_SETTINGS/);
+    assert.match(note, /NOTE_MORE_SPEAKERS/);
+    assert.match(note, /setMoreSheet\(true\)/);
+    assert.doesNotMatch(note, /presentNativeMenu/);
+    assert.doesNotMatch(note, /nativeBar=\{false\}/);
+  });
+
+  it("collapses note HTML chrome under native-top so the tap hits the native button", () => {
+    assert.match(css, /html\.native-ios\.native-top main\.note-screen > \.note-chrome/);
+    assert.match(css, /html\.native-ios\.native-top main\.note-screen > \.screen-body/);
   });
 });

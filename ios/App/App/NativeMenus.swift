@@ -189,7 +189,13 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         let button = MenuAnchorButton(frame: rect)
+        // alpha 0 / isHidden / zero-size hosts do NOT present via
+        // performPrimaryAction (iOS 17.4+). Keep a barely-visible, interactive
+        // hit target in the window.
         button.backgroundColor = .clear
+        button.alpha = 0.01
+        button.isHidden = false
+        button.isUserInteractionEnabled = true
         button.isAccessibilityElement = false
         button.overrideUserInterfaceStyle = appearance
         button.showsMenuAsPrimaryAction = true
@@ -203,12 +209,23 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         button.translatesAutoresizingMaskIntoConstraints = true
         anchorButton = button
         watchMenuDismiss()
+        print("[NativeMenus] presentMenu anchor=\(rect) items=\(items.count) inWindow=\(button.window != nil)")
 
         // performPrimaryAction is the public API that presents a UIMenu when
         // showsMenuAsPrimaryAction is true (a synthetic touchUpInside does not).
+        // Prefer attaching UIMenu to a real chrome button (FAB / trailing …)
+        // so the user's own tap presents — this path is a safety net only.
         DispatchQueue.main.async { [weak self, weak button] in
             guard let self, let button, button === self.anchorButton, !self.resolved else { return }
-            if #available(iOS 17.4, *) {
+            let ready =
+                button.window != nil
+                && !button.isHidden
+                && button.alpha > 0
+                && button.isUserInteractionEnabled
+                && button.bounds.width > 0
+                && button.bounds.height > 0
+            print("[NativeMenus] performPrimaryAction ready=\(ready) window=\(button.window != nil)")
+            if #available(iOS 17.4, *), ready {
                 button.performPrimaryAction()
             }
             self.scheduleMenuPresentFallback(
@@ -221,8 +238,8 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         }
     }
 
-    /// If the pull-down menu never appears, fall back to a UIAlertController
-    /// action sheet so the Capacitor promise cannot hang forever.
+    /// If the pull-down menu never appears within ~400ms, fall back to a
+    /// UIAlertController action sheet so the Capacitor promise cannot hang.
     private func scheduleMenuPresentFallback(
         root: UIView,
         title: String?,
@@ -234,6 +251,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         let work = DispatchWorkItem { [weak self] in
             guard let self, !self.resolved else { return }
             guard let button = self.anchorButton, !button.didPresentMenu else { return }
+            print("[NativeMenus] UIMenu not confirmed — falling back to UIAlertController")
             self.presentFallbackWork = nil
             self.clearAnchorKeepingCall()
             self.presentSheet(
@@ -246,7 +264,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             )
         }
         presentFallbackWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.40, execute: work)
     }
 
     /// Pull-down menus live in their own window. Mark presentation when that

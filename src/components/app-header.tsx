@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type 
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ChevronLeft, Search, X } from "lucide-react";
 import { t } from "@/lib/i18n";
-import { bindHeader } from "@/lib/native/chrome-store";
+import { bindHeader, type FabMenuItem } from "@/lib/native/chrome-store";
 import { isAppleUa } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -96,6 +96,8 @@ export function AppHeader({
   pinned,
   nativeBar = true,
   nativeSymbol,
+  trailingMenu,
+  onTrailingMenuSelect,
 }: {
   title?: string;
   backTo?: BackTo;
@@ -107,10 +109,17 @@ export function AppHeader({
   extra?: ReactNode;
   compact?: boolean;
   pinned?: boolean;
-  /** When false, the iOS shell keeps this header in HTML (note editor). */
+  /** When false, the iOS shell keeps this header in HTML. */
   nativeBar?: boolean;
   /** SF Symbol for the native trailing button. The tap still hits `trailing`. */
   nativeSymbol?: string;
+  /**
+   * Items for a native UIMenu on the Liquid Glass trailing button
+   * (`showsMenuAsPrimaryAction`). Prefer this over round-tripping through
+   * NativeMenus + a hidden anchor — the user's own tap presents the menu.
+   */
+  trailingMenu?: FabMenuItem[];
+  onTrailingMenuSelect?: (id: string) => void;
 }) {
   const locale = useAppStore((s) => s.locale);
   const [apple, setApple] = useState(false);
@@ -118,7 +127,10 @@ export function AppHeader({
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef(search);
   searchRef.current = search;
+  const selectRef = useRef(onTrailingMenuSelect);
+  selectRef.current = onTrailingMenuSelect;
   const keepWebHeader = Boolean(titleField) || compact || !nativeBar;
+  const menuKey = JSON.stringify(trailingMenu ?? []);
   useEffect(() => setApple(isAppleUa()), []);
   useLayoutEffect(() => {
     if (keepWebHeader) return;
@@ -130,8 +142,12 @@ export function AppHeader({
       search: current ? { value: current.value, placeholder: current.placeholder } : null,
       onSearch: (value) => searchRef.current?.onChange(value),
       trailingSymbol: nativeSymbol ?? null,
+      trailingMenu,
+      onTrailingMenuSelect: (id) => selectRef.current?.(id),
     });
-  }, [keepWebHeader, title, backTo, nativeSymbol, search?.value, search?.placeholder, locale]);
+    // menuKey stands in for trailingMenu contents.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keepWebHeader, title, backTo, nativeSymbol, search?.value, search?.placeholder, locale, menuKey]);
   const BackIcon = apple ? ChevronLeft : ArrowLeft;
 
   function cancelSearch() {
