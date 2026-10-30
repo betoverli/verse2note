@@ -27,11 +27,11 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func available(_ call: CAPPluginCall) {
         let major = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-        call.resolve([
-            "available": true,
-            "glass": V2NGlassMaterial.sdkHasLiquidGlass(),
-            "major": major as NSNumber,
-        ])
+        var data = JSObject()
+        data["available"] = true
+        data["glass"] = V2NGlassMaterial.sdkHasLiquidGlass()
+        data["major"] = major
+        call.resolve(data)
     }
 
     @objc func dismiss(_ call: CAPPluginCall) {
@@ -274,11 +274,15 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         guard let call else { return }
         call.keepAlive = false
+        var data = JSObject()
         if let id {
-            call.resolve(["id": id, "cancelled": false])
+            data["id"] = id
+            data["cancelled"] = false
         } else {
-            call.resolve(["cancelled": cancelled, "id": NSNull()])
+            data["id"] = NSNull()
+            data["cancelled"] = cancelled
         }
+        call.resolve(data)
     }
 
     private func clearAnchor() {
@@ -328,20 +332,44 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         )
     }
 
-    private static func bool(_ value: Any?) -> Bool {
+    private static func bool(_ value: JSValue?) -> Bool {
         if let value = value as? Bool { return value }
         if let number = value as? NSNumber { return number.boolValue }
         return false
     }
 
-    private static func childObjects(_ value: Any?) -> [JSObject] {
-        if let items = value as? [JSObject] { return items }
-        guard let items = value as? [Any] else { return [] }
-        return items.compactMap { item in
-            if let object = item as? JSObject { return object }
-            if let object = item as? [String: Any] { return object as JSObject }
-            return nil
+    /// Nested menu children arrive as a JS array of objects. Foundation class
+    /// clusters cannot be cast straight to `JSObject` (`[String: JSValue]`);
+    /// coerce each dictionary through Capacitor's helper instead.
+    private static func childObjects(_ value: JSValue?) -> [JSObject] {
+        guard let value else { return [] }
+        if let items = value as? [JSObject] {
+            return items
         }
+        if let items = value as? JSArray {
+            return items.compactMap { jsObject(from: $0) }
+        }
+        if let items = value as? [Any] {
+            return items.compactMap { jsObject(from: $0) }
+        }
+        if let items = value as? NSArray {
+            return items.compactMap { jsObject(from: $0) }
+        }
+        return []
+    }
+
+    private static func jsObject(from value: Any?) -> JSObject? {
+        guard let value else { return nil }
+        if let object = value as? JSObject {
+            return object
+        }
+        if let object = JSTypes.coerceDictionaryToJSObject(value as? NSDictionary) {
+            return object
+        }
+        if let object = JSTypes.coerceDictionaryToJSObject(value as? [AnyHashable: Any]) {
+            return object
+        }
+        return nil
     }
 }
 
@@ -358,11 +386,13 @@ private struct NativeMenuItem {
 /// Invisible hit target that hosts a pull-down `UIMenu` and reports dismissal.
 private final class MenuAnchorButton: UIButton {
     var onMenuEnded: (() -> Void)?
-    private var selected = false
-    private var opened = false
+    /// Do not name this `selected` — that collides with `UIControl.isSelected` /
+    /// the ObjC `selected` property and fails to compile.
+    private var didChooseItem = false
+    private var menuWasPresented = false
 
     func markSelected() {
-        selected = true
+        didChooseItem = true
     }
 
     override func contextMenuInteraction(
@@ -370,7 +400,7 @@ private final class MenuAnchorButton: UIButton {
         willDisplayMenuFor configuration: UIContextMenuConfiguration,
         animator: UIContextMenuInteractionAnimating?
     ) {
-        opened = true
+        menuWasPresented = true
         super.contextMenuInteraction(interaction, willDisplayMenuFor: configuration, animator: animator)
     }
 
@@ -380,19 +410,19 @@ private final class MenuAnchorButton: UIButton {
         animator: UIContextMenuInteractionAnimating?
     ) {
         super.contextMenuInteraction(interaction, willEndFor: configuration, animator: animator)
-        guard opened else { return }
-        opened = false
-        if selected { return }
+        guard menuWasPresented else { return }
+        menuWasPresented = false
+        if didChooseItem { return }
         // Pull-down menus may not always route through these overrides; the
         // deferred cancel below still covers a dismiss without a tap.
         DispatchQueue.main.async { [weak self] in
-            guard let self, !self.selected else { return }
+            guard let self, !self.didChooseItem else { return }
             self.onMenuEnded?()
         }
     }
 
     deinit {
-        if !selected {
+        if !didChooseItem {
             onMenuEnded?()
         }
     }
