@@ -15,5 +15,5 @@
   <rect class="rule" x="276" y="391" width="516" height="5"/>
   <rect class="rule" x="276" y="464" width="516" height="5"/>
   <rect class="rule" x="276" y="537" width="516" height="5"/>
-  <path class="ribbon" d="M853 250 H969 V1004 L911 948 L853 1004 Z"/>
+  <path class="ribbon" d="M852 250 H910 V1004 L881 948 L852 1004 Z"/>
 </svg>
