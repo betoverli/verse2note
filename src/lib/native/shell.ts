@@ -55,7 +55,8 @@ async function bootChrome() {
   }
   try {
     const { SplashScreen } = await import("@capacitor/splash-screen");
-    await SplashScreen.hide();
+    // Cut with no fade so LaunchScreen → web SplashScreen stays visually identical.
+    await SplashScreen.hide({ fadeOutDuration: 0 });
   } catch {
     /* splash hides itself */
   }

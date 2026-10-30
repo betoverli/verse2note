@@ -43,13 +43,14 @@ const config: CapacitorConfig = {
     CapacitorCookies: {
       enabled: true,
     },
+    // iOS SplashScreen reuses LaunchScreen.storyboard (small icon + Verse2Note).
+    // Do not set backgroundColor here — it would override the storyboard's
+    // light/dark SplashBackground and cause a flash. Keep the native splash up
+    // until the web splash paints, then hide with no fade for a seamless cut.
     SplashScreen: {
-      launchAutoHide: true,
-      launchShowDuration: 800,
-      backgroundColor: "#000000",
+      launchAutoHide: false,
+      launchShowDuration: 3000,
       showSpinner: false,
-      splashFullScreen: true,
-      splashImmersive: true,
     },
     StatusBar: {
       overlaysWebView: true,

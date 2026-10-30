@@ -20,6 +20,35 @@ if (!config.includes("https://verse2note.com")) {
 if (config.includes("NSAllowsArbitraryLoads") || config.includes("capacitorHttp")) {
   errors.push("Não ligar HTTP livre nem o proxy CapacitorHttp.");
 }
+const splashPlugin = config.match(/SplashScreen:\s*\{([\s\S]*?)\n\s*\},/);
+const splashBlock = splashPlugin?.[1] ?? "";
+if (!splashBlock.includes("launchAutoHide: false")) {
+  errors.push("SplashScreen tem de ficar visível até o hide() do shell (launchAutoHide: false).");
+}
+if (splashBlock.includes("backgroundColor:")) {
+  errors.push("SplashScreen não pode fixar backgroundColor — sobrescreve o LaunchScreen claro/escuro.");
+}
+
+const launchScreen = read("ios/App/App/Base.lproj/LaunchScreen.storyboard");
+if (!launchScreen.includes("SplashBrand") || !launchScreen.includes("SplashBackground")) {
+  errors.push("LaunchScreen tem de centrar SplashBrand sobre SplashBackground (igual ao splash web).");
+}
+if (launchScreen.includes("scaleAspectFill") || launchScreen.includes('image="Splash"')) {
+  errors.push("LaunchScreen não pode voltar ao Splash em ecrã inteiro.");
+}
+for (const asset of [
+  "ios/App/App/Assets.xcassets/SplashBrand.imageset/Contents.json",
+  "ios/App/App/Assets.xcassets/SplashBackground.colorset/Contents.json",
+]) {
+  try {
+    const json = read(asset);
+    if (!json.includes('"value" : "dark"')) {
+      errors.push(`${asset} tem de declarar a variante dark.`);
+    }
+  } catch {
+    errors.push(`Ficheiro em falta: ${asset}`);
+  }
+}
 
 const plist = read("ios/App/App/Info.plist");
 if (!plist.includes("<string>verse2note</string>")) {
@@ -60,6 +89,11 @@ if (debugTarget.includes("CODE_SIGN_ENTITLEMENTS") || !debugTarget.includes("VER
 }
 if (!releaseTarget.includes("VERSE2NOTE_UNIVERSAL_LINKS = YES") || !releaseTarget.includes("App/AppRelease.entitlements")) {
   errors.push("A configuração Release tem de ativar Universal Links e os entitlements.");
+}
+
+const nativeShellJs = read("src/lib/native/shell.ts");
+if (!nativeShellJs.includes("SplashScreen.hide") || !nativeShellJs.includes("fadeOutDuration: 0")) {
+  errors.push("O shell tem de esconder o SplashScreen nativo sem fade assim que a web pinta.");
 }
 
 const shell = read("ios/App/App/NativeShell.swift");
