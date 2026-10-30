@@ -30,10 +30,29 @@ type CapacitorGlobal = {
   getPlatform?: () => string;
 };
 
+/** Capacitor appends this token so the hosted site can tell the iOS shell apart. */
+export const NATIVE_IOS_UA_TOKEN = "Verse2NoteIOS";
+
+export function isNativeAppUa(ua: string | null | undefined): boolean {
+  return typeof ua === "string" && ua.includes(NATIVE_IOS_UA_TOKEN);
+}
+
 export function isNativeApp(): boolean {
   if (typeof window === "undefined") return false;
   const cap = (window as Window & { Capacitor?: CapacitorGlobal }).Capacitor;
   return cap?.getPlatform?.() === "ios" && cap.isNativePlatform?.() === true;
+}
+
+/**
+ * Native iOS shell (Capacitor WebView). Prefer `isNativeApp()` when Capacitor
+ * is ready; this also accepts the UA / `native-ios` class so the first paint
+ * (and SSR via UA) can skip the marketing landing before the bridge loads.
+ */
+export function isNativeShell(): boolean {
+  if (typeof window === "undefined") return false;
+  if (isNativeApp()) return true;
+  if (document.documentElement.classList.contains("native-ios")) return true;
+  return isNativeAppUa(navigator.userAgent);
 }
 
 export type LinkDecision = "stay" | "external";
