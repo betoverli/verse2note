@@ -1,8 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { classifyLink } from "./runtime.ts";
+import { classifyLink, isNativeAppUa } from "./runtime.ts";
 
 const page = "https://verse2note.com/app";
+
+describe("isNativeAppUa", () => {
+  it("detects the Capacitor iOS shell token", () => {
+    assert.equal(isNativeAppUa("Mozilla/5.0 Verse2NoteIOS"), true);
+    assert.equal(isNativeAppUa("Mozilla/5.0 (iPhone)"), false);
+    assert.equal(isNativeAppUa(null), false);
+  });
+});
 
 describe("classifyLink", () => {
   it("keeps the hosted site inside the WebView", () => {
