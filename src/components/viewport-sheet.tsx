@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import {
+  canUseNativeMenus,
+  dismissNativeMenu,
+  presentNativeMenu,
+  rectFromElement,
+} from "@/lib/native/menus";
+import { isNativeApp } from "@/lib/native/runtime";
 import { cn } from "@/lib/utils";
 
 /** Full-width bottom form sheet. Top radius only, flush with the screen edge. */
@@ -77,20 +84,77 @@ export type SheetAction = {
   destructive?: boolean;
 };
 
-/** iOS action sheet: inset groups, separate Cancel, tint and destructive rows. */
+/** iOS action sheet: inset groups, separate Cancel, tint and destructive rows.
+ * On Capacitor iOS this becomes a native `UIAlertController` action sheet;
+ * web and Android keep the HTML sheet. */
 export function ActionSheet({
   title,
   message,
   actions,
   cancelLabel,
   onClose,
+  anchor,
 }: {
   title?: string;
   message?: string;
   actions: SheetAction[];
   cancelLabel: string;
   onClose: () => void;
+  /** Optional element whose rect anchors the native popover (iPad). */
+  anchor?: Element | null;
 }) {
+  // Browser/Android paint the HTML sheet immediately. Capacitor iOS waits for
+  // the plugin so the web sheet never flashes under the native one.
+  const [mode, setMode] = useState<"pending" | "native" | "web">(() =>
+    typeof window !== "undefined" && isNativeApp() ? "pending" : "web",
+  );
+  const onCloseRef = useRef(onClose);
+  const actionsRef = useRef(actions);
+  onCloseRef.current = onClose;
+  actionsRef.current = actions;
+
+  useEffect(() => {
+    if (mode === "web") return;
+    let alive = true;
+    void (async () => {
+      const ok = await canUseNativeMenus();
+      if (!alive) return;
+      if (!ok) {
+        setMode("web");
+        return;
+      }
+      setMode("native");
+      const result = await presentNativeMenu({
+        style: "sheet",
+        title,
+        message,
+        cancelLabel,
+        anchor: rectFromElement(anchor ?? null),
+        items: actionsRef.current.map((action, index) => ({
+          id: `action-${index}`,
+          title: action.label,
+          destructive: action.destructive,
+          symbol: action.destructive ? "trash" : undefined,
+        })),
+      });
+      if (!alive) return;
+      if (!result.cancelled && result.id) {
+        const index = Number(result.id.replace("action-", ""));
+        const action = actionsRef.current[index];
+        action?.onSelect();
+      }
+      onCloseRef.current();
+    })();
+    return () => {
+      alive = false;
+      void dismissNativeMenu();
+    };
+    // Mount once per sheet open; callers remount when ask* flags flip.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (mode !== "web") return null;
+
   return (
     <SheetFrame onClose={onClose}>
       <div className="flex flex-col gap-2 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">

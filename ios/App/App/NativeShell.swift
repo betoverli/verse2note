@@ -12,6 +12,7 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         liquidChrome.attach(to: self)
         bridge?.registerPluginInstance(NativeAuthPlugin())
         bridge?.registerPluginInstance(LiquidChromePlugin())
+        bridge?.registerPluginInstance(NativeMenusPlugin())
         tuneDocumentScroll()
         let source = """
         (function () {

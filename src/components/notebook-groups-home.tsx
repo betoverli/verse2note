@@ -15,7 +15,7 @@ import { useAppStore } from "@/lib/store";
 import { ViewportFixed } from "@/components/viewport-fixed";
 import { useNativeFab } from "@/lib/native/use-native-fab";
 import { Button } from "@/components/ui/button";
-import { Choice } from "@/components/choice";
+import { OptionPicker } from "@/components/native-option-picker";
 import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
 import { cn } from "@/lib/utils";
 
@@ -178,9 +178,18 @@ export function NotebookGroupsHome({ query }: { query: string }) {
               enterKeyHint="done"
               className="h-12 w-full rounded-[12px] bg-surface px-3 text-[17px] text-fg outline-none"
             />
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
-              <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
+            <div className="mt-3">
+              <OptionPicker
+                label={t(locale, "notebookGroupNew")}
+                value={listed ? "listed" : "private"}
+                valueLabel={listed ? t(locale, "notebookGroupListed") : t(locale, "notebookGroupPrivate")}
+                columns={2}
+                options={[
+                  { id: "private", title: t(locale, "notebookGroupPrivate"), symbol: "lock.fill" },
+                  { id: "listed", title: t(locale, "notebookGroupListed"), symbol: "globe" },
+                ]}
+                onChange={(id) => setListed(id === "listed")}
+              />
             </div>
             <Button type="submit" className="mt-4 w-full" disabled={busy || name.trim().length < 2}>
               {t(locale, "notebookGroupCreate")}

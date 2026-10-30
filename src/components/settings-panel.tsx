@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Monitor, Moon, Sun } from "lucide-react";
 import type { Locale } from "@/lib/bible/books";
 import { bookById } from "@/lib/bible/books";
@@ -13,6 +13,8 @@ import { AboutPage } from "@/components/about-page";
 import { BibleAppList } from "@/components/bible-app-list";
 import { BibleAppOptions } from "@/components/bible-app-options";
 import { Choice } from "@/components/choice";
+import { OptionPicker } from "@/components/native-option-picker";
+import { canUseNativeMenus, presentNativeMenu, rectFromElement } from "@/lib/native/menus";
 import { scrollPageTo } from "@/lib/page-scroll";
 
 const LOCALES: Locale[] = ["pt", "en", "es"];
@@ -29,6 +31,12 @@ const THEME_LABEL: Record<Theme, I18nKey> = {
   light: "themeLight",
   dark: "themeDark",
   system: "themeSystem",
+};
+
+const THEME_SYMBOL: Record<Theme, string> = {
+  light: "sun.max",
+  dark: "moon.fill",
+  system: "circle.lefthalf.filled",
 };
 
 const THEME_ICON = {
@@ -87,26 +95,29 @@ function CiteFormatSection() {
     : "";
   return (
     <Section title={t(locale, "citeFormat")} lead={sample || t(locale, "citeFormatLead")}>
-      <div className="grid grid-cols-2 gap-2">
-        {(["name", "abbr"] as CiteBook[]).map((item) => (
-          <Choice
-            key={item}
-            active={citeBook === item}
-            title={t(locale, item === "name" ? "citeName" : "citeAbbr")}
-            onClick={() => setCiteBook(item)}
-          />
-        ))}
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {(["colon", "dot", "comma"] as CiteSep[]).map((item) => (
-          <Choice
-            key={item}
-            active={citeSep === item}
-            title={item === "colon" ? "3:16" : item === "dot" ? "3.16" : "3,16"}
-            onClick={() => setCiteSep(item)}
-          />
-        ))}
-      </div>
+      <OptionPicker
+        label={t(locale, "citeFormat")}
+        value={citeBook}
+        valueLabel={t(locale, citeBook === "name" ? "citeName" : "citeAbbr")}
+        columns={2}
+        options={([
+          { id: "name", title: t(locale, "citeName"), symbol: "textformat" },
+          { id: "abbr", title: t(locale, "citeAbbr"), symbol: "textformat.abc" },
+        ] as const).map((item) => ({ ...item }))}
+        onChange={(id) => setCiteBook(id as CiteBook)}
+      />
+      <OptionPicker
+        label={sample || "3:16"}
+        value={citeSep}
+        valueLabel={citeSep === "colon" ? "3:16" : citeSep === "dot" ? "3.16" : "3,16"}
+        columns={3}
+        options={[
+          { id: "colon", title: "3:16", symbol: "textformat.123" },
+          { id: "dot", title: "3.16", symbol: "circle.fill" },
+          { id: "comma", title: "3,16", symbol: "textformat" },
+        ]}
+        onChange={(id) => setCiteSep(id as CiteSep)}
+      />
     </Section>
   );
 }
@@ -116,33 +127,33 @@ export function LanguageSettings() {
   const copyLocale = useAppStore((s) => s.copyLocale);
   const setLocale = useAppStore((s) => s.setLocale);
   const setCopyLocale = useAppStore((s) => s.setCopyLocale);
+  const localeOptions = LOCALES.map((item) => ({
+    id: item,
+    title: item.toUpperCase(),
+    subtitle: t(locale, LOCALE_LABEL[item]),
+    symbol: "globe",
+  }));
   return (
     <div className="flex flex-col gap-6">
       <Section title={t(locale, "uiLanguage")} lead={t(locale, "uiLanguageLead")}>
-        <div className="grid grid-cols-3 gap-2">
-          {LOCALES.map((item) => (
-            <Choice
-              key={item}
-              active={locale === item}
-              title={item.toUpperCase()}
-              subtitle={t(locale, LOCALE_LABEL[item])}
-              onClick={() => setLocale(item)}
-            />
-          ))}
-        </div>
+        <OptionPicker
+          label={t(locale, "uiLanguage")}
+          value={locale}
+          valueLabel={`${locale.toUpperCase()} · ${t(locale, LOCALE_LABEL[locale])}`}
+          columns={3}
+          options={localeOptions}
+          onChange={(id) => setLocale(id as Locale)}
+        />
       </Section>
       <Section title={t(locale, "copyLanguage")} lead={t(locale, "copyLanguageLead")}>
-        <div className="grid grid-cols-3 gap-2">
-          {LOCALES.map((item) => (
-            <Choice
-              key={item}
-              active={copyLocale === item}
-              title={item.toUpperCase()}
-              subtitle={t(locale, LOCALE_LABEL[item])}
-              onClick={() => setCopyLocale(item)}
-            />
-          ))}
-        </div>
+        <OptionPicker
+          label={t(locale, "copyLanguage")}
+          value={copyLocale}
+          valueLabel={`${copyLocale.toUpperCase()} · ${t(locale, LOCALE_LABEL[copyLocale])}`}
+          columns={3}
+          options={localeOptions}
+          onChange={(id) => setCopyLocale(id as Locale)}
+        />
       </Section>
     </div>
   );
@@ -152,6 +163,55 @@ export function AppearanceSettings() {
   const locale = useAppStore((s) => s.locale);
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
+  const [native, setNative] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void canUseNativeMenus().then((ok) => {
+      if (alive) setNative(ok);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (native) {
+    const Icon = THEME_ICON[theme];
+    return (
+      <Section title={t(locale, "appearance")} lead={theme === "system" ? t(locale, "themeSystemHint") : undefined}>
+        <button
+          ref={buttonRef}
+          type="button"
+          className="flex min-h-11 w-full items-center gap-3 rounded-[12px] bg-surface px-4 py-3 text-left text-fg active:bg-fill"
+          aria-haspopup="menu"
+          aria-label={t(locale, "appearance")}
+          onClick={() => {
+            void presentNativeMenu({
+              style: "menu",
+              title: t(locale, "appearance"),
+              anchor: rectFromElement(buttonRef.current),
+              items: THEMES.map((item) => ({
+                id: item,
+                title: t(locale, THEME_LABEL[item]),
+                symbol: THEME_SYMBOL[item],
+                checked: theme === item,
+              })),
+            }).then((result) => {
+              if (!result.cancelled && result.id) setTheme(result.id as Theme);
+            });
+          }}
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] text-muted">{t(locale, "appearance")}</span>
+            <span className="block truncate text-[17px]">{t(locale, THEME_LABEL[theme])}</span>
+          </span>
+          <Icon className="size-5 shrink-0 text-subtle" aria-hidden />
+        </button>
+      </Section>
+    );
+  }
+
   return (
     <Section title={t(locale, "appearance")} lead={theme === "system" ? t(locale, "themeSystemHint") : undefined}>
       <div className="ios-segment" role="group" aria-label={t(locale, "appearance")}>
@@ -290,11 +350,18 @@ export function BibleSettings() {
       </Section>
       <CiteFormatSection />
       <Section title={t(locale, "copyFormat")} lead={clipboardDropsHtmlLinks() ? t(locale, "copyAndroidHint") : undefined}>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {COPY_FORMATS.map((item) => (
-            <Choice key={item} active={copyFormat === item} title={t(locale, item)} onClick={() => setCopyFormat(item)} />
-          ))}
-        </div>
+        <OptionPicker
+          label={t(locale, "copyFormat")}
+          value={copyFormat}
+          valueLabel={t(locale, copyFormat)}
+          columns={3}
+          options={COPY_FORMATS.map((item) => ({
+            id: item,
+            title: t(locale, item),
+            symbol: item === "rich" ? "doc.richtext" : item === "markdown" ? "text.badge.checkmark" : "doc.plaintext",
+          }))}
+          onChange={(id) => setCopyFormat(id as CopyFormat)}
+        />
       </Section>
     </div>
   );

@@ -3,7 +3,7 @@ import { appById } from "@/lib/bible/apps";
 import { TRANSLATIONS } from "@/lib/bible/translations";
 import { t, type I18nKey } from "@/lib/i18n";
 import { useAppStore } from "@/lib/store";
-import { Choice } from "@/components/choice";
+import { OptionPicker } from "@/components/native-option-picker";
 
 const LOCALES: Locale[] = ["pt", "en", "es"];
 const LOCALE_LABEL: Record<Locale, I18nKey> = {
@@ -19,6 +19,7 @@ export function BibleAppOptions({ locale }: { locale: Locale }) {
   const preferNative = useAppStore((s) => s.preferNative);
   const setPreferNative = useAppStore((s) => s.setPreferNative);
   const app = appById(appId);
+  const selected = TRANSLATIONS.find((item) => item.id === translationId);
 
   return (
     <div className="flex flex-col gap-8">
@@ -27,27 +28,27 @@ export function BibleAppOptions({ locale }: { locale: Locale }) {
           <h2 className="text-xs font-medium tracking-wide text-muted uppercase">
             {t(locale, "translation")}
           </h2>
-          <div className="flex flex-col gap-6">
-            {LOCALES.map((group) => {
-              const items = TRANSLATIONS.filter((item) => item.locale === group);
-              return (
-                <div key={group} className="space-y-2">
-                  <p className="text-xs text-subtle">{t(locale, LOCALE_LABEL[group])}</p>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {items.map((item) => (
-                      <Choice
-                        key={item.id}
-                        active={translationId === item.id}
-                        title={item.abbr}
-                        subtitle={item.name[locale]}
-                        onClick={() => setTranslationId(item.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <OptionPicker
+            label={t(locale, "translation")}
+            value={translationId}
+            valueLabel={selected ? `${selected.abbr} · ${selected.name[locale]}` : t(locale, "translation")}
+            columns={1}
+            options={LOCALES.map((group) => ({
+              id: `group-${group}`,
+              title: t(locale, LOCALE_LABEL[group]),
+              symbol: "globe",
+              children: TRANSLATIONS.filter((item) => item.locale === group).map((item) => ({
+                id: item.id,
+                title: item.abbr,
+                subtitle: item.name[locale],
+                symbol: "book",
+              })),
+            }))}
+            onChange={(id) => {
+              if (id.startsWith("group-")) return;
+              setTranslationId(id);
+            }}
+          />
         </section>
       ) : null}
 
@@ -61,20 +62,27 @@ export function BibleAppOptions({ locale }: { locale: Locale }) {
               {preferNative ? t(locale, "nativeHint") : t(locale, "webHint")}
             </p>
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Choice
-              active={!preferNative}
-              title={t(locale, "webLinks")}
-              subtitle={t(locale, "webHint")}
-              onClick={() => setPreferNative(false)}
-            />
-            <Choice
-              active={preferNative}
-              title={t(locale, "nativeLinks")}
-              subtitle={t(locale, "nativeHint")}
-              onClick={() => setPreferNative(true)}
-            />
-          </div>
+          <OptionPicker
+            label={t(locale, "linkStyle")}
+            value={preferNative ? "native" : "web"}
+            valueLabel={preferNative ? t(locale, "nativeLinks") : t(locale, "webLinks")}
+            columns={1}
+            options={[
+              {
+                id: "web",
+                title: t(locale, "webLinks"),
+                subtitle: t(locale, "webHint"),
+                symbol: "safari",
+              },
+              {
+                id: "native",
+                title: t(locale, "nativeLinks"),
+                subtitle: t(locale, "nativeHint"),
+                symbol: "arrow.up.forward.app",
+              },
+            ]}
+            onChange={(id) => setPreferNative(id === "native")}
+          />
         </section>
       ) : null}
     </div>
