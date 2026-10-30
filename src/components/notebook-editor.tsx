@@ -12,6 +12,7 @@ import { NotebookGroupPublishList } from "@/components/notebook-group-publish";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import { canUseNativeMenus, presentNativeMenu, rectFromElement } from "@/lib/native/menus";
 import { useNativeScrollLock } from "@/lib/page-scroll";
 import { cn } from "@/lib/utils";
 import type { Passage } from "@/lib/bible/passage";
@@ -502,7 +503,34 @@ export function NotebookEditor({
                 size="icon"
                 className="size-11 rounded-full border border-separator/80 text-fg [&_svg]:size-5"
                 aria-label={t(locale, "settings")}
-                onClick={() => setMetaSheet(true)}
+                onClick={(event) => {
+                  const target = event.currentTarget;
+                  void (async () => {
+                    if (!(await canUseNativeMenus())) {
+                      setMetaSheet(true);
+                      return;
+                    }
+                    const result = await presentNativeMenu({
+                      style: "menu",
+                      anchor: rectFromElement(target),
+                      items: [
+                        {
+                          id: "settings",
+                          title: t(locale, "settings"),
+                          symbol: "gearshape",
+                        },
+                        {
+                          id: "speakers",
+                          title: t(locale, "notebookSpeakers"),
+                          symbol: "person.2",
+                        },
+                      ],
+                    });
+                    if (result.cancelled || !result.id) return;
+                    if (result.id === "settings") setMetaSheet(true);
+                    if (result.id === "speakers") setPeople(true);
+                  })();
+                }}
               >
                 <Ellipsis />
               </Button>

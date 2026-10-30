@@ -26,7 +26,7 @@ import {
 import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
-import { Choice } from "@/components/choice";
+import { OptionPicker } from "@/components/native-option-picker";
 import { ActionSheet } from "@/components/viewport-sheet";
 import { flushOutbox } from "@/lib/outbox";
 import { removeMyGroup, peekGroupNotes, peekMyGroups, setGroupNotesCache, upsertMyGroup } from "@/lib/groups-cache";
@@ -370,14 +370,32 @@ function GroupSettings({
           rows={3}
           className="mb-3 w-full rounded-md bg-bg px-3 py-2 text-base text-fg outline-none"
         />
-        <div className="mb-3 grid grid-cols-2 gap-2">
-          <Choice active={!listed} title={t(locale, "notebookGroupPrivate")} onClick={() => setListed(false)} />
-          <Choice active={listed} title={t(locale, "notebookGroupListed")} onClick={() => setListed(true)} />
+        <div className="mb-3">
+          <OptionPicker
+            label={t(locale, "settings")}
+            value={listed ? "listed" : "private"}
+            valueLabel={listed ? t(locale, "notebookGroupListed") : t(locale, "notebookGroupPrivate")}
+            columns={2}
+            options={[
+              { id: "private", title: t(locale, "notebookGroupPrivate"), symbol: "lock.fill" },
+              { id: "listed", title: t(locale, "notebookGroupListed"), symbol: "globe" },
+            ]}
+            onChange={(id) => setListed(id === "listed")}
+          />
         </div>
         <p className="mb-2 text-xs font-medium tracking-wide text-muted uppercase">{t(locale, "notebookGroupPostPolicy")}</p>
-        <div className="mb-4 grid grid-cols-1 gap-2">
-          <Choice active={!adminsOnly} title={t(locale, "notebookGroupPostMembers")} onClick={() => setAdminsOnly(false)} />
-          <Choice active={adminsOnly} title={t(locale, "notebookGroupPostAdmins")} onClick={() => setAdminsOnly(true)} />
+        <div className="mb-4">
+          <OptionPicker
+            label={t(locale, "notebookGroupPostPolicy")}
+            value={adminsOnly ? "admins" : "members"}
+            valueLabel={adminsOnly ? t(locale, "notebookGroupPostAdmins") : t(locale, "notebookGroupPostMembers")}
+            columns={1}
+            options={[
+              { id: "members", title: t(locale, "notebookGroupPostMembers"), symbol: "person.3" },
+              { id: "admins", title: t(locale, "notebookGroupPostAdmins"), symbol: "person.crop.circle.badge.checkmark" },
+            ]}
+            onChange={(id) => setAdminsOnly(id === "admins")}
+          />
         </div>
         <Button className="w-full" disabled={busy} onClick={() => void save()}>
           {t(locale, "saveProfile")}
