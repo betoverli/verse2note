@@ -38,4 +38,11 @@ describe("native menus wiring", () => {
     assert.match(plugin, /UIAlertController/);
     assert.match(pbx, /NativeMenus\.swift in Sources/);
   });
+
+  it("builds JSObject without casting [String: Any]", () => {
+    assert.match(plugin, /JSTypes\.coerceDictionaryToJSObject/);
+    assert.doesNotMatch(plugin, /as JSObject/);
+    assert.match(plugin, /didChooseItem/);
+    assert.doesNotMatch(plugin, /private var selected\b/);
+  });
 });
