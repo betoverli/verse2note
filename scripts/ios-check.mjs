@@ -144,6 +144,24 @@ const scene = read("ios/App/App/SceneDelegate.swift");
 if (!scene.includes("rootViewController = Verse2NoteBridgeViewController()")) {
   errors.push("O SceneDelegate tem de mostrar o controlador que registra o login.");
 }
+const mainStoryboard = read("ios/App/App/Base.lproj/Main.storyboard");
+if (!mainStoryboard.includes('customClass="Verse2NoteBridgeViewController"')) {
+  errors.push("Main.storyboard tem de apontar para Verse2NoteBridgeViewController (plugins locais).");
+}
+if (mainStoryboard.includes('customClass="CAPBridgeViewController"')) {
+  errors.push("Main.storyboard não pode ficar no CAPBridgeViewController genérico.");
+}
+const nativeMenus = read("ios/App/App/NativeMenus.swift");
+if (!nativeMenus.includes("button.performPrimaryAction()") || /\bsendActions\s*\(/.test(nativeMenus)) {
+  errors.push("NativeMenus tem de abrir o UIMenu com performPrimaryAction (sendActions não apresenta o menu).");
+}
+if (!shell.includes("registerPluginInstance(NativeMenusPlugin())")) {
+  errors.push("NativeMenusPlugin tem de ser registrado em capacitorDidLoad.");
+}
+const liquidChrome = read("ios/App/App/LiquidChrome.swift");
+if (!liquidChrome.includes("applyFabMenu") || !liquidChrome.includes("fabMenuSelect")) {
+  errors.push("O FAB Liquid Glass tem de hospedar UIMenu (applyFabMenu / fabMenuSelect).");
+}
 const handoff = read("src/lib/native/handoff.server.ts");
 if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) {
   errors.push("O handoff não pode gravar o token de sessão em claro.");

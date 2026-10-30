@@ -24,6 +24,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
     private var resolved = false
     private var appearance: UIUserInterfaceStyle = .unspecified
     private var keyWindowObserver: NSObjectProtocol?
+    private var presentFallbackWork: DispatchWorkItem?
 
     @objc func available(_ call: CAPPluginCall) {
         let major = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
@@ -87,13 +88,20 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
                 return
             }
 
-            self.presentMenu(on: root, title: title, items: items, anchor: anchor)
+            self.presentMenu(
+                on: root,
+                title: title,
+                cancelLabel: cancelLabel,
+                items: items,
+                anchor: anchor
+            )
         }
     }
 
+    /// Prefer the WKWebView's superview so the anchor lines up with CSS rects.
     private func presentationView() -> UIView? {
+        if let host = bridge?.webView?.superview { return host }
         if let view = bridge?.viewController?.view { return view }
-        if let view = bridge?.webView?.superview { return view }
         return bridge?.webView
     }
 
@@ -142,14 +150,15 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         sheet.addAction(cancel)
 
+        let sourceRect = anchorRect(anchor, in: root)
         if let pop = sheet.popoverPresentationController {
             pop.sourceView = root
-            pop.sourceRect = sanitizedAnchor(anchor, in: root)
+            pop.sourceRect = sourceRect
             pop.permittedArrowDirections = [.up, .down]
         }
 
         guard let controller = bridge?.viewController else {
-            finish(cancelled: true)
+            failPresent("Controlador nativo indisponível.")
             return
         }
         controller.present(sheet, animated: true)
@@ -158,11 +167,27 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
     private func presentMenu(
         on root: UIView,
         title: String?,
+        cancelLabel: String,
         items: [NativeMenuItem],
         anchor: CGRect
     ) {
         clearAnchor()
-        let rect = sanitizedAnchor(anchor, in: root)
+        let rect = anchorRect(anchor, in: root)
+
+        // Pre-iOS 17.4: UIButton.performPrimaryAction is unavailable, and a
+        // synthetic touchUpInside does not open a pull-down UIMenu.
+        if #unavailable(iOS 17.4) {
+            presentSheet(
+                on: root,
+                title: title,
+                message: nil,
+                cancelLabel: cancelLabel,
+                items: items,
+                anchor: anchor
+            )
+            return
+        }
+
         let button = MenuAnchorButton(frame: rect)
         button.backgroundColor = .clear
         button.isAccessibilityElement = false
@@ -173,35 +198,87 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             self?.finish(cancelled: true)
         }
         root.addSubview(button)
+        // Keep the invisible host alive for the menu lifetime; do not let
+        // Auto Layout collapse it.
+        button.translatesAutoresizingMaskIntoConstraints = true
         anchorButton = button
         watchMenuDismiss()
 
-        // Pull-down menus open from a primary-action tap.
-        DispatchQueue.main.async {
-            button.sendActions(for: .touchUpInside)
+        // performPrimaryAction is the public API that presents a UIMenu when
+        // showsMenuAsPrimaryAction is true (a synthetic touchUpInside does not).
+        DispatchQueue.main.async { [weak self, weak button] in
+            guard let self, let button, button === self.anchorButton, !self.resolved else { return }
+            if #available(iOS 17.4, *) {
+                button.performPrimaryAction()
+            }
+            self.scheduleMenuPresentFallback(
+                root: root,
+                title: title,
+                cancelLabel: cancelLabel,
+                items: items,
+                anchor: anchor
+            )
         }
     }
 
-    /// Pull-down menus live in their own window. When our window is key again
-    /// without a selection, the person dismissed the menu.
+    /// If the pull-down menu never appears, fall back to a UIAlertController
+    /// action sheet so the Capacitor promise cannot hang forever.
+    private func scheduleMenuPresentFallback(
+        root: UIView,
+        title: String?,
+        cancelLabel: String,
+        items: [NativeMenuItem],
+        anchor: CGRect
+    ) {
+        presentFallbackWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, !self.resolved else { return }
+            guard let button = self.anchorButton, !button.didPresentMenu else { return }
+            self.presentFallbackWork = nil
+            self.clearAnchorKeepingCall()
+            self.presentSheet(
+                on: root,
+                title: title,
+                message: nil,
+                cancelLabel: cancelLabel,
+                items: items,
+                anchor: anchor
+            )
+        }
+        presentFallbackWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: work)
+    }
+
+    /// Pull-down menus live in their own window. Mark presentation when that
+    /// window becomes key; when ours is key again without a selection, dismiss.
     private func watchMenuDismiss() {
         if let keyWindowObserver {
             NotificationCenter.default.removeObserver(keyWindowObserver)
             self.keyWindowObserver = nil
         }
-        var armed = false
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { armed = true }
+        var dismissArmed = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { dismissArmed = true }
         keyWindowObserver = NotificationCenter.default.addObserver(
             forName: UIWindow.didBecomeKeyNotification,
             object: nil,
             queue: .main
         ) { [weak self] note in
-            guard let self, armed, !self.resolved else { return }
+            guard let self, !self.resolved else { return }
             guard let window = note.object as? UIWindow else { return }
             let ours = self.bridge?.viewController?.view.window
-            guard window === ours else { return }
+            if window !== ours {
+                // A menu / popover window took key — presentation succeeded.
+                self.anchorButton?.markPresented()
+                self.presentFallbackWork?.cancel()
+                self.presentFallbackWork = nil
+                return
+            }
+            guard dismissArmed else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
                 guard let self, !self.resolved else { return }
+                // Only treat as dismiss once a menu was actually shown; otherwise
+                // the presentation-fallback sheet still owns the call.
+                guard self.anchorButton?.didPresentMenu == true else { return }
                 self.finish(cancelled: true)
             }
         }
@@ -247,10 +324,14 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         return UIImage(systemName: name)
     }
 
-    private func sanitizedAnchor(_ anchor: CGRect, in root: UIView) -> CGRect {
+    /// CSS viewport rect → host view coordinates (WKWebView when available).
+    private func anchorRect(_ anchor: CGRect, in root: UIView) -> CGRect {
         var rect = anchor
         if rect.width < 1 { rect.size.width = 44 }
         if rect.height < 1 { rect.size.height = 44 }
+        if let webView = bridge?.webView {
+            rect = webView.convert(rect, to: root)
+        }
         let bounds = root.bounds
         rect.origin.x = min(max(0, rect.origin.x), max(0, bounds.width - rect.width))
         rect.origin.y = min(max(0, rect.origin.y), max(0, bounds.height - rect.height))
@@ -263,6 +344,8 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         resolved = true
+        presentFallbackWork?.cancel()
+        presentFallbackWork = nil
         if id != nil {
             anchorButton?.markSelected()
         }
@@ -285,7 +368,25 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         call.resolve(data)
     }
 
-    private func clearAnchor() {
+    private func failPresent(_ message: String) {
+        guard !resolved else {
+            clearAnchor()
+            return
+        }
+        resolved = true
+        presentFallbackWork?.cancel()
+        presentFallbackWork = nil
+        let call = activeCall
+        activeCall = nil
+        clearAnchor()
+        guard let call else { return }
+        call.keepAlive = false
+        call.reject(message)
+    }
+
+    private func clearAnchorKeepingCall() {
+        presentFallbackWork?.cancel()
+        presentFallbackWork = nil
         if let keyWindowObserver {
             NotificationCenter.default.removeObserver(keyWindowObserver)
             self.keyWindowObserver = nil
@@ -293,6 +394,10 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         anchorButton?.onMenuEnded = nil
         anchorButton?.removeFromSuperview()
         anchorButton = nil
+    }
+
+    private func clearAnchor() {
+        clearAnchorKeepingCall()
     }
 
     private static func parseAnchor(_ object: JSObject?) -> CGRect {
@@ -389,10 +494,14 @@ private final class MenuAnchorButton: UIButton {
     /// Do not name this `selected` — that collides with `UIControl.isSelected` /
     /// the ObjC `selected` property and fails to compile.
     private var didChooseItem = false
-    private var menuWasPresented = false
+    private(set) var didPresentMenu = false
 
     func markSelected() {
         didChooseItem = true
+    }
+
+    func markPresented() {
+        didPresentMenu = true
     }
 
     override func contextMenuInteraction(
@@ -400,7 +509,7 @@ private final class MenuAnchorButton: UIButton {
         willDisplayMenuFor configuration: UIContextMenuConfiguration,
         animator: UIContextMenuInteractionAnimating?
     ) {
-        menuWasPresented = true
+        didPresentMenu = true
         super.contextMenuInteraction(interaction, willDisplayMenuFor: configuration, animator: animator)
     }
 
@@ -410,8 +519,7 @@ private final class MenuAnchorButton: UIButton {
         animator: UIContextMenuInteractionAnimating?
     ) {
         super.contextMenuInteraction(interaction, willEndFor: configuration, animator: animator)
-        guard menuWasPresented else { return }
-        menuWasPresented = false
+        guard didPresentMenu else { return }
         if didChooseItem { return }
         // Pull-down menus may not always route through these overrides; the
         // deferred cancel below still covers a dismiss without a tap.

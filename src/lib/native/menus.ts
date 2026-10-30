@@ -38,6 +38,12 @@ export type NativeMenuRequest = {
 export type NativeMenuResult = {
   id: string | null;
   cancelled: boolean;
+  /**
+   * Plugin missing, threw, timed out, or native presentation failed.
+   * Callers should fall back to the web menu when this is true — do not treat
+   * it as a user dismiss.
+   */
+  failed?: boolean;
 };
 
 export type NativeMenusInfo = {
@@ -63,9 +69,34 @@ type NativeMenusPlugin = {
 let pluginPromise: Promise<NativeMenusPlugin | null> | null = null;
 let infoPromise: Promise<NativeMenusInfo | null> | null = null;
 
+/** Probe / connect budget — never block the UI on a silent native hang. */
+const AVAILABLE_TIMEOUT_MS = 1500;
+/**
+ * Safety net if native `present` never settles (menu never shown and never
+ * rejected). Far longer than a real presentation so an open menu is not
+ * interrupted; short enough that a hung promise recovers in-session.
+ */
+const PRESENT_HANG_TIMEOUT_MS = 12_000;
+
 function readAppearance(): "light" | "dark" {
   if (typeof document === "undefined") return "dark";
   return document.documentElement.classList.contains("light") ? "light" : "dark";
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(label)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
 }
 
 /** CSS viewport rect → plugin anchor (1:1 with the WKWebView when scale is 1). */
@@ -111,9 +142,11 @@ export async function nativeMenusInfo(): Promise<NativeMenusInfo | null> {
       const plugin = await connect();
       if (!plugin) return null;
       try {
-        const info = await plugin.available();
+        const info = await withTimeout(plugin.available(), AVAILABLE_TIMEOUT_MS, "native-menus-available-timeout");
         return info?.available ? info : null;
       } catch {
+        // Allow a later tap to retry after a failed/hung probe.
+        infoPromise = null;
         return null;
       }
     })();
@@ -126,26 +159,39 @@ export async function canUseNativeMenus(): Promise<boolean> {
   return (await nativeMenusInfo()) != null;
 }
 
+/**
+ * Present a native menu. On plugin errors / hang, returns `{ failed: true }`
+ * so callers can open the existing web UI instead of swallowing the tap.
+ */
 export async function presentNativeMenu(request: NativeMenuRequest): Promise<NativeMenuResult> {
   const plugin = await connect();
-  if (!plugin) return { id: null, cancelled: true };
+  if (!plugin) return { id: null, cancelled: true, failed: true };
   const anchor = request.anchor ?? rectFromElement(null);
   try {
-    const result = await plugin.present({
-      style: request.style ?? "menu",
-      title: request.title,
-      message: request.message,
-      cancelLabel: request.cancelLabel,
-      appearance: request.appearance ?? readAppearance(),
-      anchor,
-      items: request.items,
-    });
+    const result = await withTimeout(
+      plugin.present({
+        style: request.style ?? "menu",
+        title: request.title,
+        message: request.message,
+        cancelLabel: request.cancelLabel,
+        appearance: request.appearance ?? readAppearance(),
+        anchor,
+        items: request.items,
+      }),
+      PRESENT_HANG_TIMEOUT_MS,
+      "native-menu-present-timeout",
+    );
     if (result?.cancelled || !result?.id) {
       return { id: null, cancelled: true };
     }
     return { id: result.id, cancelled: false };
   } catch {
-    return { id: null, cancelled: true };
+    try {
+      await plugin.dismiss();
+    } catch {
+      /* already gone */
+    }
+    return { id: null, cancelled: true, failed: true };
   }
 }
 
@@ -172,5 +218,6 @@ export async function pickNativeOption(input: {
     anchor: input.anchor,
     items: input.options,
   });
-  return result.cancelled ? null : result.id;
+  if (result.failed || result.cancelled) return null;
+  return result.id;
 }

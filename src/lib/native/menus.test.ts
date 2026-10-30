@@ -29,7 +29,11 @@ describe("rectFromPoint", () => {
 describe("native menus wiring", () => {
   const shell = readFileSync(new URL("../../../ios/App/App/NativeShell.swift", import.meta.url), "utf8");
   const plugin = readFileSync(new URL("../../../ios/App/App/NativeMenus.swift", import.meta.url), "utf8");
+  const storyboard = readFileSync(new URL("../../../ios/App/App/Base.lproj/Main.storyboard", import.meta.url), "utf8");
   const pbx = readFileSync(new URL("../../../ios/App/App.xcodeproj/project.pbxproj", import.meta.url), "utf8");
+  const wrapper = readFileSync(new URL("./menus.ts", import.meta.url), "utf8");
+  const notebook = readFileSync(new URL("../../components/notebook-editor.tsx", import.meta.url), "utf8");
+  const sheet = readFileSync(new URL("../../components/viewport-sheet.tsx", import.meta.url), "utf8");
 
   it("registers NativeMenus next to LiquidChrome and NativeAuth", () => {
     assert.match(shell, /registerPluginInstance\(NativeMenusPlugin\(\)\)/);
@@ -39,10 +43,54 @@ describe("native menus wiring", () => {
     assert.match(pbx, /NativeMenus\.swift in Sources/);
   });
 
+  it("points Main.storyboard at Verse2NoteBridgeViewController", () => {
+    assert.match(storyboard, /customClass="Verse2NoteBridgeViewController"/);
+    assert.doesNotMatch(storyboard, /customClass="CAPBridgeViewController"/);
+  });
+
+  it("presents UIMenu via performPrimaryAction with action-sheet fallback", () => {
+    assert.match(plugin, /performPrimaryAction/);
+    assert.match(plugin, /showsMenuAsPrimaryAction = true/);
+    assert.match(plugin, /scheduleMenuPresentFallback/);
+    assert.doesNotMatch(plugin, /sendActions\(for: \.touchUpInside\)/);
+    assert.match(plugin, /failPresent/);
+  });
+
   it("builds JSObject without casting [String: Any]", () => {
     assert.match(plugin, /JSTypes\.coerceDictionaryToJSObject/);
     assert.doesNotMatch(plugin, /as JSObject/);
     assert.match(plugin, /didChooseItem/);
     assert.doesNotMatch(plugin, /private var selected\b/);
+  });
+
+  it("TS wrapper marks failures and call sites fall back to web UI", () => {
+    assert.match(wrapper, /failed\?:\s*boolean/);
+    assert.match(wrapper, /PRESENT_HANG_TIMEOUT_MS/);
+    assert.match(wrapper, /failed:\s*true/);
+    assert.match(notebook, /result\.failed/);
+    assert.match(notebook, /setMetaSheet\(true\)/);
+    assert.match(sheet, /result\.failed/);
+    assert.match(sheet, /setMode\("web"\)/);
+  });
+});
+
+describe("native FAB compose menu", () => {
+  const chrome = readFileSync(new URL("../../../ios/App/App/LiquidChrome.swift", import.meta.url), "utf8");
+  const home = readFileSync(new URL("../../components/notebook-home.tsx", import.meta.url), "utf8");
+  const bridge = readFileSync(new URL("../../components/native-chrome.tsx", import.meta.url), "utf8");
+
+  it("attaches UIMenu to the Liquid Glass FAB instead of round-tripping", () => {
+    assert.match(chrome, /applyFabMenu/);
+    assert.match(chrome, /showsMenuAsPrimaryAction = true/);
+    assert.match(chrome, /fabMenuSelect/);
+    assert.match(bridge, /fabMenuSelect/);
+    assert.match(bridge, /fabMenu:/);
+  });
+
+  it("offers Nova nota + Importar from the notebook + button", () => {
+    assert.match(home, /COMPOSE_IMPORT/);
+    assert.match(home, /notebookImport/);
+    assert.match(home, /menu:\s*composeMenu/);
+    assert.match(home, /ActionSheet/);
   });
 });

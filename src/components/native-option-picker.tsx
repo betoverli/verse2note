@@ -106,6 +106,11 @@ export function OptionPicker({
           anchor: rectFromElement(buttonRef.current),
           items: toNativeItems(options, value),
         }).then((result) => {
+          if (result.failed) {
+            // Drop back to the Choice grid so the next tap still works.
+            setNative(false);
+            return;
+          }
           if (!result.cancelled && result.id) onChange(result.id);
         });
       }}

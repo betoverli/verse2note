@@ -19,6 +19,9 @@ import { NoteDateGroups, NoteDay } from "@/components/note-date-groups";
 import { lockSwipe } from "@/lib/swipe-axis";
 import { cn } from "@/lib/utils";
 
+const COMPOSE_NEW = "new";
+const COMPOSE_IMPORT = "import";
+
 type Filter = "all" | "tags" | "speakers" | "shared";
 
 function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: string }[] }) {
@@ -240,6 +243,7 @@ export function NotebookHome({ query }: { query: string }) {
   const [granted, setGranted] = useState<Note[]>([]);
   const [noteGroups, setNoteGroups] = useState<Record<string, { id: string; name: string }[]>>({});
   const [people, setPeople] = useState(false);
+  const [compose, setCompose] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -266,7 +270,22 @@ export function NotebookHome({ query }: { query: string }) {
     void navigate({ to: "/notebook/$id", params: { id: note.id } });
   }
 
-  useNativeFab(t(locale, "notebookNew"), openNew);
+  function openImport() {
+    void navigate({ to: "/notebook/import" });
+  }
+
+  const composeMenu = [
+    { id: COMPOSE_NEW, title: t(locale, "notebookNew"), symbol: "square.and.pencil" },
+    { id: COMPOSE_IMPORT, title: t(locale, "notebookImport"), symbol: "square.and.arrow.down" },
+  ];
+
+  useNativeFab(t(locale, "notebookNew"), () => setCompose(true), {
+    menu: composeMenu,
+    onMenuSelect: (id) => {
+      if (id === COMPOSE_NEW) openNew();
+      else if (id === COMPOSE_IMPORT) openImport();
+    },
+  });
 
   const filters: { id: Filter; label: string }[] = [
     { id: "all", label: t(locale, "notebookAll") },
@@ -372,12 +391,29 @@ export function NotebookHome({ query }: { query: string }) {
         <Button
           className="native-fab fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
           style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-          onClick={() => openNew()}
+          onClick={() => setCompose(true)}
           aria-label={t(locale, "notebookNew")}
+          aria-haspopup="menu"
         >
           <Plus />
         </Button>
       </ViewportFixed>
+      {compose ? (
+        <ActionSheet
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setCompose(false)}
+          actions={[
+            {
+              label: t(locale, "notebookNew"),
+              onSelect: () => openNew(),
+            },
+            {
+              label: t(locale, "notebookImport"),
+              onSelect: () => openImport(),
+            },
+          ]}
+        />
+      ) : null}
       {people ? <NotebookSpeakerSheet open onClose={() => setPeople(false)} /> : null}
     </div>
   );

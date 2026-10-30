@@ -102,6 +102,12 @@ export function NativeChrome() {
         trailingLabel: trailing.label,
         fabVisible: flags.fab,
         fabLabel: fab?.label ?? "",
+        fabMenu: (fab?.menu ?? []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          symbol: item.symbol ?? "",
+          destructive: Boolean(item.destructive),
+        })),
         keyboard: flags.keyboard,
         appearance: root.classList.contains("light") ? "light" : "dark",
       };
@@ -180,6 +186,13 @@ export function NativeChrome() {
           control?.click();
         }),
         await connected.plugin.addListener("fabTap", () => currentFab()?.onPress()),
+        await connected.plugin.addListener("fabMenuSelect", (event) => {
+          const fab = currentFab();
+          const id = String(event.id ?? "");
+          if (!id) return;
+          if (fab?.onMenuSelect) fab.onMenuSelect(id);
+          else fab?.onPress();
+        }),
         await connected.plugin.addListener("searchChanged", (event) => currentHeader()?.onSearch(event.text)),
         await connected.plugin.addListener("insets", (event) => {
           root.style.setProperty("--native-tab-inset", `${Math.round(Number(event.bottom) || 0)}px`);
