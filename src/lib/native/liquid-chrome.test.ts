@@ -83,6 +83,8 @@ describe("native underlap", () => {
     assert.match(css, /padding-top:\s*max\(0px, calc\(var\(--native-top-inset, 0px\) \+ var\(--native-title-gap, 12px\)\)\)/);
     assert.match(css, /html\.native-ios\.native-top::before/);
     assert.match(css, /-webkit-backdrop-filter:\s*saturate\(180%\) blur\(22px\)/);
+    assert.match(css, /html\.native-ios\.native-top main\.note-screen > \.note-chrome/);
+    assert.match(css, /html\.native-ios\.native-top main\.note-screen > \.screen-body/);
   });
 
   it("keeps search inside the title row and does not paint a glass slab", () => {

@@ -100,6 +100,12 @@ export function NativeChrome() {
         trailingSymbol: header?.trailingSymbol ?? "",
         trailingBadge: trailing.badge,
         trailingLabel: trailing.label,
+        trailingMenu: (header?.trailingMenu ?? []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          symbol: item.symbol ?? "",
+          destructive: Boolean(item.destructive),
+        })),
         fabVisible: flags.fab,
         fabLabel: fab?.label ?? "",
         fabMenu: (fab?.menu ?? []).map((item) => ({
@@ -182,6 +188,7 @@ export function NativeChrome() {
           document.querySelector<HTMLElement>("[data-native-back]")?.click();
         }),
         await connected.plugin.addListener("trailingTap", () => {
+          console.log("[native-chrome] trailingTap → web control");
           const control = document.querySelector<HTMLElement>("[data-native-trailing] a, [data-native-trailing] button");
           control?.click();
         }),
@@ -189,9 +196,16 @@ export function NativeChrome() {
         await connected.plugin.addListener("fabMenuSelect", (event) => {
           const fab = currentFab();
           const id = String(event.id ?? "");
+          console.log("[native-chrome] fabMenuSelect", id);
           if (!id) return;
           if (fab?.onMenuSelect) fab.onMenuSelect(id);
           else fab?.onPress();
+        }),
+        await connected.plugin.addListener("trailingMenuSelect", (event) => {
+          const id = String(event.id ?? "");
+          console.log("[native-chrome] trailingMenuSelect", id);
+          if (!id) return;
+          currentHeader()?.onTrailingMenuSelect?.(id);
         }),
         await connected.plugin.addListener("searchChanged", (event) => currentHeader()?.onSearch(event.text)),
         await connected.plugin.addListener("insets", (event) => {

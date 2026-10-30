@@ -165,8 +165,16 @@ export async function canUseNativeMenus(): Promise<boolean> {
  */
 export async function presentNativeMenu(request: NativeMenuRequest): Promise<NativeMenuResult> {
   const plugin = await connect();
-  if (!plugin) return { id: null, cancelled: true, failed: true };
+  if (!plugin) {
+    console.warn("[NativeMenus] present skipped — plugin missing");
+    return { id: null, cancelled: true, failed: true };
+  }
   const anchor = request.anchor ?? rectFromElement(null);
+  console.log("[NativeMenus] present", {
+    style: request.style ?? "menu",
+    items: request.items.length,
+    anchor,
+  });
   try {
     const result = await withTimeout(
       plugin.present({
@@ -181,11 +189,13 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
       PRESENT_HANG_TIMEOUT_MS,
       "native-menu-present-timeout",
     );
+    console.log("[NativeMenus] present resolved", result);
     if (result?.cancelled || !result?.id) {
       return { id: null, cancelled: true };
     }
     return { id: result.id, cancelled: false };
-  } catch {
+  } catch (error) {
+    console.warn("[NativeMenus] present failed — web should fall back", error);
     try {
       await plugin.dismiss();
     } catch {

@@ -825,7 +825,8 @@ html.native-ios {
    under the status bar and the buttons. Clearance is on the scrolling
    content and stops short of the bar, so the first row is already under
    the frost. End padding for the tab pill stays on this same node. */
-html.native-ios.native-top main.screen > .app-header {
+html.native-ios.native-top main.screen > .app-header,
+html.native-ios.native-top main.note-screen > .note-chrome {
   position: absolute;
   inset: 0 auto auto 0;
   flex: 0 0 auto;
@@ -848,6 +849,11 @@ html.native-ios.native-tabs main.screen > .screen-body {
 }
 
 html.native-ios.native-top main.screen > .screen-body > .screen-content {
+  padding-top: max(0px, calc(var(--native-top-inset, 0px) + var(--native-title-gap, 12px)));
+}
+
+/* Note editor keeps title in the body; native top bar still needs clearance. */
+html.native-ios.native-top main.note-screen > .screen-body {
   padding-top: max(0px, calc(var(--native-top-inset, 0px) + var(--native-title-gap, 12px)));
 }
 

@@ -31,6 +31,11 @@ export type LiquidChromePayload = {
   trailingSymbol: string;
   trailingBadge: string;
   trailingLabel: string;
+  /**
+   * When non-empty, the native trailing (… / gear / …) button presents these
+   * as a UIMenu via showsMenuAsPrimaryAction — same path as fabMenu.
+   */
+  trailingMenu: { id: string; title: string; symbol: string; destructive: boolean }[];
   fabVisible: boolean;
   fabLabel: string;
   /** When non-empty, the native FAB presents these as a UIMenu. */
@@ -94,7 +99,7 @@ export type LiquidChromePlugin = {
   ): Promise<{ remove: () => Promise<void> }>;
   addListener(event: "back" | "trailingTap" | "fabTap", handler: () => void): Promise<{ remove: () => Promise<void> }>;
   addListener(
-    event: "fabMenuSelect",
+    event: "fabMenuSelect" | "trailingMenuSelect",
     handler: (event: { id: string }) => void,
   ): Promise<{ remove: () => Promise<void> }>;
   addListener(

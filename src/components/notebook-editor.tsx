@@ -12,10 +12,12 @@ import { NotebookGroupPublishList } from "@/components/notebook-group-publish";
 import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
-import { canUseNativeMenus, presentNativeMenu, rectFromElement } from "@/lib/native/menus";
 import { useNativeScrollLock } from "@/lib/page-scroll";
 import { cn } from "@/lib/utils";
 import type { Passage } from "@/lib/bible/passage";
+
+const NOTE_MORE_SETTINGS = "settings";
+const NOTE_MORE_SPEAKERS = "speakers";
 
 function mapLine(blocks: NoteBlock[], id: string, update: (block: LineBlock) => LineBlock): NoteBlock[] {
   return blocks.map((block) => {
@@ -202,6 +204,7 @@ export function NotebookEditor({
   focusIdRef.current = focusId;
   const [pending, setPending] = useState<ReturnType<typeof detectTrailingRef>>(null);
   const [metaSheet, setMetaSheet] = useState(false);
+  const [moreSheet, setMoreSheet] = useState(false);
   const [tag, setTag] = useState("");
   const tagRef = useRef<HTMLInputElement>(null);
   const cite = { book: citeBook, sep: citeSep };
@@ -492,10 +495,32 @@ export function NotebookEditor({
       >
         <AppHeader
           pinned
-          nativeBar={false}
+          title={draft.title || t(locale, "notebookMeeting")}
           backTo={fromGroup ? "/groups/$id" : "/notebook"}
           backParams={fromGroup ? { id: fromGroup } : undefined}
           compact={false}
+          nativeSymbol={readOnly ? undefined : "ellipsis"}
+          trailingMenu={
+            readOnly
+              ? undefined
+              : [
+                  {
+                    id: NOTE_MORE_SETTINGS,
+                    title: t(locale, "settings"),
+                    symbol: "gearshape",
+                  },
+                  {
+                    id: NOTE_MORE_SPEAKERS,
+                    title: t(locale, "notebookSpeakers"),
+                    symbol: "person.2",
+                  },
+                ]
+          }
+          onTrailingMenuSelect={(id) => {
+            console.log("[notebook-editor] trailingMenuSelect", id);
+            if (id === NOTE_MORE_SETTINGS) setMetaSheet(true);
+            else if (id === NOTE_MORE_SPEAKERS) setPeople(true);
+          }}
           trailing={
             readOnly ? null : (
               <Button
@@ -503,39 +528,12 @@ export function NotebookEditor({
                 size="icon"
                 className="size-11 rounded-full border border-separator/80 text-fg [&_svg]:size-5"
                 aria-label={t(locale, "settings")}
-                onClick={(event) => {
-                  const target = event.currentTarget;
-                  void (async () => {
-                    const openWeb = () => setMetaSheet(true);
-                    if (!(await canUseNativeMenus())) {
-                      openWeb();
-                      return;
-                    }
-                    const result = await presentNativeMenu({
-                      style: "menu",
-                      anchor: rectFromElement(target),
-                      items: [
-                        {
-                          id: "settings",
-                          title: t(locale, "settings"),
-                          symbol: "gearshape",
-                        },
-                        {
-                          id: "speakers",
-                          title: t(locale, "notebookSpeakers"),
-                          symbol: "person.2",
-                        },
-                      ],
-                    });
-                    // Plugin missing / threw / hung → web sheet. User dismiss → noop.
-                    if (result.failed) {
-                      openWeb();
-                      return;
-                    }
-                    if (result.cancelled || !result.id) return;
-                    if (result.id === "settings") setMetaSheet(true);
-                    if (result.id === "speakers") setPeople(true);
-                  })();
+                onClick={() => {
+                  // Web / Android: ActionSheet. On Capacitor iOS the Liquid Glass
+                  // trailing button owns a UIMenu (showsMenuAsPrimaryAction) and
+                  // this HTML control is hidden under native-top.
+                  console.log("[notebook-editor] … web fallback sheet");
+                  setMoreSheet(true);
                 }}
               >
                 <Ellipsis />
@@ -749,6 +747,22 @@ export function NotebookEditor({
       ) : null}
 
       <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />
+      {moreSheet ? (
+        <ActionSheet
+          cancelLabel={t(locale, "linkCancel")}
+          onClose={() => setMoreSheet(false)}
+          actions={[
+            {
+              label: t(locale, "settings"),
+              onSelect: () => setMetaSheet(true),
+            },
+            {
+              label: t(locale, "notebookSpeakers"),
+              onSelect: () => setPeople(true),
+            },
+          ]}
+        />
+      ) : null}
       {askSpeaker ? (
         <ActionSheet
           message={t(locale, "notebookNoteSpeakerAsk").replace("{name}", askSpeaker.name)}

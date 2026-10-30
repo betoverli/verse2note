@@ -5,6 +5,13 @@ export type HeaderChrome = {
   search: { value: string; placeholder: string } | null;
   onSearch: (value: string) => void;
   trailingSymbol: string | null;
+  /**
+   * When set, the native Liquid Glass trailing button hosts a UIMenu
+   * (`showsMenuAsPrimaryAction`) instead of emitting `trailingTap`.
+   * Same contract as the FAB compose menu.
+   */
+  trailingMenu?: FabMenuItem[];
+  onTrailingMenuSelect?: (id: string) => void;
 };
 
 export type FabMenuItem = {

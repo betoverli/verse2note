@@ -162,6 +162,19 @@ const liquidChrome = read("ios/App/App/LiquidChrome.swift");
 if (!liquidChrome.includes("applyFabMenu") || !liquidChrome.includes("fabMenuSelect")) {
   errors.push("O FAB Liquid Glass tem de hospedar UIMenu (applyFabMenu / fabMenuSelect).");
 }
+if (!liquidChrome.includes("applyTrailingMenu") || !liquidChrome.includes("trailingMenuSelect")) {
+  errors.push("O botão … do chrome Liquid Glass tem de hospedar UIMenu (applyTrailingMenu / trailingMenuSelect).");
+}
+if (!nativeMenus.includes("alpha = 0.01") || !nativeMenus.includes("0.40")) {
+  errors.push("NativeMenus tem de usar âncora alpha 0.01 e fallback UIAlertController em ~400ms.");
+}
+const noteEditor = read("src/components/notebook-editor.tsx");
+if (noteEditor.includes("nativeBar={false}") || noteEditor.includes("presentNativeMenu")) {
+  errors.push("O … da nota tem de usar trailingMenu no chrome nativo, não NativeMenus.present / nativeBar={false}.");
+}
+if (!noteEditor.includes('nativeSymbol={readOnly ? undefined : "ellipsis"}') || !noteEditor.includes("trailingMenu=")) {
+  errors.push("O editor da nota tem de enviar ellipsis + trailingMenu ao chrome Liquid Glass.");
+}
 const handoff = read("src/lib/native/handoff.server.ts");
 if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) {
   errors.push("O handoff não pode gravar o token de sessão em claro.");
