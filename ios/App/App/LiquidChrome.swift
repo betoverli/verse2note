@@ -54,6 +54,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     private var tabsWanted = false
     private var lastTop: CGFloat = -1
     private var lastBottom: CGFloat = -1
+    private var fabMenuSignature = ""
     private let accent = UIColor(red: 0, green: 122.0 / 255.0, blue: 1, alpha: 1)
     /// Title row only. Search does not add a row. Matches the web clearance.
     private let barHeight: CGFloat = 44
@@ -182,6 +183,7 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
 
         fab.accessibilityLabel = model.fabLabel
         fab.isHidden = !model.fabVisible || model.keyboard
+        applyFabMenu(model.fabMenu)
 
         owner?.view.layoutIfNeeded()
         layout()
@@ -393,6 +395,37 @@ final class LiquidChromeOverlay: NSObject, UITabBarDelegate, UISearchBarDelegate
     @objc private func fabTapped() {
         LiquidChromePlugin.active?.notifyListeners("fabTap", data: [:])
     }
+
+    /// Host a UIMenu on the native + button when the page sends items.
+    /// Prefer this over round-tripping through NativeMenus + a hidden anchor.
+    private func applyFabMenu(_ items: [LiquidChromeFabItem]) {
+        let signature = items.map { "\($0.id)|\($0.title)|\($0.symbol)|\($0.destructive)" }.joined(separator: "\n")
+        if signature == fabMenuSignature { return }
+        fabMenuSignature = signature
+        if items.isEmpty {
+            fab.showsMenuAsPrimaryAction = false
+            fab.menu = nil
+            fab.removeTarget(self, action: #selector(fabTapped), for: .touchUpInside)
+            fab.addTarget(self, action: #selector(fabTapped), for: .touchUpInside)
+            return
+        }
+        fab.removeTarget(self, action: #selector(fabTapped), for: .touchUpInside)
+        let actions: [UIMenuElement] = items.map { item in
+            var attributes: UIMenuElement.Attributes = []
+            if item.destructive { attributes.insert(.destructive) }
+            let image = item.symbol.isEmpty ? nil : UIImage(systemName: item.symbol)
+            return UIAction(
+                title: item.title,
+                image: image,
+                identifier: UIAction.Identifier(item.id),
+                attributes: attributes
+            ) { _ in
+                LiquidChromePlugin.active?.notifyListeners("fabMenuSelect", data: ["id": item.id])
+            }
+        }
+        fab.menu = UIMenu(title: "", children: actions)
+        fab.showsMenuAsPrimaryAction = true
+    }
 }
 
 private final class ChromePassView: UIView {
@@ -432,6 +465,13 @@ struct LiquidChromeTab {
     var symbol: String
 }
 
+struct LiquidChromeFabItem {
+    var id: String
+    var title: String
+    var symbol: String
+    var destructive: Bool
+}
+
 struct LiquidChromeModel {
     var tabsVisible = false
     var tabs: [LiquidChromeTab] = []
@@ -449,6 +489,7 @@ struct LiquidChromeModel {
     var trailingLabel = ""
     var fabVisible = false
     var fabLabel = ""
+    var fabMenu: [LiquidChromeFabItem] = []
     var keyboard = false
     var appearance = "dark"
 }
@@ -530,6 +571,25 @@ public class LiquidChromePlugin: CAPPlugin, CAPBridgedPlugin {
                 id: id,
                 label: item["label"] as? String ?? "",
                 symbol: item["symbol"] as? String ?? "circle"
+            )
+        }
+        model.fabMenu = (call.getArray("fabMenu", JSObject.self) ?? []).compactMap { item in
+            let id = item["id"] as? String ?? ""
+            let title = item["title"] as? String ?? ""
+            if id.isEmpty || title.isEmpty { return nil }
+            let destructive: Bool
+            if let value = item["destructive"] as? Bool {
+                destructive = value
+            } else if let number = item["destructive"] as? NSNumber {
+                destructive = number.boolValue
+            } else {
+                destructive = false
+            }
+            return LiquidChromeFabItem(
+                id: id,
+                title: title,
+                symbol: item["symbol"] as? String ?? "",
+                destructive: destructive
             )
         }
         return model

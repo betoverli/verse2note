@@ -7,9 +7,19 @@ export type HeaderChrome = {
   trailingSymbol: string | null;
 };
 
+export type FabMenuItem = {
+  id: string;
+  title: string;
+  symbol?: string;
+  destructive?: boolean;
+};
+
 export type FabChrome = {
   label: string;
   onPress: () => void;
+  /** When set, the native Liquid Glass FAB hosts a UIMenu instead of fabTap. */
+  menu?: FabMenuItem[];
+  onMenuSelect?: (id: string) => void;
 };
 
 const listeners = new Set<() => void>();

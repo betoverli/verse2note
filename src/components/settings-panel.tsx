@@ -198,6 +198,10 @@ export function AppearanceSettings() {
                 checked: theme === item,
               })),
             }).then((result) => {
+              if (result.failed) {
+                setNative(false);
+                return;
+              }
               if (!result.cancelled && result.id) setTheme(result.id as Theme);
             });
           }}

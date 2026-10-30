@@ -506,8 +506,9 @@ export function NotebookEditor({
                 onClick={(event) => {
                   const target = event.currentTarget;
                   void (async () => {
+                    const openWeb = () => setMetaSheet(true);
                     if (!(await canUseNativeMenus())) {
-                      setMetaSheet(true);
+                      openWeb();
                       return;
                     }
                     const result = await presentNativeMenu({
@@ -526,6 +527,11 @@ export function NotebookEditor({
                         },
                       ],
                     });
+                    // Plugin missing / threw / hung → web sheet. User dismiss → noop.
+                    if (result.failed) {
+                      openWeb();
+                      return;
+                    }
                     if (result.cancelled || !result.id) return;
                     if (result.id === "settings") setMetaSheet(true);
                     if (result.id === "speakers") setPeople(true);

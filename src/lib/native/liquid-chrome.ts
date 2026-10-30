@@ -33,6 +33,8 @@ export type LiquidChromePayload = {
   trailingLabel: string;
   fabVisible: boolean;
   fabLabel: string;
+  /** When non-empty, the native FAB presents these as a UIMenu. */
+  fabMenu: { id: string; title: string; symbol: string; destructive: boolean }[];
   keyboard: boolean;
   appearance: "light" | "dark";
 };
@@ -91,6 +93,10 @@ export type LiquidChromePlugin = {
     handler: (event: { id: AppTabId | string }) => void,
   ): Promise<{ remove: () => Promise<void> }>;
   addListener(event: "back" | "trailingTap" | "fabTap", handler: () => void): Promise<{ remove: () => Promise<void> }>;
+  addListener(
+    event: "fabMenuSelect",
+    handler: (event: { id: string }) => void,
+  ): Promise<{ remove: () => Promise<void> }>;
   addListener(
     event: "searchChanged",
     handler: (event: { text: string }) => void,

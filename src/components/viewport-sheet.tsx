@@ -138,6 +138,11 @@ export function ActionSheet({
         })),
       });
       if (!alive) return;
+      if (result.failed) {
+        // Native present failed/hung — paint the HTML sheet instead of a blank frame.
+        setMode("web");
+        return;
+      }
       if (!result.cancelled && result.id) {
         const index = Number(result.id.replace("action-", ""));
         const action = actionsRef.current[index];
