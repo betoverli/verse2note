@@ -192,11 +192,25 @@ const notebookTs = read("src/lib/notebook.ts");
 if (!notebookTs.includes("noteIncludesSpeaker") || !notebookTs.includes("note.speakerId === speakerId")) {
   errors.push("O filtro de speakers tem de incluir o speaker ao nível da nota.");
 }
-if (!read("src/components/offline-banner.tsx").includes("offlineBanner")) {
-  errors.push("Falta o indicador offline.");
+const offlineBanner = read("src/components/offline-banner.tsx");
+if (!offlineBanner.includes("offlineBanner") || !offlineBanner.includes("subscribeOnlineStatus")) {
+  errors.push("O indicador offline tem de usar subscribeOnlineStatus (não navigator.onLine directo).");
+}
+if (!offlineBanner.includes("--native-top-inset")) {
+  errors.push("O banner offline não pode cobrir a top bar nativa (usar --native-top-inset).");
+}
+const onlineStatus = read("src/lib/online-status.ts");
+if (!onlineStatus.includes("/robots.txt") || onlineStatus.includes("/api/auth")) {
+  errors.push("O probe offline tem de usar um asset estático, nunca /api/auth.");
 }
 if (!read("public/sw.js").includes("verse2note-v15")) {
   errors.push("O service worker tem de cachear o app shell (v15+) incluindo /assets.");
+}
+if (noteEditor.includes("dropSpeaker") || noteEditor.includes("confirmDropSpeaker")) {
+  errors.push("Remover speaker de secção tem de ser imediato (sem ActionSheet de confirmação).");
+}
+if (!read("src/components/notebook-doc.tsx").includes("onPointerDownCapture")) {
+  errors.push("O × da secção tem de usar pointerdown em capture (alvo Text node no iOS).");
 }
 const handoff = read("src/lib/native/handoff.server.ts");
 if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) {

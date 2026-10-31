@@ -202,7 +202,7 @@ export function blocksToHtml(
         )
         .find(Boolean) ?? "";
       const collapsed = block.collapsed ? "true" : "false";
-      return `<section class="note-speaker" data-speaker-block="${block.id}" data-speaker-id="${block.speakerId}" data-collapsed="${collapsed}" style="border-color:${escapeHtml(color)}"><div class="note-speaker-head" contenteditable="false" data-toggle-speaker="${block.id}"><span class="note-speaker-chevron" aria-hidden="true"></span><span class="note-speaker-name">${escapeHtml(speaker?.name ?? "—")}</span><span class="note-speaker-preview">${escapeHtml(preview)}</span><button type="button" class="note-speaker-remove" data-remove-speaker="${block.id}">×</button></div>${children}</section>`;
+      return `<section class="note-speaker" data-speaker-block="${block.id}" data-speaker-id="${block.speakerId}" data-collapsed="${collapsed}" style="border-color:${escapeHtml(color)}"><div class="note-speaker-head" contenteditable="false" data-toggle-speaker="${block.id}"><span class="note-speaker-chevron" aria-hidden="true"></span><span class="note-speaker-name">${escapeHtml(speaker?.name ?? "—")}</span><span class="note-speaker-preview">${escapeHtml(preview)}</span><button type="button" class="note-speaker-remove" data-remove-speaker="${block.id}" aria-label="Remove speaker"><span aria-hidden="true">×</span></button></div>${children}</section>`;
     })
     .join("");
 }

@@ -23,6 +23,15 @@ describe("note speaker attribution", () => {
     assert.match(editor, /note-whole-speaker/);
     assert.match(editor, /pickNoteSpeaker/);
     assert.match(editor, /setPickNoteSpeaker\(true\)/);
-    assert.match(editor, /speakerId: null/);
+    assert.match(editor, /clearNoteSpeaker/);
+  });
+
+  it("section speaker remove is immediate (no ActionSheet) and handles text-node taps", () => {
+    const doc = readFileSync(new URL("../components/notebook-doc.tsx", import.meta.url), "utf8");
+    assert.match(editor, /Immediate removal/);
+    assert.doesNotMatch(editor, /dropSpeaker/);
+    assert.match(doc, /onPointerDownCapture/);
+    assert.match(doc, /node instanceof Element/);
+    assert.match(doc, /parentElement/);
   });
 });
