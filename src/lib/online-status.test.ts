@@ -24,6 +24,8 @@ describe("online status / offline banner", () => {
     assert.match(banner, /subscribeOnlineStatus/);
     assert.match(banner, /--native-top-inset/);
     assert.match(banner, /useState\(true\)/);
+    assert.match(banner, /pointer-events-none/);
+    assert.match(banner, /WifiOff|Offline/);
     assert.doesNotMatch(banner, /navigator\.onLine/);
   });
 });

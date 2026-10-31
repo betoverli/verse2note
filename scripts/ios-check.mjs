@@ -203,8 +203,15 @@ const onlineStatus = read("src/lib/online-status.ts");
 if (!onlineStatus.includes("/robots.txt") || onlineStatus.includes("/api/auth")) {
   errors.push("O probe offline tem de usar um asset estático, nunca /api/auth.");
 }
-if (!read("public/sw.js").includes("verse2note-v15")) {
-  errors.push("O service worker tem de cachear o app shell (v15+) incluindo /assets.");
+const swSource = read("public/sw.js");
+if (!/verse2note-v1[6-9]|verse2note-v[2-9]\d/.test(swSource)) {
+  errors.push("O service worker tem de cachear o app shell (v16+) incluindo /assets.");
+}
+if (!swSource.includes("networkFirst") || !swSource.includes("PRECACHE_URLS")) {
+  errors.push("O service worker tem de ter network-first com timeout e PRECACHE_URLS para offline.");
+}
+if (!read("ios/App/App/NativeMenus.swift").includes('style == "prompt"') || !read("ios/App/App/NativeMenus.swift").includes("addTextField")) {
+  errors.push("NativeMenus tem de expor alert/prompt (UIAlertController com text field).");
 }
 if (noteEditor.includes("dropSpeaker") || noteEditor.includes("confirmDropSpeaker")) {
   errors.push("Remover speaker de secção tem de ser imediato (sem ActionSheet de confirmação).");

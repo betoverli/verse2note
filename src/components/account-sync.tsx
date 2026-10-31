@@ -6,6 +6,7 @@ import { mergeNotes, mergeSpeakers } from "@/lib/notebook-local";
 import { listMyNotes, listMySpeakers } from "@/lib/notebook-cloud";
 import { getPrefs, mergePrefs, savePrefs, type CloudPrefs } from "@/lib/cloud";
 import { enqueue, flushOutbox, startOutbox, clearOutbox } from "@/lib/outbox";
+import { getOnlineStatus } from "@/lib/online-status";
 import { profileIsComplete } from "@/lib/profile";
 import { listMyCollections } from "@/lib/user-collections";
 import { listMyGroups } from "@/lib/notebook-groups";
@@ -63,13 +64,21 @@ export function AccountSync() {
       ready.current = true;
       return;
     }
+    // Offline: use local notes/session and skip network-blocking cloud hydrate
+    // so route changes never hang on a black splash.
+    if (!getOnlineStatus()) {
+      useAppStore.getState().setCloudHydrated(true);
+      useAppStore.getState().setCloudProfileOk(profileIsComplete(useAppStore.getState()));
+      ready.current = true;
+      return;
+    }
     let cancelled = false;
     const timeout = window.setTimeout(() => {
       if (!cancelled) {
         useAppStore.getState().setCloudHydrated(true);
         ready.current = true;
       }
-    }, 4000);
+    }, 2500);
     void (async () => {
       try {
         await flushOutbox();

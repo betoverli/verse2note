@@ -14,6 +14,8 @@ import { peekMyGroups, setMyGroupsCache, upsertMyGroup } from "@/lib/groups-cach
 import { useAppStore } from "@/lib/store";
 import { ViewportFixed } from "@/components/viewport-fixed";
 import { useNativeFab } from "@/lib/native/use-native-fab";
+import { runNativeNewGroup } from "@/lib/native/new-group";
+import { isNativeApp } from "@/lib/native/runtime";
 import { Button } from "@/components/ui/button";
 import { OptionPicker } from "@/components/native-option-picker";
 import { SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
@@ -101,16 +103,13 @@ export function NotebookGroupsHome({ query }: { query: string }) {
     return () => window.clearTimeout(handle);
   }, [query, user]);
 
-  useNativeFab(t(locale, "notebookGroupNew"), () => setCreate(true), Boolean(user));
-
-  async function make() {
+  async function makeWith(title: string, isListed: boolean) {
     if (busy) return;
-    const title = name.trim();
-    if (title.length < 2) return;
+    if (title.trim().length < 2) return;
     setBusy(true);
     try {
       const result = await createNotebookGroup({
-        data: { name: title, visibility: listed ? "listed" : "private" },
+        data: { name: title.trim(), visibility: isListed ? "listed" : "private" },
       });
       if (!result?.ok || !result.id) {
         toast.error(t(locale, "linkSendFail"));
@@ -119,9 +118,9 @@ export function NotebookGroupsHome({ query }: { query: string }) {
       if (user) {
         upsertMyGroup(user.id, {
           id: result.id,
-          name: title,
+          name: title.trim(),
           description: "",
-          visibility: listed ? "listed" : "private",
+          visibility: isListed ? "listed" : "private",
           postPolicy: "members",
           createdBy: user.id,
           memberCount: 1,
@@ -139,6 +138,26 @@ export function NotebookGroupsHome({ query }: { query: string }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function openCreate() {
+    if (!isNativeApp()) {
+      setCreate(true);
+      return;
+    }
+    const result = await runNativeNewGroup(locale);
+    if (result.type === "web-fallback") {
+      setCreate(true);
+      return;
+    }
+    if (result.type === "cancelled") return;
+    await makeWith(result.name, result.listed);
+  }
+
+  useNativeFab(t(locale, "notebookGroupNew"), () => void openCreate(), Boolean(user));
+
+  async function make() {
+    await makeWith(name, listed);
   }
 
   if (!user) {
@@ -239,7 +258,7 @@ export function NotebookGroupsHome({ query }: { query: string }) {
         <Button
           className="native-fab fixed right-4 z-20 size-14 rounded-full shadow-[0_8px_20px_rgb(0_0_0/0.22)]"
           style={{ bottom: "calc(var(--tab-bar-height) + 1rem)" }}
-          onClick={() => setCreate(true)}
+          onClick={() => void openCreate()}
           aria-label={t(locale, "notebookGroupNew")}
         >
           <Plus />

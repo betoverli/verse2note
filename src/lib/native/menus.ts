@@ -23,13 +23,19 @@ export type NativeMenuAnchor = {
   height: number;
 };
 
-export type NativeMenuStyle = "menu" | "sheet";
+export type NativeMenuStyle = "menu" | "sheet" | "alert" | "prompt";
 
 export type NativeMenuRequest = {
   style?: NativeMenuStyle;
   title?: string;
   message?: string;
   cancelLabel?: string;
+  /** Label for the primary button on alert/prompt (defaults to first item / OK). */
+  okLabel?: string;
+  /** Placeholder for prompt text field. */
+  placeholder?: string;
+  /** Initial value for prompt text field. */
+  defaultValue?: string;
   appearance?: "light" | "dark";
   anchor?: NativeMenuAnchor | null;
   items: NativeMenuItem[];
@@ -38,6 +44,8 @@ export type NativeMenuRequest = {
 export type NativeMenuResult = {
   id: string | null;
   cancelled: boolean;
+  /** Prompt text when style is `"prompt"`. */
+  value?: string;
   /**
    * Plugin missing, threw, timed out, or native presentation failed.
    * Callers should fall back to the web menu when this is true — do not treat
@@ -59,6 +67,9 @@ type NativeMenusPlugin = {
     title?: string;
     message?: string;
     cancelLabel?: string;
+    okLabel?: string;
+    placeholder?: string;
+    defaultValue?: string;
     appearance?: "light" | "dark";
     anchor: NativeMenuAnchor;
     items: NativeMenuItem[];
@@ -182,6 +193,9 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
         title: request.title,
         message: request.message,
         cancelLabel: request.cancelLabel,
+        okLabel: request.okLabel,
+        placeholder: request.placeholder,
+        defaultValue: request.defaultValue,
         appearance: request.appearance ?? readAppearance(),
         anchor,
         items: request.items,
@@ -191,9 +205,9 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
     );
     console.log("[NativeMenus] present resolved", result);
     if (result?.cancelled || !result?.id) {
-      return { id: null, cancelled: true };
+      return { id: null, cancelled: true, value: result?.value };
     }
-    return { id: result.id, cancelled: false };
+    return { id: result.id, cancelled: false, value: result.value };
   } catch (error) {
     console.warn("[NativeMenus] present failed — web should fall back", error);
     try {
@@ -230,4 +244,52 @@ export async function pickNativeOption(input: {
   });
   if (result.failed || result.cancelled) return null;
   return result.id;
+}
+
+/** Centered confirm / multi-button alert. Returns selected id, `null` on cancel, or `{ failed: true }`. */
+export async function presentNativeAlert(input: {
+  title?: string;
+  message?: string;
+  cancelLabel: string;
+  okLabel?: string;
+  items?: NativeMenuItem[];
+  anchor?: NativeMenuAnchor | null;
+}): Promise<NativeMenuResult> {
+  if (!(await canUseNativeMenus())) return { id: null, cancelled: true, failed: true };
+  return presentNativeMenu({
+    style: "alert",
+    title: input.title,
+    message: input.message,
+    cancelLabel: input.cancelLabel,
+    okLabel: input.okLabel,
+    anchor: input.anchor ?? rectFromElement(null),
+    items: input.items ?? (input.okLabel ? [{ id: "ok", title: input.okLabel }] : []),
+  });
+}
+
+/** Text-field prompt. Returns trimmed value, `null` on cancel, or failed. */
+export async function presentNativePrompt(input: {
+  title?: string;
+  message?: string;
+  cancelLabel: string;
+  okLabel: string;
+  placeholder?: string;
+  defaultValue?: string;
+  anchor?: NativeMenuAnchor | null;
+}): Promise<{ value: string | null; failed?: boolean; cancelled?: boolean }> {
+  if (!(await canUseNativeMenus())) return { value: null, failed: true };
+  const result = await presentNativeMenu({
+    style: "prompt",
+    title: input.title,
+    message: input.message,
+    cancelLabel: input.cancelLabel,
+    okLabel: input.okLabel,
+    placeholder: input.placeholder,
+    defaultValue: input.defaultValue,
+    anchor: input.anchor ?? rectFromElement(null),
+    items: [{ id: "ok", title: input.okLabel }],
+  });
+  if (result.failed) return { value: null, failed: true };
+  if (result.cancelled || result.id !== "ok") return { value: null, cancelled: true };
+  return { value: (result.value ?? "").trim() };
 }

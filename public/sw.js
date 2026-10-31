@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v15";
+const CACHE = "verse2note-v16";
 
 const PRECACHE = [
   "/",
@@ -7,8 +7,12 @@ const PRECACHE = [
   "/reading",
   "/profile",
   "/notebook",
+  "/notebook/import",
+  "/groups",
+  "/inbox",
   "/about",
   "/for-ai",
+  "/login",
   "/llms.txt",
   "/skill.md",
   "/robots.txt",
@@ -63,6 +67,64 @@ function putCache(request, response) {
   void caches.open(CACHE).then((cache) => cache.put(request, copy));
 }
 
+async function networkFirst(request, { timeoutMs = 2500 } = {}) {
+  const cached = await caches.match(request);
+  const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs) : 0;
+  try {
+    const response = await fetch(request, ctrl ? { signal: ctrl.signal } : undefined);
+    clearTimeout(timer);
+    putCache(request, response);
+    return response;
+  } catch {
+    clearTimeout(timer);
+    if (cached) return cached;
+    if (request.mode === "navigate") {
+      return (
+        (await caches.match("/notebook")) ||
+        (await caches.match("/app")) ||
+        (await caches.match("/")) ||
+        Response.error()
+      );
+    }
+    return Response.error();
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) {
+    // Refresh in the background when online.
+    void fetch(request)
+      .then((response) => putCache(request, response))
+      .catch(() => {});
+    return cached;
+  }
+  try {
+    const response = await fetch(request);
+    putCache(request, response);
+    return response;
+  } catch {
+    return Response.error();
+  }
+}
+
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "PRECACHE_URLS" || !Array.isArray(data.urls)) return;
+  event.waitUntil(
+    caches.open(CACHE).then(async (cache) => {
+      for (const url of data.urls) {
+        try {
+          await cache.add(url);
+        } catch {
+          /* ignore individual failures */
+        }
+      }
+    }),
+  );
+});
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
@@ -101,45 +163,21 @@ self.addEventListener("fetch", (event) => {
     dest === "style" ||
     dest === "worker" ||
     dest === "font" ||
+    dest === "image" ||
     url.pathname.startsWith("/assets/") ||
-    url.pathname.startsWith("/fonts/");
+    url.pathname.startsWith("/fonts/") ||
+    url.pathname.startsWith("/apps/");
 
   if (isAsset) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        const fetched = fetch(request)
-          .then((response) => {
-            putCache(request, response);
-            return response;
-          })
-          .catch(() => cached || Response.error());
-        return cached || fetched;
-      }),
-    );
+    event.respondWith(cacheFirst(request));
     return;
   }
 
   if (accept.includes("application/json")) return;
 
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        putCache(request, response);
-        return response;
-      })
-      .catch(async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        if (request.mode === "navigate") {
-          return (
-            (await caches.match("/notebook")) ||
-            (await caches.match("/app")) ||
-            (await caches.match("/"))
-          );
-        }
-        return Response.error();
-      }),
-  );
+  // Navigations / documents: short network budget, then shell cache so
+  // client-side route changes and cold reopen do not black-screen offline.
+  event.respondWith(networkFirst(request));
 });
 
 self.addEventListener("push", (event) => {

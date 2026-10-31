@@ -124,6 +124,32 @@ export function notePreview(note: Note) {
   return "";
 }
 
+/** Plain-text body for the system share sheet (title + lines, speaker heads). */
+export function notePlainText(note: Note, speakers: Speaker[] = []) {
+  const lines: string[] = [];
+  if (note.title.trim()) lines.push(note.title.trim());
+  for (const block of note.blocks) {
+    if (block.type === "speaker") {
+      const name = speakers.find((item) => item.id === block.speakerId)?.name;
+      if (name) lines.push(`— ${name}`);
+      for (const child of block.children) {
+        const text = lineText(child).trim();
+        if (text) lines.push(text);
+      }
+      continue;
+    }
+    const text = lineText(block).trim();
+    if (text) lines.push(text);
+  }
+  return lines.join("\n").trim();
+}
+
+/** True when the note has no whole-note or section speaker yet (first attribution). */
+export function noteNeedsSpeakerAsk(note: Note) {
+  if (note.speakerId) return false;
+  return !note.blocks.some((block) => block.type === "speaker");
+}
+
 export function noteSpeakerIds(note: Note) {
   const ids = new Set<string>();
   // Whole-note speaker (note.speakerId) and section speakers both count.

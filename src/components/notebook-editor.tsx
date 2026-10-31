@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Bold, BookOpen, Ellipsis, Italic, List, ListOrdered, Plus, Type, UserRound, X } from "lucide-react";
 import { t } from "@/lib/i18n";
-import { detectTrailingRef, emptyLine, newNoteId, noteIsBare, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
+import { detectTrailingRef, emptyLine, newNoteId, noteIsBare, noteNeedsSpeakerAsk, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
+import { runNativeNoteSettings } from "@/lib/native/note-settings";
+import { isNativeApp } from "@/lib/native/runtime";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
 import { formatSelection } from "@/components/notebook-line";
@@ -309,6 +311,12 @@ export function NotebookEditor({
       children: [child],
     };
     updateBlocks((blocks) => {
+      // Empty / bare notes: replace the blank starter line so the section
+      // speaker head is visible immediately (no invisible empty paragraph above).
+      const current = { ...latest(), blocks };
+      if (noteIsBare(current)) {
+        return [block, emptyLine()];
+      }
       const withSpeaker = insertAfterAnchor(blocks, focusId, block);
       const last = withSpeaker[withSpeaker.length - 1];
       if (last?.id === block.id) return [...withSpeaker, emptyLine()];
@@ -320,11 +328,37 @@ export function NotebookEditor({
 
   function addSpeaker(speaker: Speaker) {
     upsertLocalSpeaker(speaker);
-    if (noteIsBare(latest()) && !latest().speakerId) {
+    // First speaker on a note (even with text, even when empty) → ask whole vs section.
+    if (noteNeedsSpeakerAsk(latest())) {
       setAskSpeaker(speaker);
       return;
     }
     insertSpeakerSection(speaker);
+  }
+
+  async function openNativeNoteSettings() {
+    const action = await runNativeNoteSettings({ locale, note: latest() });
+    if (action.type === "web-fallback") {
+      setMetaSheet(true);
+      return;
+    }
+    if (action.type === "cancelled") return;
+    if (action.type === "set-date") {
+      patch((row) => ({ ...row, happenedAt: action.value }));
+      return;
+    }
+    if (action.type === "add-tag") {
+      patch((row) => (row.tags.includes(action.value) ? row : { ...row, tags: [...row.tags, action.value] }));
+      return;
+    }
+    if (action.type === "clear-speaker") {
+      patch((row) => ({ ...row, speakerId: null }));
+      return;
+    }
+    if (action.type === "pick-speaker") {
+      setPickNoteSpeaker(true);
+      setPeople(true);
+    }
   }
 
   /** Immediate removal — no ActionSheet. The native confirm path never
@@ -520,8 +554,10 @@ export function NotebookEditor({
           }
           onTrailingMenuSelect={(id) => {
             console.log("[notebook-editor] trailingMenuSelect", id);
-            if (id === NOTE_MORE_SETTINGS) setMetaSheet(true);
-            else if (id === NOTE_MORE_SPEAKERS) setPeople(true);
+            if (id === NOTE_MORE_SETTINGS) {
+              if (isNativeApp()) void openNativeNoteSettings();
+              else setMetaSheet(true);
+            } else if (id === NOTE_MORE_SPEAKERS) setPeople(true);
           }}
           trailing={
             readOnly ? null : (
@@ -809,7 +845,10 @@ export function NotebookEditor({
           actions={[
             {
               label: t(locale, "settings"),
-              onSelect: () => setMetaSheet(true),
+              onSelect: () => {
+                if (isNativeApp()) void openNativeNoteSettings();
+                else setMetaSheet(true);
+              },
             },
             {
               label: t(locale, "notebookSpeakers"),

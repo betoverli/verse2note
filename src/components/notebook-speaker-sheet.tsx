@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { SPEAKER_COLORS, newNoteId, noteSpeakerIds, type Speaker } from "@/lib/notebook";
 import { deleteLocalSpeaker, upsertLocalSpeaker } from "@/lib/notebook-local";
@@ -7,7 +7,16 @@ import { useAppStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
+import {
+  canUseNativeMenus,
+  presentNativeMenu,
+  presentNativePrompt,
+  rectFromElement,
+} from "@/lib/native/menus";
+import { isNativeApp } from "@/lib/native/runtime";
 import { cn } from "@/lib/utils";
+
+const ADD_ID = "__add__";
 
 export function NotebookSpeakerSheet({
   open,
@@ -25,21 +34,28 @@ export function NotebookSpeakerSheet({
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [dropId, setDropId] = useState<string | null>(null);
+  const [web, setWeb] = useState(() => !isNativeApp());
+  const started = useRef(false);
 
   function used(id: string) {
     return notes.some((note) => noteSpeakerIds(note).includes(id));
   }
 
-  function add() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
+  function addFromName(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
     const color = SPEAKER_COLORS[speakers.length % SPEAKER_COLORS.length]!;
-    const speaker = upsertLocalSpeaker({
+    return upsertLocalSpeaker({
       id: newNoteId(),
       name: trimmed.slice(0, 40),
       color,
       updatedAt: new Date().toISOString(),
     });
+  }
+
+  function add() {
+    const speaker = addFromName(name);
+    if (!speaker) return;
     setName("");
     if (onPick) {
       onPick(speaker);
@@ -54,7 +70,128 @@ export function NotebookSpeakerSheet({
     upsertLocalSpeaker({ ...speaker, name: trimmed });
   }
 
+  useEffect(() => {
+    if (!open) {
+      started.current = false;
+      setWeb(!isNativeApp());
+      return;
+    }
+    if (!isNativeApp() || started.current) return;
+    started.current = true;
+    let alive = true;
+    void (async () => {
+      if (!(await canUseNativeMenus())) {
+        if (alive) setWeb(true);
+        return;
+      }
+      const items = [
+        ...speakers.map((speaker) => ({
+          id: speaker.id,
+          title: speaker.name,
+          symbol: "person.fill" as string | undefined,
+        })),
+        {
+          id: ADD_ID,
+          title: t(locale, "notebookSaveSpeaker"),
+          symbol: "plus",
+        },
+      ];
+      const result = await presentNativeMenu({
+        style: "sheet",
+        title: onPick ? t(locale, "notebookAddSpeaker") : t(locale, "notebookSpeakers"),
+        cancelLabel: t(locale, "linkCancel"),
+        anchor: rectFromElement(null),
+        items,
+      });
+      if (!alive) return;
+      if (result.failed) {
+        setWeb(true);
+        return;
+      }
+      if (result.cancelled || !result.id) {
+        onClose();
+        return;
+      }
+      if (result.id === ADD_ID) {
+        const prompted = await presentNativePrompt({
+          title: t(locale, "notebookAddSpeaker"),
+          cancelLabel: t(locale, "linkCancel"),
+          okLabel: t(locale, "notebookSaveSpeaker"),
+          placeholder: t(locale, "notebookSpeakerName"),
+        });
+        if (!alive) return;
+        if (prompted.failed) {
+          setWeb(true);
+          return;
+        }
+        if (!prompted.value) {
+          onClose();
+          return;
+        }
+        const speaker = addFromName(prompted.value);
+        if (speaker && onPick) onPick(speaker);
+        onClose();
+        return;
+      }
+      const speaker = speakers.find((item) => item.id === result.id);
+      if (!speaker) {
+        onClose();
+        return;
+      }
+      if (onPick) {
+        onPick(speaker);
+        onClose();
+        return;
+      }
+      // Manage mode: rename / delete unused.
+      const manage = await presentNativeMenu({
+        style: "sheet",
+        title: speaker.name,
+        cancelLabel: t(locale, "linkCancel"),
+        anchor: rectFromElement(null),
+        items: [
+          { id: "rename", title: t(locale, "notebookRenameSpeaker"), symbol: "pencil" },
+          ...(!used(speaker.id)
+            ? [{ id: "delete", title: t(locale, "notebookDeleteSpeaker"), symbol: "trash", destructive: true }]
+            : []),
+        ],
+      });
+      if (!alive) return;
+      if (manage.failed) {
+        setWeb(true);
+        return;
+      }
+      if (manage.id === "rename") {
+        const prompted = await presentNativePrompt({
+          title: t(locale, "notebookRenameSpeaker"),
+          cancelLabel: t(locale, "linkCancel"),
+          okLabel: t(locale, "collectionDone"),
+          defaultValue: speaker.name,
+          placeholder: t(locale, "notebookSpeakerName"),
+        });
+        if (!alive) return;
+        if (prompted.failed) {
+          setWeb(true);
+          return;
+        }
+        const trimmed = (prompted.value ?? "").trim().slice(0, 40);
+        if (trimmed && trimmed !== speaker.name) {
+          upsertLocalSpeaker({ ...speaker, name: trimmed });
+        }
+      } else if (manage.id === "delete") {
+        deleteLocalSpeaker(speaker.id);
+      }
+      onClose();
+    })();
+    return () => {
+      alive = false;
+    };
+    // Speakers snapshot at open is intentional — remount when `open` flips.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   if (!open) return null;
+  if (!web) return null;
 
   return (
     <ViewportSheet onClose={onClose}>
@@ -149,6 +286,7 @@ export function NotebookSpeakerSheet({
       </div>
       {dropId ? (
         <ActionSheet
+          variant="alert"
           message={t(locale, "notebookDeleteSpeakerAsk")}
           cancelLabel={t(locale, "linkCancel")}
           onClose={() => setDropId(null)}
