@@ -181,6 +181,18 @@ const menusTs = read("src/lib/native/menus.ts");
 if (!menusTs.includes("PRESENTATION_CONFIRM_MS") || !menusTs.includes("presented")) {
   errors.push("O wrapper NativeMenus tem de falhar rápido (~600ms) sem apresentação e cair no web.");
 }
+if (/listener\s*=\s*await\s+plugin\.addListener/.test(menusTs)) {
+  errors.push("menus.ts não pode await addListener antes de present (TF85: pending eterno).");
+}
+if (!menusTs.includes("classifyPresentOutcome") || !menusTs.includes("FORCE_WEB_FALLBACK_MS")) {
+  errors.push("menus.ts tem de classificar cancel fantasma e expor FORCE_WEB_FALLBACK_MS.");
+}
+if (!nativeMenus.includes("itemObjects") || !nativeMenus.includes('getArray("items")')) {
+  errors.push("NativeMenus tem de coerir items via itemObjects(getArray(\"items\")).");
+}
+if (/call\.getArray\("items",\s*JSObject\.self\)/.test(nativeMenus)) {
+  errors.push("NativeMenus não pode usar getArray tipado para items (cast silencioso → sheet vazio).");
+}
 const noteEditor = read("src/components/notebook-editor.tsx");
 if (noteEditor.includes("nativeBar={false}") || noteEditor.includes("presentNativeMenu")) {
   errors.push("O … da nota tem de usar trailingMenu no chrome nativo, não NativeMenus.present / nativeBar={false}.");
@@ -200,6 +212,13 @@ if (!viewportSheet.includes("settledRef") || !viewportSheet.includes("presented.
 }
 if (!viewportSheet.includes("result.failed") || !viewportSheet.includes('setMode("web")')) {
   errors.push("ActionSheet tem de cair no sheet web quando o native falha.");
+}
+if (!viewportSheet.includes("FORCE_WEB_FALLBACK_MS") || !viewportSheet.includes("force web fallback")) {
+  errors.push("ActionSheet tem de forçar o sheet web se o native ficar em pending.");
+}
+const stylesCss = read("src/styles.css");
+if (!/html\.native-ios main\.screen > \.screen-body[\s\S]*?touch-action:\s*pan-x pan-y/.test(stylesCss)) {
+  errors.push("screen-body nativo tem de permitir pan-x (senão o swipe-to-delete morre por interseção CSS).");
 }
 const notebookTs = read("src/lib/notebook.ts");
 if (!notebookTs.includes("noteIncludesSpeaker") || !notebookTs.includes("note.speakerId === speakerId")) {

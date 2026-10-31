@@ -4,9 +4,10 @@ export const SWIPE_SLOP = 10;
 /**
  * Horizontal movement must exceed vertical by this factor.
  * A diagonal drag stays a scroll so the list does not stick mid-flick.
- * Kept modest so a clear sideways flick still claims the row on iOS.
+ * Kept near 1 so a clear sideways flick still claims the row on iOS WKWebView
+ * (1.35 was rejecting real delete swipes that also moved a few px vertically).
  */
-export const SWIPE_HORIZONTAL_BIAS = 1.35;
+export const SWIPE_HORIZONTAL_BIAS = 1.15;
 
 export type SwipeLock = "h" | "v";
 
