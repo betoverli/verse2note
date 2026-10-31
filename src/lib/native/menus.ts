@@ -60,6 +60,8 @@ export type NativeMenusInfo = {
   major: number;
 };
 
+type PluginListenerHandle = { remove: () => void | Promise<void> };
+
 type NativeMenusPlugin = {
   available(): Promise<NativeMenusInfo>;
   present(options: {
@@ -73,19 +75,24 @@ type NativeMenusPlugin = {
     appearance?: "light" | "dark";
     anchor: NativeMenuAnchor;
     items: NativeMenuItem[];
-  }): Promise<NativeMenuResult>;
+  }): Promise<NativeMenuResult & { replaced?: boolean }>;
   dismiss(): Promise<void>;
+  addListener?(event: "presented", cb: () => void): Promise<PluginListenerHandle>;
 };
 
 let pluginPromise: Promise<NativeMenusPlugin | null> | null = null;
 let infoPromise: Promise<NativeMenusInfo | null> | null = null;
 
 /** Probe / connect budget — never block the UI on a silent native hang. */
-const AVAILABLE_TIMEOUT_MS = 1500;
+const AVAILABLE_TIMEOUT_MS = 800;
 /**
- * Safety net if native `present` never settles (menu never shown and never
- * rejected). Far longer than a real presentation so an open menu is not
- * interrupted; short enough that a hung promise recovers in-session.
+ * If native never confirms presentation (listener or early settle), fall back
+ * to the web sheet. Long enough for a real UIAlertController to appear; short
+ * enough that a silent failure never leaves a blank screen.
+ */
+const PRESENTATION_CONFIRM_MS = 600;
+/**
+ * Safety net if native `present` never settles after it was shown.
  */
 const PRESENT_HANG_TIMEOUT_MS = 12_000;
 
@@ -108,6 +115,11 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
       },
     );
   });
+}
+
+function isUnimplemented(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /UNIMPLEMENTED|not implemented|is not implemented|plugin.*not.*found/i.test(message);
 }
 
 /** CSS viewport rect → plugin anchor (1:1 with the WKWebView when scale is 1). */
@@ -171,8 +183,9 @@ export async function canUseNativeMenus(): Promise<boolean> {
 }
 
 /**
- * Present a native menu. On plugin errors / hang, returns `{ failed: true }`
- * so callers can open the existing web UI instead of swallowing the tap.
+ * Present a native menu. On plugin errors / hang / no presentation within
+ * ~600ms, returns `{ failed: true }` so callers can open the web UI instead
+ * of swallowing the tap.
  */
 export async function presentNativeMenu(request: NativeMenuRequest): Promise<NativeMenuResult> {
   const plugin = await connect();
@@ -186,24 +199,82 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
     items: request.items.length,
     anchor,
   });
+
+  let presented = false;
+  let listener: PluginListenerHandle | null = null;
   try {
-    const result = await withTimeout(
-      plugin.present({
-        style: request.style ?? "menu",
-        title: request.title,
-        message: request.message,
-        cancelLabel: request.cancelLabel,
-        okLabel: request.okLabel,
-        placeholder: request.placeholder,
-        defaultValue: request.defaultValue,
-        appearance: request.appearance ?? readAppearance(),
-        anchor,
-        items: request.items,
-      }),
-      PRESENT_HANG_TIMEOUT_MS,
-      "native-menu-present-timeout",
+    if (typeof plugin.addListener === "function") {
+      listener = await plugin.addListener("presented", () => {
+        presented = true;
+      });
+    }
+  } catch {
+    listener = null;
+  }
+
+  const presentPromise = plugin.present({
+    style: request.style ?? "menu",
+    title: request.title,
+    message: request.message,
+    cancelLabel: request.cancelLabel,
+    okLabel: request.okLabel,
+    placeholder: request.placeholder,
+    defaultValue: request.defaultValue,
+    appearance: request.appearance ?? readAppearance(),
+    anchor,
+    items: request.items,
+  });
+
+  // Watchdog: if nothing confirms presentation quickly, abort for web fallback.
+  // A real sheet fires `presented` (or settles) well under this budget.
+  const confirmed = await new Promise<"presented" | "settled" | "timeout">((resolve) => {
+    let done = false;
+    const finish = (value: "presented" | "settled" | "timeout") => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(timer);
+      window.clearInterval(poll);
+      resolve(value);
+    };
+    const timer = window.setTimeout(() => finish("timeout"), PRESENTATION_CONFIRM_MS);
+    const poll = window.setInterval(() => {
+      if (presented) finish("presented");
+    }, 32);
+    presentPromise.then(
+      () => finish("settled"),
+      () => finish("settled"),
     );
+  });
+
+  if (confirmed === "timeout" && !presented) {
+    console.warn("[NativeMenus] presentation not confirmed in time — web fallback");
+    try {
+      await plugin.dismiss();
+    } catch {
+      /* already gone */
+    }
+    try {
+      await listener?.remove();
+    } catch {
+      /* ignore */
+    }
+    // Best-effort: let the hanging present settle without blocking UI.
+    void presentPromise.catch(() => {});
+    return { id: null, cancelled: true, failed: true };
+  }
+
+  try {
+    const result = await withTimeout(presentPromise, PRESENT_HANG_TIMEOUT_MS, "native-menu-present-timeout");
     console.log("[NativeMenus] present resolved", result);
+    try {
+      await listener?.remove();
+    } catch {
+      /* ignore */
+    }
+    // Replaced by a newer present — treat as failure so the caller can retry/web.
+    if ((result as { replaced?: boolean })?.replaced) {
+      return { id: null, cancelled: true, failed: true };
+    }
     if (result?.cancelled || !result?.id) {
       return { id: null, cancelled: true, value: result?.value };
     }
@@ -214,6 +285,15 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
       await plugin.dismiss();
     } catch {
       /* already gone */
+    }
+    try {
+      await listener?.remove();
+    } catch {
+      /* ignore */
+    }
+    if (isUnimplemented(error)) {
+      // Older binary without the method — never cache a false "available".
+      infoPromise = null;
     }
     return { id: null, cancelled: true, failed: true };
   }

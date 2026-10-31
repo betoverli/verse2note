@@ -13,12 +13,13 @@ describe("lockSwipe", () => {
     assert.equal(lockSwipe(6, 20), "v");
     assert.equal(lockSwipe(12, 10), "v");
     assert.equal(lockSwipe(8, -30), "v");
-    assert.equal(lockSwipe(17, 10), "v");
+    assert.equal(lockSwipe(14, 12), "v");
   });
 
   it("claims a clearly horizontal swipe for the row actions", () => {
     assert.equal(lockSwipe(20, 6), "h");
     assert.equal(lockSwipe(20, 10), "h");
+    assert.equal(lockSwipe(18, 10), "h");
     assert.equal(lockSwipe(-30, 8), "h");
   });
 });

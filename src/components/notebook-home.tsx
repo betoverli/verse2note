@@ -61,7 +61,9 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
   function finish(dir: "share" | "delete" | "reset") {
     const max = width.current;
     if (dir === "delete") {
-      paint(0, true);
+      // Keep the delete reveal open while the confirm sheet is up so the
+      // gesture is visibly acknowledged even if native alert falls back.
+      paint(-Math.min(max * 0.35, 96), true);
       setAskDelete(true);
       return;
     }
@@ -186,7 +188,9 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
         ref={layer}
         role="link"
         className="relative bg-surface active:bg-fill"
-        style={{ touchAction: "pan-y" }}
+        // pan-x pan-y lets the row claim a sideways flick; non-passive
+        // touchmove + preventDefault still stops the list once locked.
+        style={{ touchAction: "pan-x pan-y" }}
         onClick={() => {
           if (dragged.current || Math.abs(x.current) > 12) return;
           void navigate({ to: "/notebook/$id", params: { id: note.id } });
@@ -223,13 +227,17 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
           variant="alert"
           message={t(locale, "notebookDeleteAsk")}
           cancelLabel={t(locale, "linkCancel")}
-          onClose={() => setAskDelete(false)}
+          onClose={() => {
+            setAskDelete(false);
+            paintRef.current(0, true);
+          }}
           actions={[
             {
               label: t(locale, "notebookDelete"),
               destructive: true,
               onSelect: () => {
                 setGone(true);
+                // Local-first: works offline; outbox syncs later.
                 deleteLocalNote(note.id);
               },
             },
