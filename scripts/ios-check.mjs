@@ -168,12 +168,35 @@ if (!liquidChrome.includes("applyTrailingMenu") || !liquidChrome.includes("trail
 if (!nativeMenus.includes("alpha = 0.01") || !nativeMenus.includes("0.40")) {
   errors.push("NativeMenus tem de usar âncora alpha 0.01 e fallback UIAlertController em ~400ms.");
 }
+if (!nativeMenus.includes("ObjectIdentifier") || !nativeMenus.includes("dismiss ignored stale")) {
+  errors.push("NativeMenus.dismiss tem de ignorar dismiss obsoleto (race do primeiro speaker / remover).");
+}
 const noteEditor = read("src/components/notebook-editor.tsx");
 if (noteEditor.includes("nativeBar={false}") || noteEditor.includes("presentNativeMenu")) {
   errors.push("O … da nota tem de usar trailingMenu no chrome nativo, não NativeMenus.present / nativeBar={false}.");
 }
 if (!noteEditor.includes('nativeSymbol={readOnly ? undefined : "ellipsis"}') || !noteEditor.includes("trailingMenu=")) {
   errors.push("O editor da nota tem de enviar ellipsis + trailingMenu ao chrome Liquid Glass.");
+}
+if (/title=\{draft\.title/.test(noteEditor) || !noteEditor.includes('title=""')) {
+  errors.push("O título da nota tem de aparecer só no corpo (Apple Notes), não na top bar nativa/web.");
+}
+if (!noteEditor.includes("note-whole-speaker") || !noteEditor.includes("pickNoteSpeaker")) {
+  errors.push("A nota com speaker ao nível da nota tem de mostrar o chip removível/trocável no corpo.");
+}
+const viewportSheet = read("src/components/viewport-sheet.tsx");
+if (!viewportSheet.includes("settledRef") || !viewportSheet.includes("presented.map")) {
+  errors.push("ActionSheet tem de aplicar onSelect mesmo após remount (settledRef + snapshot).");
+}
+const notebookTs = read("src/lib/notebook.ts");
+if (!notebookTs.includes("noteIncludesSpeaker") || !notebookTs.includes("note.speakerId === speakerId")) {
+  errors.push("O filtro de speakers tem de incluir o speaker ao nível da nota.");
+}
+if (!read("src/components/offline-banner.tsx").includes("offlineBanner")) {
+  errors.push("Falta o indicador offline.");
+}
+if (!read("public/sw.js").includes("verse2note-v15")) {
+  errors.push("O service worker tem de cachear o app shell (v15+) incluindo /assets.");
 }
 const handoff = read("src/lib/native/handoff.server.ts");
 if (handoff.includes("session_token") || !handoff.includes("token_ciphertext")) {

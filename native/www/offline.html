@@ -17,9 +17,33 @@
     <main>
       <div>
         <h1>Sem ligação</h1>
-        <p>Não foi possível abrir o Verse2Note. Confira a internet e tente de novo. O site continua em verse2note.com.</p>
-        <button type="button" onclick="location.reload()">Tentar de novo</button>
+        <p>
+          Não foi possível abrir o Verse2Note. Depois da primeira abertura com
+          internet, o caderno e o picker ficam em cache. Confira a ligação e
+          tente de novo.
+        </p>
+        <button type="button" id="retry">Tentar de novo</button>
       </div>
     </main>
+    <script>
+      (function () {
+        var button = document.getElementById("retry");
+        function go() {
+          location.replace("https://verse2note.com/notebook");
+        }
+        button.addEventListener("click", go);
+        // Auto-retry a few times when the radio comes back.
+        var tries = 0;
+        var timer = setInterval(function () {
+          tries += 1;
+          if (navigator.onLine) {
+            clearInterval(timer);
+            go();
+            return;
+          }
+          if (tries >= 12) clearInterval(timer);
+        }, 2500);
+      })();
+    </script>
   </body>
 </html>

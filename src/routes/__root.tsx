@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeShell } from "@/components/native-shell";
+import { OfflineBanner } from "@/components/offline-banner";
 import { OfflineSupport } from "@/components/offline-support";
 import { ThemeSync } from "@/components/theme-sync";
 import { AppShell } from "@/components/app-shell";
@@ -86,6 +87,7 @@ function RootDocument() {
         <NativeShell />
         <ThemeSync />
         <AuthProvider>
+          <OfflineBanner />
           <AppShell />
         </AuthProvider>
         <Scripts />

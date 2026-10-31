@@ -22,6 +22,10 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
     private var anchorButton: MenuAnchorButton?
     private var activeCall: CAPPluginCall?
     private var resolved = false
+    /// Identity of the in-flight `present` call. A deferred `dismiss` from an
+    /// unmounted web ActionSheet (React remount) must not cancel a newer sheet
+    /// — that was wiping the first-speaker chooser and the remove confirm.
+    private var activeCallToken: ObjectIdentifier?
     private var appearance: UIUserInterfaceStyle = .unspecified
     private var keyWindowObserver: NSObjectProtocol?
     private var presentFallbackWork: DispatchWorkItem?
@@ -37,8 +41,25 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func dismiss(_ call: CAPPluginCall) {
         DispatchQueue.main.async {
-            self.finish(cancelled: true)
-            call.resolve()
+            guard let active = self.activeCall, !self.resolved else {
+                call.resolve()
+                return
+            }
+            let token = ObjectIdentifier(active)
+            // Bounce once so a dismiss queued just before a new present lands
+            // after that present has replaced activeCall — then we no-op.
+            DispatchQueue.main.async {
+                guard let current = self.activeCall,
+                      ObjectIdentifier(current) == token,
+                      !self.resolved
+                else {
+                    print("[NativeMenus] dismiss ignored stale token")
+                    call.resolve()
+                    return
+                }
+                self.finish(cancelled: true)
+                call.resolve()
+            }
         }
     }
 
@@ -60,6 +81,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             self.finish(cancelled: true)
             self.resolved = false
             self.activeCall = call
+            self.activeCallToken = ObjectIdentifier(call)
             call.keepAlive = true
 
             switch appearanceRaw {
@@ -71,6 +93,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             guard let root = self.presentationView() else {
                 call.keepAlive = false
                 self.activeCall = nil
+                self.activeCallToken = nil
                 call.reject("Janela nativa indisponível.")
                 return
             }
@@ -369,6 +392,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         }
         let call = activeCall
         activeCall = nil
+        activeCallToken = nil
         clearAnchor()
         if let controller = bridge?.viewController, controller.presentedViewController is UIAlertController {
             controller.dismiss(animated: true)
@@ -396,6 +420,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         presentFallbackWork = nil
         let call = activeCall
         activeCall = nil
+        activeCallToken = nil
         clearAnchor()
         guard let call else { return }
         call.keepAlive = false

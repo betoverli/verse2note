@@ -63,7 +63,7 @@ export type CurrentUserState = {
 export function useCurrentUserState(): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
   // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
-  const { data, isPending } = authClient.useSession();
+  const { data, isPending, error } = authClient.useSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [online, setOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine,
@@ -93,13 +93,14 @@ export function useCurrentUserState(): CurrentUserState {
     return { user, isPending: false };
   }
   const cached = readSessionUser();
-  if (cached && (isPending || !online)) {
-    // Offline, the cache is the session we have. While the check is still in
-    // flight, it is only a leftover identity — keep isPending so the profile
-    // gate does not treat it as a confirmed login.
-    return { user: cached, isPending };
+  // Keep the cached identity when offline OR when get-session fails (server
+  // unreachable while navigator.onLine is still true). Never treat that as
+  // a sign-out — notes must stay editable.
+  const unreachable = !online || Boolean(error);
+  if (cached && (isPending || unreachable)) {
+    return { user: cached, isPending: isPending && !unreachable };
   }
-  if (!isPending && online) clearSessionUser();
+  if (!isPending && online && !error) clearSessionUser();
   return { user: null, isPending };
 }
 

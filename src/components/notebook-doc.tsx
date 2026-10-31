@@ -674,11 +674,19 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
         if (after) placeAfterContent(after);
         emit(true);
       }}
+      onPointerDown={(event) => {
+        // iOS WKWebView often swallows click on controls inside contenteditable.
+        // Handle remove on pointerdown so the × works under native chrome too.
+        const remove = (event.target as HTMLElement).closest<HTMLElement>("[data-remove-speaker]");
+        if (!remove?.dataset.removeSpeaker || readOnly) return;
+        event.preventDefault();
+        event.stopPropagation();
+        onRemoveSpeaker(remove.dataset.removeSpeaker);
+      }}
       onClick={(event) => {
         const remove = (event.target as HTMLElement).closest<HTMLElement>("[data-remove-speaker]");
         if (remove?.dataset.removeSpeaker) {
           event.preventDefault();
-          onRemoveSpeaker(remove.dataset.removeSpeaker);
           return;
         }
         const toggle = (event.target as HTMLElement).closest<HTMLElement>("[data-toggle-speaker]");

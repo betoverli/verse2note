@@ -197,6 +197,8 @@ export function NotebookEditor({
   const [draft, setDraft] = useState(note);
   const [picker, setPicker] = useState(false);
   const [people, setPeople] = useState(false);
+  /** When true, picking a speaker assigns the whole-note speaker (chip), not a section. */
+  const [pickNoteSpeaker, setPickNoteSpeaker] = useState(false);
   const [askSpeaker, setAskSpeaker] = useState<Speaker | null>(null);
   const [dropSpeaker, setDropSpeaker] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
@@ -330,8 +332,7 @@ export function NotebookEditor({
     setDropSpeaker(id);
   }
 
-  function confirmDropSpeaker() {
-    const id = dropSpeaker;
+  function confirmDropSpeaker(id: string) {
     if (!id) return;
     setDropSpeaker(null);
     const current = latest();
@@ -495,7 +496,7 @@ export function NotebookEditor({
       >
         <AppHeader
           pinned
-          title={draft.title || t(locale, "notebookMeeting")}
+          title=""
           backTo={fromGroup ? "/groups/$id" : "/notebook"}
           backParams={fromGroup ? { id: fromGroup } : undefined}
           compact={false}
@@ -558,6 +559,44 @@ export function NotebookEditor({
             className="w-full bg-transparent pt-1 text-[28px] leading-[1.15] font-bold tracking-[-0.022em] text-fg outline-none placeholder:text-subtle"
           />
         )}
+        {draft.speakerId ? (
+          <div className="note-whole-speaker flex items-center gap-1">
+            <button
+              type="button"
+              className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-full bg-fill/70 px-3 text-left active:opacity-80"
+              disabled={readOnly}
+              aria-label={t(locale, "notebookNoteSpeaker")}
+              onClick={() => {
+                if (readOnly) return;
+                setPickNoteSpeaker(true);
+                setPeople(true);
+              }}
+            >
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: speakers.find((item) => item.id === draft.speakerId)?.color ?? "#c4a574" }}
+                aria-hidden
+              />
+              <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-muted">
+                {speakers.find((item) => item.id === draft.speakerId)?.name ?? t(locale, "notebookNoteSpeaker")}
+              </span>
+            </button>
+            {readOnly ? null : (
+              <button
+                type="button"
+                className="note-whole-speaker-remove grid size-9 shrink-0 place-items-center rounded-full text-[18px] leading-none text-muted active:bg-fill"
+                aria-label={t(locale, "notebookRemoveSpeaker")}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  patch((current) => ({ ...current, speakerId: null }));
+                }}
+              >
+                ×
+              </button>
+            )}
+          </div>
+        ) : null}
         <NotebookDoc
           ref={docApi}
           blocks={draft.blocks}
@@ -746,7 +785,22 @@ export function NotebookEditor({
         </ViewportSheet>
       ) : null}
 
-      <NotebookSpeakerSheet open={people} onClose={() => setPeople(false)} onPick={addSpeaker} />
+      <NotebookSpeakerSheet
+        open={people}
+        onClose={() => {
+          setPeople(false);
+          setPickNoteSpeaker(false);
+        }}
+        onPick={(speaker) => {
+          if (pickNoteSpeaker) {
+            upsertLocalSpeaker(speaker);
+            patch((current) => ({ ...current, speakerId: speaker.id }));
+            setPickNoteSpeaker(false);
+            return;
+          }
+          addSpeaker(speaker);
+        }}
+      />
       {moreSheet ? (
         <ActionSheet
           cancelLabel={t(locale, "linkCancel")}
@@ -771,11 +825,19 @@ export function NotebookEditor({
           actions={[
             {
               label: t(locale, "notebookNoteSpeakerYes"),
-              onSelect: () => patch((current) => ({ ...current, speakerId: askSpeaker.id })),
+              // Capture id/name now — ActionSheet presents async on iOS and the
+              // askSpeaker state may clear before onSelect runs.
+              onSelect: () => {
+                const speaker = askSpeaker;
+                patch((current) => ({ ...current, speakerId: speaker.id }));
+              },
             },
             {
               label: t(locale, "notebookNoteSpeakerSection"),
-              onSelect: () => insertSpeakerSection(askSpeaker),
+              onSelect: () => {
+                const speaker = askSpeaker;
+                insertSpeakerSection(speaker);
+              },
             },
           ]}
         />
@@ -788,7 +850,7 @@ export function NotebookEditor({
             {
               label: t(locale, "notebookRemoveSpeaker"),
               destructive: true,
-              onSelect: confirmDropSpeaker,
+              onSelect: () => confirmDropSpeaker(dropSpeaker),
             },
           ]}
         />

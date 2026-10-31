@@ -118,6 +118,7 @@ export const upsertMyNote = createServerFn({ method: "POST" })
         updated_at = excluded.updated_at,
         speaker_id = excluded.speaker_id
       where notebook_notes.user_id = ${context.userId}
+        and notebook_notes.updated_at <= excluded.updated_at
     `;
     return { ok: true as const };
   });
@@ -146,12 +147,13 @@ export const upsertMySpeaker = createServerFn({ method: "POST" })
     const sql = await getSql();
     await sql`
       insert into notebook_speakers (id, user_id, name, color, updated_at)
-      values (${speaker.id}, ${context.userId}, ${speaker.name}, ${speaker.color}, now())
+      values (${speaker.id}, ${context.userId}, ${speaker.name}, ${speaker.color}, ${speaker.updatedAt}::timestamptz)
       on conflict (id) do update set
         name = excluded.name,
         color = excluded.color,
-        updated_at = now()
+        updated_at = excluded.updated_at
       where notebook_speakers.user_id = ${context.userId}
+        and notebook_speakers.updated_at <= excluded.updated_at
     `;
     return { ok: true as const };
   });

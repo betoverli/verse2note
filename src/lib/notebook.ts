@@ -126,11 +126,19 @@ export function notePreview(note: Note) {
 
 export function noteSpeakerIds(note: Note) {
   const ids = new Set<string>();
+  // Whole-note speaker (note.speakerId) and section speakers both count.
   if (note.speakerId) ids.add(note.speakerId);
   for (const block of note.blocks) {
     if (block.type === "speaker") ids.add(block.speakerId);
   }
   return [...ids];
+}
+
+/** True when the note is attributed to this speaker at note level or in a section. */
+export function noteIncludesSpeaker(note: Note, speakerId: string) {
+  if (!speakerId) return false;
+  if (note.speakerId === speakerId) return true;
+  return note.blocks.some((block) => block.type === "speaker" && block.speakerId === speakerId);
 }
 
 export function noteIsBare(note: Note) {
