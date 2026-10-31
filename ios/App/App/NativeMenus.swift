@@ -71,6 +71,9 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         let appearanceRaw = call.getString("appearance") ?? ""
         let items = Self.parseItems(call.getArray("items", JSObject.self) ?? [])
         let anchor = Self.parseAnchor(call.getObject("anchor"))
+        let placeholder = call.getString("placeholder") ?? ""
+        let defaultValue = call.getString("defaultValue") ?? ""
+        let okLabel = call.getString("okLabel") ?? items.first?.title ?? "OK"
 
         guard !items.isEmpty || style == "sheet" || style == "alert" || style == "prompt" else {
             call.reject("Menu sem itens.")
@@ -78,11 +81,9 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         DispatchQueue.main.async {
-            self.finish(cancelled: true)
-            self.resolved = false
-            self.activeCall = call
-            self.activeCallToken = ObjectIdentifier(call)
-            call.keepAlive = true
+            // Replace any in-flight call WITHOUT an animated dismiss→present
+            // race (that was silently dropping every UIAlertController on device).
+            self.replaceActiveCall(with: call)
 
             switch appearanceRaw {
             case "light": self.appearance = .light
@@ -91,52 +92,50 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             }
 
             guard let root = self.presentationView() else {
-                call.keepAlive = false
-                self.activeCall = nil
-                self.activeCallToken = nil
-                call.reject("Janela nativa indisponível.")
+                self.failPresent("Janela nativa indisponível.")
                 return
             }
             self.hostView = root
 
-            if style == "sheet" {
-                self.presentSheet(
+            self.preparePresenter { [weak self] in
+                guard let self, !self.resolved, self.activeCall === call else { return }
+
+                if style == "sheet" {
+                    self.presentSheet(
+                        on: root,
+                        title: title,
+                        message: message,
+                        cancelLabel: cancelLabel,
+                        items: items,
+                        anchor: anchor
+                    )
+                    return
+                }
+
+                if style == "alert" || style == "prompt" {
+                    self.presentAlert(
+                        on: root,
+                        title: title,
+                        message: message,
+                        cancelLabel: cancelLabel,
+                        okLabel: okLabel,
+                        prompt: style == "prompt",
+                        placeholder: placeholder,
+                        defaultValue: defaultValue,
+                        items: items,
+                        anchor: anchor
+                    )
+                    return
+                }
+
+                self.presentMenu(
                     on: root,
                     title: title,
-                    message: message,
                     cancelLabel: cancelLabel,
                     items: items,
                     anchor: anchor
                 )
-                return
             }
-
-            if style == "alert" || style == "prompt" {
-                let placeholder = call.getString("placeholder") ?? ""
-                let defaultValue = call.getString("defaultValue") ?? ""
-                let okLabel = call.getString("okLabel") ?? items.first?.title ?? "OK"
-                self.presentAlert(
-                    on: root,
-                    title: title,
-                    message: message,
-                    cancelLabel: cancelLabel,
-                    okLabel: okLabel,
-                    prompt: style == "prompt",
-                    placeholder: placeholder,
-                    defaultValue: defaultValue,
-                    items: items,
-                    anchor: anchor
-                )
-                return
-            }
-
-            self.presentMenu(
-                on: root,
-                title: title,
-                cancelLabel: cancelLabel,
-                items: items,
-                anchor: anchor
-            )
         }
     }
 
@@ -145,6 +144,80 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         if let host = bridge?.webView?.superview { return host }
         if let view = bridge?.viewController?.view { return view }
         return bridge?.webView
+    }
+
+    /// Topmost VC that can present — never present on a mid-dismiss controller.
+    private func topPresenter() -> UIViewController? {
+        guard var vc = bridge?.viewController else { return nil }
+        while let next = vc.presentedViewController, !next.isBeingDismissed {
+            vc = next
+        }
+        return vc
+    }
+
+    /// Cancel the previous plugin call and strip any alert without animation.
+    private func replaceActiveCall(with call: CAPPluginCall) {
+        presentFallbackWork?.cancel()
+        presentFallbackWork = nil
+        clearAnchorKeepingCall()
+
+        if let previous = activeCall, !resolved {
+            previous.keepAlive = false
+            var data = JSObject()
+            data["id"] = NSNull()
+            data["cancelled"] = true
+            data["replaced"] = true
+            previous.resolve(data)
+        }
+        activeCall = call
+        activeCallToken = ObjectIdentifier(call)
+        resolved = false
+        call.keepAlive = true
+    }
+
+    /// Dismiss any leftover UIAlertController without animation, then continue.
+    private func preparePresenter(then: @escaping () -> Void) {
+        guard let host = bridge?.viewController else {
+            then()
+            return
+        }
+        if let presented = host.presentedViewController as? UIAlertController {
+            presented.dismiss(animated: false) {
+                DispatchQueue.main.async(execute: then)
+            }
+            return
+        }
+        if host.presentedViewController != nil {
+            // Something else is up (Safari VC, etc.) — still try after a tick.
+            DispatchQueue.main.async(execute: then)
+            return
+        }
+        then()
+    }
+
+    private func presentAlertController(_ alert: UIAlertController, on root: UIView, anchor: CGRect) {
+        let sourceRect = anchorRect(anchor, in: root)
+        if let pop = alert.popoverPresentationController {
+            pop.sourceView = root
+            pop.sourceRect = sourceRect
+            pop.permittedArrowDirections = [.up, .down]
+        }
+
+        guard let controller = topPresenter() else {
+            failPresent("Controlador nativo indisponível.")
+            return
+        }
+        if controller.presentedViewController != nil {
+            // Still blocked — reject so JS falls back to the web sheet fast.
+            print("[NativeMenus] present blocked — already presenting \(String(describing: controller.presentedViewController))")
+            failPresent("Já há um modal nativo.")
+            return
+        }
+        controller.present(alert, animated: true) { [weak self] in
+            guard let self, !self.resolved else { return }
+            print("[NativeMenus] presented style=\(alert.preferredStyle == .alert ? "alert" : "sheet")")
+            self.notifyListeners("presented", data: [:])
+        }
     }
 
     private func presentSheet(
@@ -191,19 +264,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             self?.finish(cancelled: true)
         }
         sheet.addAction(cancel)
-
-        let sourceRect = anchorRect(anchor, in: root)
-        if let pop = sheet.popoverPresentationController {
-            pop.sourceView = root
-            pop.sourceRect = sourceRect
-            pop.permittedArrowDirections = [.up, .down]
-        }
-
-        guard let controller = bridge?.viewController else {
-            failPresent("Controlador nativo indisponível.")
-            return
-        }
-        controller.present(sheet, animated: true)
+        presentAlertController(sheet, on: root, anchor: anchor)
     }
 
     /// Centered `UIAlertController` — confirm/alert, or a single text-field prompt.
@@ -255,18 +316,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             self?.finish(cancelled: true)
         }
         alert.addAction(cancel)
-
-        // iPad still needs a source for .alert when presented as a popover in some embeds.
-        if let pop = alert.popoverPresentationController {
-            pop.sourceView = root
-            pop.sourceRect = anchorRect(anchor, in: root)
-        }
-
-        guard let controller = bridge?.viewController else {
-            failPresent("Controlador nativo indisponível.")
-            return
-        }
-        controller.present(alert, animated: true)
+        presentAlertController(alert, on: root, anchor: anchor)
     }
 
     private func presentMenu(
@@ -394,6 +444,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
                 self.anchorButton?.markPresented()
                 self.presentFallbackWork?.cancel()
                 self.presentFallbackWork = nil
+                self.notifyListeners("presented", data: [:])
                 return
             }
             guard dismissArmed else { return }
@@ -476,8 +527,17 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         activeCall = nil
         activeCallToken = nil
         clearAnchor()
-        if let controller = bridge?.viewController, controller.presentedViewController is UIAlertController {
-            controller.dismiss(animated: true)
+        // Dismiss without animation so a follow-up present (or web fallback)
+        // is not blocked mid-transition.
+        if let host = bridge?.viewController {
+            var walker: UIViewController? = host
+            while let current = walker {
+                if let alert = current.presentedViewController as? UIAlertController {
+                    alert.dismiss(animated: false)
+                    break
+                }
+                walker = current.presentedViewController
+            }
         }
         guard let call else { return }
         call.keepAlive = false
@@ -507,8 +567,14 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         activeCall = nil
         activeCallToken = nil
         clearAnchor()
+        if let host = bridge?.viewController,
+           let alert = host.presentedViewController as? UIAlertController
+        {
+            alert.dismiss(animated: false)
+        }
         guard let call else { return }
         call.keepAlive = false
+        print("[NativeMenus] failPresent \(message)")
         call.reject(message)
     }
 

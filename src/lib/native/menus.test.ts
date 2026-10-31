@@ -66,8 +66,10 @@ describe("native menus wiring", () => {
   it("TS wrapper marks failures and call sites fall back to web UI", () => {
     assert.match(wrapper, /failed\?:\s*boolean/);
     assert.match(wrapper, /PRESENT_HANG_TIMEOUT_MS/);
+    assert.match(wrapper, /PRESENTATION_CONFIRM_MS/);
     assert.match(wrapper, /failed:\s*true/);
     assert.match(wrapper, /\[NativeMenus\] present failed/);
+    assert.match(wrapper, /presentation not confirmed in time/);
     assert.match(sheet, /result\.failed/);
     assert.match(sheet, /setMode\("web"\)/);
   });
@@ -88,6 +90,16 @@ describe("native menus wiring", () => {
     assert.match(plugin, /isUserInteractionEnabled = true/);
     assert.match(plugin, /deadline: \.now\(\) \+ 0\.40/);
     assert.match(plugin, /\[NativeMenus\]/);
+  });
+
+  it("presents on the topmost VC without animated dismiss→present races", () => {
+    assert.match(plugin, /topPresenter/);
+    assert.match(plugin, /preparePresenter/);
+    assert.match(plugin, /replaceActiveCall/);
+    assert.match(plugin, /dismiss\(animated: false\)/);
+    assert.match(plugin, /notifyListeners\("presented"/);
+    assert.match(plugin, /pluginMethods/);
+    assert.match(plugin, /CAPPluginMethod\(name: "present"/);
   });
 });
 

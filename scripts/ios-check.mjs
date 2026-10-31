@@ -171,6 +171,16 @@ if (!nativeMenus.includes("alpha = 0.01") || !nativeMenus.includes("0.40")) {
 if (!nativeMenus.includes("ObjectIdentifier") || !nativeMenus.includes("dismiss ignored stale")) {
   errors.push("NativeMenus.dismiss tem de ignorar dismiss obsoleto (race do primeiro speaker / remover).");
 }
+if (!nativeMenus.includes("topPresenter") || !nativeMenus.includes("preparePresenter") || !nativeMenus.includes("replaceActiveCall")) {
+  errors.push("NativeMenus tem de apresentar no VC do topo sem race dismiss→present animado.");
+}
+if (!nativeMenus.includes('notifyListeners("presented"') && !nativeMenus.includes("notifyListeners(\"presented\"")) {
+  errors.push("NativeMenus tem de emitir o evento presented para o watchdog JS.");
+}
+const menusTs = read("src/lib/native/menus.ts");
+if (!menusTs.includes("PRESENTATION_CONFIRM_MS") || !menusTs.includes("presented")) {
+  errors.push("O wrapper NativeMenus tem de falhar rápido (~600ms) sem apresentação e cair no web.");
+}
 const noteEditor = read("src/components/notebook-editor.tsx");
 if (noteEditor.includes("nativeBar={false}") || noteEditor.includes("presentNativeMenu")) {
   errors.push("O … da nota tem de usar trailingMenu no chrome nativo, não NativeMenus.present / nativeBar={false}.");
@@ -187,6 +197,9 @@ if (!noteEditor.includes("note-whole-speaker") || !noteEditor.includes("pickNote
 const viewportSheet = read("src/components/viewport-sheet.tsx");
 if (!viewportSheet.includes("settledRef") || !viewportSheet.includes("presented.map")) {
   errors.push("ActionSheet tem de aplicar onSelect mesmo após remount (settledRef + snapshot).");
+}
+if (!viewportSheet.includes("result.failed") || !viewportSheet.includes('setMode("web")')) {
+  errors.push("ActionSheet tem de cair no sheet web quando o native falha.");
 }
 const notebookTs = read("src/lib/notebook.ts");
 if (!notebookTs.includes("noteIncludesSpeaker") || !notebookTs.includes("note.speakerId === speakerId")) {
