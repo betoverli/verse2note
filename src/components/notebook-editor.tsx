@@ -200,7 +200,6 @@ export function NotebookEditor({
   /** When true, picking a speaker assigns the whole-note speaker (chip), not a section. */
   const [pickNoteSpeaker, setPickNoteSpeaker] = useState(false);
   const [askSpeaker, setAskSpeaker] = useState<Speaker | null>(null);
-  const [dropSpeaker, setDropSpeaker] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(draft.blocks[0] && draft.blocks[0].type !== "speaker" ? draft.blocks[0].id : null);
   const focusIdRef = useRef(focusId);
   focusIdRef.current = focusId;
@@ -328,15 +327,13 @@ export function NotebookEditor({
     insertSpeakerSection(speaker);
   }
 
+  /** Immediate removal — no ActionSheet. The native confirm path never
+   * reliably resolved on device (PR #29), so × looked dead. */
   function removeSpeaker(id: string) {
-    setDropSpeaker(id);
-  }
-
-  function confirmDropSpeaker(id: string) {
     if (!id) return;
-    setDropSpeaker(null);
     const current = latest();
     const idx = current.blocks.findIndex((block) => block.id === id);
+    if (idx < 0) return;
     const prev = idx > 0 ? current.blocks[idx - 1] : current.blocks[idx + 1];
     updateBlocks((blocks) => {
       const out = blocks.filter((block) => block.id !== id);
@@ -349,6 +346,10 @@ export function NotebookEditor({
       setFocusId(prev?.id ?? null);
       setActive(null);
     }
+  }
+
+  function clearNoteSpeaker() {
+    patch((current) => ({ ...current, speakerId: null }));
   }
 
   function currentLineId() {
@@ -584,15 +585,15 @@ export function NotebookEditor({
             {readOnly ? null : (
               <button
                 type="button"
-                className="note-whole-speaker-remove grid size-9 shrink-0 place-items-center rounded-full text-[18px] leading-none text-muted active:bg-fill"
+                className="note-whole-speaker-remove grid size-11 shrink-0 place-items-center rounded-full text-[22px] leading-none text-muted active:bg-fill"
                 aria-label={t(locale, "notebookRemoveSpeaker")}
-                onPointerDown={(event) => {
+                onClick={(event) => {
                   event.preventDefault();
                   event.stopPropagation();
-                  patch((current) => ({ ...current, speakerId: null }));
+                  clearNoteSpeaker();
                 }}
               >
-                ×
+                <span aria-hidden>×</span>
               </button>
             )}
           </div>
@@ -838,19 +839,6 @@ export function NotebookEditor({
                 const speaker = askSpeaker;
                 insertSpeakerSection(speaker);
               },
-            },
-          ]}
-        />
-      ) : null}
-      {dropSpeaker ? (
-        <ActionSheet
-          cancelLabel={t(locale, "linkCancel")}
-          onClose={() => setDropSpeaker(null)}
-          actions={[
-            {
-              label: t(locale, "notebookRemoveSpeaker"),
-              destructive: true,
-              onSelect: () => confirmDropSpeaker(dropSpeaker),
             },
           ]}
         />

@@ -138,9 +138,11 @@ describe("native note … trailing UIMenu", () => {
     assert.doesNotMatch(note, /title=\{draft\.title/);
   });
 
-  it("first-speaker and remove ActionSheets capture ids for the native present race", () => {
-    assert.match(note, /confirmDropSpeaker\(dropSpeaker\)/);
+  it("first-speaker ActionSheet snapshots handlers; section remove is immediate (no confirm)", () => {
     assert.match(note, /pickNoteSpeaker/);
+    assert.match(note, /Immediate removal/);
+    assert.doesNotMatch(note, /dropSpeaker/);
+    assert.doesNotMatch(note, /confirmDropSpeaker/);
     assert.match(sheet, /settledRef/);
     assert.match(sheet, /presented\.map/);
     assert.match(menusSwift, /ObjectIdentifier/);

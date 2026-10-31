@@ -674,22 +674,29 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
         if (after) placeAfterContent(after);
         emit(true);
       }}
-      onPointerDown={(event) => {
-        // iOS WKWebView often swallows click on controls inside contenteditable.
-        // Handle remove on pointerdown so the × works under native chrome too.
-        const remove = (event.target as HTMLElement).closest<HTMLElement>("[data-remove-speaker]");
-        if (!remove?.dataset.removeSpeaker || readOnly) return;
+      onPointerDownCapture={(event) => {
+        // Capture phase + Element resolution: on iOS the event target is often
+        // the Text node "×", which has no .closest — that made remove a no-op.
+        if (readOnly) return;
+        const node = event.target;
+        const el = node instanceof Element ? node : node instanceof Node ? node.parentElement : null;
+        const remove = el?.closest<HTMLElement>("[data-remove-speaker]");
+        const id = remove?.dataset.removeSpeaker;
+        if (!id) return;
         event.preventDefault();
         event.stopPropagation();
-        onRemoveSpeaker(remove.dataset.removeSpeaker);
+        onRemoveSpeaker(id);
       }}
       onClick={(event) => {
-        const remove = (event.target as HTMLElement).closest<HTMLElement>("[data-remove-speaker]");
+        const node = event.target;
+        const el = node instanceof Element ? node : node instanceof Node ? node.parentElement : null;
+        const remove = el?.closest<HTMLElement>("[data-remove-speaker]");
         if (remove?.dataset.removeSpeaker) {
           event.preventDefault();
+          event.stopPropagation();
           return;
         }
-        const toggle = (event.target as HTMLElement).closest<HTMLElement>("[data-toggle-speaker]");
+        const toggle = el?.closest<HTMLElement>("[data-toggle-speaker]");
         if (toggle) {
           event.preventDefault();
           const section = toggle.closest<HTMLElement>("[data-speaker-block]");
@@ -707,7 +714,7 @@ export const NotebookDoc = forwardRef<NotebookDocHandle, NotebookDocProps>(funct
           return;
         }
         if (!window.getSelection()?.isCollapsed) return;
-        const pill = (event.target as HTMLElement).closest<HTMLElement>(".ref-pill");
+        const pill = el?.closest<HTMLElement>(".ref-pill");
         if (!pill?.dataset.ref) return;
         const passage = passageFromDataset(pill.dataset.ref);
         if (!passage) return;
