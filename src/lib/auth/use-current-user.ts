@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { authClient, authEnabled } from "./client";
 import { clearSessionUser, readSessionUser, writeSessionUser } from "./session-cache";
+import { getOnlineStatus, subscribeOnlineStatus } from "@/lib/online-status";
 
 /** Normalized user shape used across the app, auth on or off. */
 export type AppUser = {
@@ -65,20 +66,9 @@ export function useCurrentUserState(): CurrentUserState {
   // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending, error } = authClient.useSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [online, setOnline] = useState(
-    typeof navigator === "undefined" ? true : navigator.onLine,
-  );
+  const [online, setOnline] = useState(() => getOnlineStatus());
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
-    return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
-    };
-  }, []);
+  useEffect(() => subscribeOnlineStatus(setOnline), []);
   const user = data?.user
     ? {
         id: data.user.id,
@@ -94,13 +84,15 @@ export function useCurrentUserState(): CurrentUserState {
   }
   const cached = readSessionUser();
   // Keep the cached identity when offline OR when get-session fails (server
-  // unreachable while navigator.onLine is still true). Never treat that as
-  // a sign-out — notes must stay editable.
+  // unreachable while probes still look online). Never treat that as a
+  // sign-out — notes must stay editable, and splash must not hang.
   const unreachable = !online || Boolean(error);
   if (cached && (isPending || unreachable)) {
-    return { user: cached, isPending: isPending && !unreachable };
+    return { user: cached, isPending: false };
   }
   if (!isPending && online && !error) clearSessionUser();
+  // Offline with no cache: stop pending so navigation/splash can proceed.
+  if (!online && isPending) return { user: null, isPending: false };
   return { user: null, isPending };
 }
 

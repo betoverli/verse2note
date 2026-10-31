@@ -72,7 +72,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         let items = Self.parseItems(call.getArray("items", JSObject.self) ?? [])
         let anchor = Self.parseAnchor(call.getObject("anchor"))
 
-        guard !items.isEmpty || style == "sheet" else {
+        guard !items.isEmpty || style == "sheet" || style == "alert" || style == "prompt" else {
             call.reject("Menu sem itens.")
             return
         }
@@ -105,6 +105,25 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
                     title: title,
                     message: message,
                     cancelLabel: cancelLabel,
+                    items: items,
+                    anchor: anchor
+                )
+                return
+            }
+
+            if style == "alert" || style == "prompt" {
+                let placeholder = call.getString("placeholder") ?? ""
+                let defaultValue = call.getString("defaultValue") ?? ""
+                let okLabel = call.getString("okLabel") ?? items.first?.title ?? "OK"
+                self.presentAlert(
+                    on: root,
+                    title: title,
+                    message: message,
+                    cancelLabel: cancelLabel,
+                    okLabel: okLabel,
+                    prompt: style == "prompt",
+                    placeholder: placeholder,
+                    defaultValue: defaultValue,
                     items: items,
                     anchor: anchor
                 )
@@ -185,6 +204,69 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         controller.present(sheet, animated: true)
+    }
+
+    /// Centered `UIAlertController` — confirm/alert, or a single text-field prompt.
+    private func presentAlert(
+        on root: UIView,
+        title: String?,
+        message: String?,
+        cancelLabel: String,
+        okLabel: String,
+        prompt: Bool,
+        placeholder: String,
+        defaultValue: String,
+        items: [NativeMenuItem],
+        anchor: CGRect
+    ) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.overrideUserInterfaceStyle = appearance
+
+        if prompt {
+            alert.addTextField { field in
+                field.placeholder = placeholder
+                field.text = defaultValue
+                field.clearButtonMode = .whileEditing
+                field.autocapitalizationType = .sentences
+                field.returnKeyType = .done
+            }
+            let ok = UIAlertAction(title: okLabel, style: .default) { [weak self, weak alert] _ in
+                let text = alert?.textFields?.first?.text ?? ""
+                self?.finish(id: "ok", value: text)
+            }
+            alert.addAction(ok)
+        } else if items.isEmpty {
+            let ok = UIAlertAction(title: okLabel, style: .default) { [weak self] _ in
+                self?.finish(id: "ok")
+            }
+            alert.addAction(ok)
+        } else {
+            for item in items {
+                let style: UIAlertAction.Style = item.destructive ? .destructive : .default
+                let action = UIAlertAction(title: item.title, style: style) { [weak self] _ in
+                    self?.finish(id: item.id)
+                }
+                action.isEnabled = !item.disabled
+                alert.addAction(action)
+            }
+        }
+
+        let cancel = UIAlertAction(title: cancelLabel, style: .cancel) { [weak self] _ in
+            self?.finish(cancelled: true)
+        }
+        alert.addAction(cancel)
+
+        // iPad still needs a source for .alert when presented as a popover in some embeds.
+        if let pop = alert.popoverPresentationController {
+            pop.sourceView = root
+            pop.sourceRect = anchorRect(anchor, in: root)
+        }
+
+        guard let controller = bridge?.viewController else {
+            failPresent("Controlador nativo indisponível.")
+            return
+        }
+        controller.present(alert, animated: true)
     }
 
     private func presentMenu(
@@ -379,7 +461,7 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         return rect
     }
 
-    private func finish(id: String? = nil, cancelled: Bool = false) {
+    private func finish(id: String? = nil, cancelled: Bool = false, value: String? = nil) {
         guard !resolved else {
             clearAnchor()
             return
@@ -406,6 +488,9 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         } else {
             data["id"] = NSNull()
             data["cancelled"] = cancelled
+        }
+        if let value {
+            data["value"] = value
         }
         call.resolve(data)
     }

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Pencil, Plus, Share2, Trash2, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { noteIncludesSpeaker, noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
@@ -9,7 +9,7 @@ import { listMyNoteGroups } from "@/lib/notebook-groups";
 import type { Note } from "@/lib/notebook";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useAppStore } from "@/lib/store";
-import { SendToFriendButton } from "@/components/send-to-friend";
+import { shareNote } from "@/lib/share-note";
 import { ActionSheet } from "@/components/viewport-sheet";
 import { NotebookSpeakerSheet } from "@/components/notebook-speaker-sheet";
 import { ViewportFixed } from "@/components/viewport-fixed";
@@ -29,7 +29,6 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
   const speakers = useAppStore((s) => s.speakers);
   const navigate = useNavigate();
   const preview = notePreview(note);
-  const [share, setShare] = useState(false);
   const [askDelete, setAskDelete] = useState(false);
   const [gone, setGone] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -41,6 +40,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
   const x = useRef(0);
   const dragged = useRef(false);
   const width = useRef(1);
+  const origin = useRef({ x: 0, y: 0, lock: "" as "" | "h" | "v" });
   const paintRef = useRef<(value: number, animate?: boolean) => void>(() => {});
   const finishRef = useRef<(dir: "share" | "delete" | "reset") => void>(() => {});
 
@@ -69,7 +69,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
       paint(max, true);
       window.setTimeout(() => {
         paint(0, true);
-        setShare(true);
+        void shareNote(note, speakers, t(locale, "notebookMeeting"));
       }, 220);
       return;
     }
@@ -83,47 +83,44 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
     const el = layer.current;
     if (!el) return;
 
-    let originX = 0;
-    let originY = 0;
-    let lock: "" | "h" | "v" = "";
-    let pointerId = -1;
-
-    const onDown = (event: PointerEvent) => {
-      if (event.button) return;
-      width.current = wrap.current?.getBoundingClientRect().width || 1;
-      originX = event.clientX;
-      originY = event.clientY;
-      lock = "";
-      pointerId = event.pointerId;
+    const point = (event: TouchEvent | PointerEvent) => {
+      if ("touches" in event) {
+        const touch = event.touches[0] ?? event.changedTouches[0];
+        return { x: touch?.clientX ?? 0, y: touch?.clientY ?? 0 };
+      }
+      return { x: event.clientX, y: event.clientY };
     };
 
-    const onMove = (event: PointerEvent) => {
-      if (event.pointerId !== pointerId || lock === "v") return;
-      const dx = event.clientX - originX;
-      const dy = event.clientY - originY;
-      if (!lock) {
+    const onStart = (event: TouchEvent | PointerEvent) => {
+      if ("button" in event && event.button) return;
+      width.current = wrap.current?.getBoundingClientRect().width || 1;
+      const p = point(event);
+      origin.current = { x: p.x, y: p.y, lock: "" };
+    };
+
+    const onMove = (event: TouchEvent | PointerEvent) => {
+      if (origin.current.lock === "v") return;
+      const p = point(event);
+      const dx = p.x - origin.current.x;
+      const dy = p.y - origin.current.y;
+      if (!origin.current.lock) {
         const next = lockSwipe(dx, dy);
         if (!next) return;
-        lock = next;
-        if (lock !== "h") return;
-        try {
-          el.setPointerCapture(event.pointerId);
-        } catch {
-          /* pointer already released */
-        }
+        origin.current.lock = next;
+        if (next !== "h") return;
       }
+      if (origin.current.lock !== "h") return;
+      // Non-passive touchmove + preventDefault so WKWebView does not steal the
+      // gesture for vertical list scroll (pointer-only was broken on iOS).
+      event.preventDefault();
       const max = width.current;
       paintRef.current(Math.max(-max, Math.min(max, dx)));
     };
 
-    const onUp = (event: PointerEvent) => {
-      if (event.pointerId !== pointerId) return;
-      pointerId = -1;
-      const wasHorizontal = lock === "h";
-      lock = "";
+    const onEnd = () => {
+      const wasHorizontal = origin.current.lock === "h";
+      origin.current.lock = "";
       if (!wasHorizontal) return;
-      // A touchend that preventDefaulted used to swallow the click. Pointer
-      // events do not, so ignore the click that follows a sideways drag.
       dragged.current = true;
       window.setTimeout(() => {
         dragged.current = false;
@@ -135,23 +132,31 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
       else finishRef.current("reset");
     };
 
-    const onCancel = (event: PointerEvent) => {
-      if (event.pointerId !== pointerId) return;
-      pointerId = -1;
-      const wasHorizontal = lock === "h";
-      lock = "";
-      if (wasHorizontal) finishRef.current("reset");
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd);
+    el.addEventListener("touchcancel", onEnd);
+    const onPointerStart = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      onStart(event);
     };
-
-    el.addEventListener("pointerdown", onDown);
-    el.addEventListener("pointermove", onMove);
-    el.addEventListener("pointerup", onUp);
-    el.addEventListener("pointercancel", onCancel);
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      onMove(event);
+    };
+    el.addEventListener("pointerdown", onPointerStart);
+    el.addEventListener("pointermove", onPointerMove);
+    el.addEventListener("pointerup", onEnd);
+    el.addEventListener("pointercancel", onEnd);
     return () => {
-      el.removeEventListener("pointerdown", onDown);
-      el.removeEventListener("pointermove", onMove);
-      el.removeEventListener("pointerup", onUp);
-      el.removeEventListener("pointercancel", onCancel);
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+      el.removeEventListener("pointerdown", onPointerStart);
+      el.removeEventListener("pointermove", onPointerMove);
+      el.removeEventListener("pointerup", onEnd);
+      el.removeEventListener("pointercancel", onEnd);
     };
   }, [note.id]);
 
@@ -165,7 +170,7 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
         aria-hidden
       >
         <span ref={shareIcon} className="inline-flex">
-          <UserPlus className="size-6" />
+          <Share2 className="size-6" />
         </span>
       </div>
       <div
@@ -213,9 +218,9 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
           ) : null}
         </div>
       </div>
-      <SendToFriendButton kind="note" targetId={note.id} hideTrigger open={share} onOpenChange={setShare} />
       {askDelete ? (
         <ActionSheet
+          variant="alert"
           message={t(locale, "notebookDeleteAsk")}
           cancelLabel={t(locale, "linkCancel")}
           onClose={() => setAskDelete(false)}

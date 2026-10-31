@@ -12,6 +12,7 @@ import { UsagePing } from "@/components/usage-ping";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { takeInvite } from "@/lib/invite";
 import { joinPlanGroup } from "@/lib/plan-groups";
+import { getOnlineStatus, subscribeOnlineStatus } from "@/lib/online-status";
 import { syncWindowControlsPad } from "@/lib/platform";
 import { useAppStore } from "@/lib/store";
 
@@ -45,6 +46,7 @@ export function AppShell() {
   const cloudProfileOk = useAppStore((s) => s.cloudProfileOk);
   const startPlan = useAppStore((s) => s.startPlan);
   const { user, isPending } = useCurrentUserState();
+  const [online, setOnline] = useState(() => getOnlineStatus());
   const invitePage = pathname.startsWith("/g/");
   const publicPage =
     PUBLIC.has(pathname) ||
@@ -55,7 +57,8 @@ export function AppShell() {
     pathname.startsWith("/n/");
   const [hydrated, setHydrated] = useState(publicPage);
   const [minTime, setMinTime] = useState(publicPage);
-  const waitingCloud = Boolean(!onboarded && user && !cloudHydrated && !isPending);
+  // Never block the shell on cloud when offline — local notes/session are enough.
+  const waitingCloud = Boolean(online && !onboarded && user && !cloudHydrated && !isPending);
   const showSplash = !publicPage && (!hydrated || !minTime || waitingCloud);
   const showOnboarding = !publicPage && !showSplash && !onboarded;
   const needsProfile = Boolean(user && !user.isDevFallback && cloudHydrated && !isPending && !cloudProfileOk);
@@ -75,11 +78,15 @@ export function AppShell() {
     return api.onFinishHydration(() => setHydrated(true));
   }, []);
 
+  useEffect(() => subscribeOnlineStatus(setOnline), []);
+
   useEffect(() => {
     if (publicPage) return;
-    const timer = window.setTimeout(() => setMinTime(true), 450);
+    // Offline: skip the artificial splash delay so navigation stays snappy.
+    const delay = online ? 450 : 0;
+    const timer = window.setTimeout(() => setMinTime(true), delay);
     return () => window.clearTimeout(timer);
-  }, [publicPage]);
+  }, [publicPage, online]);
 
   useLayoutEffect(() => {
     document.documentElement.classList.toggle("has-tab-bar", Boolean(tabs));

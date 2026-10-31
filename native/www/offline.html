@@ -11,6 +11,7 @@
       h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 0.6rem; }
       p { margin: 0 0 1.25rem; color: rgb(235 235 245 / 60%); }
       button { appearance: none; border: 0; border-radius: 14px; background: #0a84ff; color: #fff; font: inherit; font-weight: 600; min-height: 44px; padding: 0.7rem 1.1rem; }
+      .quiet { margin-top: 1rem; background: transparent; color: rgb(235 235 245 / 70%); font-weight: 500; }
     </style>
   </head>
   <body>
@@ -19,30 +20,52 @@
         <h1>Sem ligação</h1>
         <p>
           Não foi possível abrir o Verse2Note. Depois da primeira abertura com
-          internet, o caderno e o picker ficam em cache. Confira a ligação e
-          tente de novo.
+          internet, o caderno fica em cache e funciona offline. Confira a ligação
+          e tente de novo.
         </p>
         <button type="button" id="retry">Tentar de novo</button>
+        <button type="button" id="cached" class="quiet">Abrir cache</button>
       </div>
     </main>
     <script>
       (function () {
+        var ORIGIN = "https://verse2note.com";
+        var TARGETS = [ORIGIN + "/notebook", ORIGIN + "/app", ORIGIN + "/"];
         var button = document.getElementById("retry");
-        function go() {
-          location.replace("https://verse2note.com/notebook");
+        var cached = document.getElementById("cached");
+
+        function go(url) {
+          location.replace(url || TARGETS[0]);
         }
-        button.addEventListener("click", go);
-        // Auto-retry a few times when the radio comes back.
+
+        button.addEventListener("click", function () {
+          go(TARGETS[0]);
+        });
+        cached.addEventListener("click", function () {
+          // Hit the hosted origin so a previously registered service worker
+          // can serve the cached shell even while offline.
+          go(TARGETS[0]);
+        });
+
+        // Prefer the service-worker cache as soon as the radio looks up, or
+        // when a prior install already registered for verse2note.com.
         var tries = 0;
         var timer = setInterval(function () {
           tries += 1;
           if (navigator.onLine) {
             clearInterval(timer);
-            go();
+            go(TARGETS[0]);
             return;
           }
-          if (tries >= 12) clearInterval(timer);
-        }, 2500);
+          if (tries >= 16) clearInterval(timer);
+        }, 2000);
+
+        // Opportunistic: if SW controls this after a prior session, jump in.
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function () {
+            /* local file origin — registrations live on verse2note.com */
+          }).catch(function () {});
+        }
       })();
     </script>
   </body>

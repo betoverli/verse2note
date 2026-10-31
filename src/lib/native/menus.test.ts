@@ -72,6 +72,17 @@ describe("native menus wiring", () => {
     assert.match(sheet, /setMode\("web"\)/);
   });
 
+  it("exposes alert and prompt (UIAlertController + text field) for native dialogs", () => {
+    assert.match(plugin, /style == "alert"/);
+    assert.match(plugin, /style == "prompt"/);
+    assert.match(plugin, /addTextField/);
+    assert.match(plugin, /preferredStyle: \.alert/);
+    assert.match(wrapper, /"alert" \| "prompt"/);
+    assert.match(wrapper, /presentNativePrompt/);
+    assert.match(wrapper, /presentNativeAlert/);
+    assert.match(sheet, /variant === "alert"/);
+  });
+
   it("uses a barely-visible interactive anchor and 400ms alert fallback", () => {
     assert.match(plugin, /alpha = 0\.01/);
     assert.match(plugin, /isUserInteractionEnabled = true/);
@@ -98,6 +109,17 @@ describe("native FAB compose menu", () => {
     assert.match(home, /notebookImport/);
     assert.match(home, /menu:\s*composeMenu/);
     assert.match(home, /ActionSheet/);
+  });
+
+  it("note list swipe uses non-passive touchmove and native Share", () => {
+    assert.match(home, /passive:\s*false/);
+    assert.match(home, /touchmove/);
+    assert.match(home, /preventDefault/);
+    assert.match(home, /shareNote/);
+    assert.doesNotMatch(home, /SendToFriendButton/);
+    const share = readFileSync(new URL("../share-note.ts", import.meta.url), "utf8");
+    assert.match(share, /@capacitor\/share/);
+    assert.match(share, /Share\.share/);
   });
 });
 

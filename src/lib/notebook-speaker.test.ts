@@ -34,4 +34,11 @@ describe("note speaker attribution", () => {
     assert.match(doc, /node instanceof Element/);
     assert.match(doc, /parentElement/);
   });
+
+  it("asks whole-vs-section on the first speaker and inserts a visible section on empty notes", () => {
+    assert.match(notebook, /export function noteNeedsSpeakerAsk/);
+    assert.match(editor, /noteNeedsSpeakerAsk\(latest\(\)\)/);
+    assert.match(editor, /noteIsBare\(current\)/);
+    assert.match(editor, /return \[block, emptyLine\(\)\]/);
+  });
 });

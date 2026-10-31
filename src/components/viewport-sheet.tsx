@@ -84,9 +84,9 @@ export type SheetAction = {
   destructive?: boolean;
 };
 
-/** iOS action sheet: inset groups, separate Cancel, tint and destructive rows.
- * On Capacitor iOS this becomes a native `UIAlertController` action sheet;
- * web and Android keep the HTML sheet. */
+/** iOS action sheet / alert: inset groups, separate Cancel, tint and destructive rows.
+ * On Capacitor iOS this becomes a native `UIAlertController` (action sheet or
+ * centered alert); web and Android keep the HTML sheet. */
 export function ActionSheet({
   title,
   message,
@@ -94,6 +94,7 @@ export function ActionSheet({
   cancelLabel,
   onClose,
   anchor,
+  variant = "sheet",
 }: {
   title?: string;
   message?: string;
@@ -102,6 +103,8 @@ export function ActionSheet({
   onClose: () => void;
   /** Optional element whose rect anchors the native popover (iPad). */
   anchor?: Element | null;
+  /** `"alert"` → centered UIAlertController; default is the bottom action sheet. */
+  variant?: "sheet" | "alert";
 }) {
   // Browser/Android paint the HTML sheet immediately. Capacitor iOS waits for
   // the plugin so the web sheet never flashes under the native one.
@@ -135,7 +138,7 @@ export function ActionSheet({
         onSelect: action.onSelect,
       }));
       const result = await presentNativeMenu({
-        style: "sheet",
+        style: variant === "alert" ? "alert" : "sheet",
         title,
         message,
         cancelLabel,
