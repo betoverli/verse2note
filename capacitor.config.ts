@@ -1,10 +1,13 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
- * The iOS app is a native shell. The WebView loads the hosted site so the
- * web server keeps serving browsers. Override the URL at sync time with
- * CAPACITOR_SERVER_URL (must be https for App Transport Security and for
- * the __Host- session cookies). http://verse2note.com already 308s to https.
+ * The iOS app is a native shell. The WebView loads the hosted site so Better
+ * Auth session cookies (__Host-, Secure) and Google return stay on
+ * https://verse2note.com — bundling the SPA under capacitor:// would break
+ * that. Notes are local-first (zustand + outbox); the service worker caches
+ * the app shell after the first online open; offline.html is the cold-start
+ * fallback. Override the URL at sync time with CAPACITOR_SERVER_URL (must be
+ * https). http://verse2note.com already 308s to https.
  */
 const serverUrl = (process.env.CAPACITOR_SERVER_URL || "https://verse2note.com").replace(/\/+$/, "");
 const cleartext = serverUrl.startsWith("http://");

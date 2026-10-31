@@ -14,25 +14,9 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(LiquidChromePlugin())
         bridge?.registerPluginInstance(NativeMenusPlugin())
         tuneDocumentScroll()
-        let source = """
-        (function () {
-          try {
-            if (!('serviceWorker' in navigator)) return;
-            var sw = navigator.serviceWorker;
-            sw.register = function () {
-              return Promise.resolve({
-                unregister: function () { return Promise.resolve(true); },
-                scope: '/'
-              });
-            };
-            sw.getRegistrations().then(function (regs) {
-              regs.forEach(function (reg) { reg.unregister(); });
-            }).catch(function () {});
-          } catch (e) {}
-        })();
-        """
-        let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
-        webView?.configuration.userContentController.addUserScript(script)
+        // Allow the site's service worker so notebook / app-shell routes stay
+        // available after the first online open. Auth still uses the hosted
+        // HTTPS origin (bearer + cookies); the SW must never cache /api/*.
     }
 
     override func viewDidLayoutSubviews() {

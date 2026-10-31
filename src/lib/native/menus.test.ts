@@ -103,10 +103,12 @@ describe("native FAB compose menu", () => {
 
 describe("native note … trailing UIMenu", () => {
   const chrome = readFileSync(new URL("../../../ios/App/App/LiquidChrome.swift", import.meta.url), "utf8");
+  const menusSwift = readFileSync(new URL("../../../ios/App/App/NativeMenus.swift", import.meta.url), "utf8");
   const bridge = readFileSync(new URL("../../components/native-chrome.tsx", import.meta.url), "utf8");
   const header = readFileSync(new URL("../../components/app-header.tsx", import.meta.url), "utf8");
   const store = readFileSync(new URL("./chrome-store.ts", import.meta.url), "utf8");
   const note = readFileSync(new URL("../../components/notebook-editor.tsx", import.meta.url), "utf8");
+  const sheet = readFileSync(new URL("../../components/viewport-sheet.tsx", import.meta.url), "utf8");
   const css = readFileSync(new URL("../../styles.css", import.meta.url), "utf8");
 
   it("attaches UIMenu to the Liquid Glass trailing … button like the FAB", () => {
@@ -128,6 +130,21 @@ describe("native note … trailing UIMenu", () => {
     assert.match(note, /setMoreSheet\(true\)/);
     assert.doesNotMatch(note, /presentNativeMenu/);
     assert.doesNotMatch(note, /nativeBar=\{false\}/);
+  });
+
+  it("note editor keeps the title only in the body, not the native/web top bar", () => {
+    assert.match(note, /title=""/);
+    assert.match(note, /note-whole-speaker/);
+    assert.doesNotMatch(note, /title=\{draft\.title/);
+  });
+
+  it("first-speaker and remove ActionSheets capture ids for the native present race", () => {
+    assert.match(note, /confirmDropSpeaker\(dropSpeaker\)/);
+    assert.match(note, /pickNoteSpeaker/);
+    assert.match(sheet, /settledRef/);
+    assert.match(sheet, /presented\.map/);
+    assert.match(menusSwift, /ObjectIdentifier/);
+    assert.match(menusSwift, /dismiss ignored stale/);
   });
 
   it("collapses note HTML chrome under native-top so the tap hits the native button", () => {

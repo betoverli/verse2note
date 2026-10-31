@@ -1,4 +1,4 @@
-const CACHE = "verse2note-v14";
+const CACHE = "verse2note-v15";
 
 const PRECACHE = [
   "/",
@@ -56,6 +56,13 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+function putCache(request, response) {
+  const cacheControl = response.headers.get("cache-control") ?? "";
+  if (!response.ok || cacheControl.includes("no-store") || cacheControl.includes("private")) return;
+  const copy = response.clone();
+  void caches.open(CACHE).then((cache) => cache.put(request, copy));
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
@@ -84,26 +91,51 @@ self.addEventListener("fetch", (event) => {
   }
   if (request.method !== "GET") return;
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/assets/")) return;
+  // Auth, server functions, and APIs must hit the network — never the cache.
+  if (url.pathname.startsWith("/api/")) return;
+
   const dest = request.destination;
-  if (dest === "script" || dest === "style" || dest === "worker" || dest === "font") return;
   const accept = request.headers.get("accept") ?? "";
+  const isAsset =
+    dest === "script" ||
+    dest === "style" ||
+    dest === "worker" ||
+    dest === "font" ||
+    url.pathname.startsWith("/assets/") ||
+    url.pathname.startsWith("/fonts/");
+
+  if (isAsset) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const fetched = fetch(request)
+          .then((response) => {
+            putCache(request, response);
+            return response;
+          })
+          .catch(() => cached || Response.error());
+        return cached || fetched;
+      }),
+    );
+    return;
+  }
+
   if (accept.includes("application/json")) return;
+
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const cacheControl = response.headers.get("cache-control") ?? "";
-        if (response.ok && !cacheControl.includes("no-store") && !cacheControl.includes("private")) {
-          const copy = response.clone();
-          void caches.open(CACHE).then((cache) => cache.put(request, copy));
-        }
+        putCache(request, response);
         return response;
       })
       .catch(async () => {
         const cached = await caches.match(request);
         if (cached) return cached;
         if (request.mode === "navigate") {
-          return (await caches.match("/app")) || (await caches.match("/"));
+          return (
+            (await caches.match("/notebook")) ||
+            (await caches.match("/app")) ||
+            (await caches.match("/"))
+          );
         }
         return Response.error();
       }),

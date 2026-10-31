@@ -110,6 +110,7 @@ export function ActionSheet({
   );
   const onCloseRef = useRef(onClose);
   const actionsRef = useRef(actions);
+  const settledRef = useRef(false);
   onCloseRef.current = onClose;
   actionsRef.current = actions;
 
@@ -124,34 +125,53 @@ export function ActionSheet({
         return;
       }
       setMode("native");
+      // Snapshot handlers at present time so a later parent render cannot
+      // replace onSelect with a stale closure (e.g. dropSpeaker cleared).
+      const presented = actionsRef.current.map((action, index) => ({
+        id: `action-${index}`,
+        title: action.label,
+        destructive: action.destructive,
+        symbol: action.destructive ? "trash" : undefined,
+        onSelect: action.onSelect,
+      }));
       const result = await presentNativeMenu({
         style: "sheet",
         title,
         message,
         cancelLabel,
         anchor: rectFromElement(anchor ?? null),
-        items: actionsRef.current.map((action, index) => ({
-          id: `action-${index}`,
-          title: action.label,
-          destructive: action.destructive,
-          symbol: action.destructive ? "trash" : undefined,
+        items: presented.map(({ id, title: itemTitle, destructive, symbol }) => ({
+          id,
+          title: itemTitle,
+          destructive,
+          symbol,
         })),
       });
-      if (!alive) return;
+      // A remount may have set alive=false, but if the user already picked an
+      // item on this presentation we must still apply it — that was the
+      // first-speaker / remove-× bug on iOS.
       if (result.failed) {
-        // Native present failed/hung — paint the HTML sheet instead of a blank frame.
+        if (!alive) return;
         setMode("web");
         return;
       }
+      if (settledRef.current) return;
+      settledRef.current = true;
       if (!result.cancelled && result.id) {
         const index = Number(result.id.replace("action-", ""));
-        const action = actionsRef.current[index];
-        action?.onSelect();
+        const action = presented[index];
+        try {
+          action?.onSelect();
+        } catch (error) {
+          console.warn("[ActionSheet] onSelect failed", error);
+        }
       }
       onCloseRef.current();
     })();
     return () => {
       alive = false;
+      // Dismiss is deferred + token-checked in Swift so a remount cannot
+      // cancel the sheet the user is about to tap.
       void dismissNativeMenu();
     };
     // Mount once per sheet open; callers remount when ask* flags flip.

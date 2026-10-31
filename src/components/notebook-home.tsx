@@ -2,7 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
-import { noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
+import { noteIncludesSpeaker, noteMatches, notePreview, noteSpeakerIds } from "@/lib/notebook";
 import { createLocalNote, deleteLocalNote } from "@/lib/notebook-local";
 import { listGrantedNotes } from "@/lib/notebook-cloud";
 import { listMyNoteGroups } from "@/lib/notebook-groups";
@@ -193,13 +193,18 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
             <span className="block truncate text-[17px] leading-snug">{note.title || t(locale, "notebookMeeting")}</span>
             {preview ? <span className="mt-0.5 block truncate text-[15px] text-muted">{preview}</span> : null}
           </span>
-          {note.speakerId ? (
-            <span
-              className="size-2.5 shrink-0 rounded-full"
-              style={{ background: speakers.find((item) => item.id === note.speakerId)?.color ?? "#c4a574" }}
-              aria-hidden
-            />
-          ) : null}
+          {(() => {
+            const ids = noteSpeakerIds(note);
+            const lead = note.speakerId || ids[0];
+            if (!lead) return null;
+            return (
+              <span
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ background: speakers.find((item) => item.id === lead)?.color ?? "#c4a574" }}
+                aria-hidden
+              />
+            );
+          })()}
           {groups.length ? (
             <span className="flex shrink-0 items-center gap-0.5 text-muted" aria-label={t(locale, "notebookGroups")}>
               <Users className="size-4" />
@@ -260,7 +265,8 @@ export function NotebookHome({ query }: { query: string }) {
   const visible = useMemo(() => {
     let list = notes.filter((item) => noteMatches(item, query, speakers));
     if (filter === "tags" && tag) list = list.filter((item) => item.tags.includes(tag));
-    if (filter === "speakers" && speakerId) list = list.filter((item) => noteSpeakerIds(item).includes(speakerId));
+    // Include whole-note speakerId as well as section speaker blocks.
+    if (filter === "speakers" && speakerId) list = list.filter((item) => noteIncludesSpeaker(item, speakerId));
     if (filter === "shared") list = granted.filter((item) => noteMatches(item, query, speakers));
     return list;
   }, [notes, query, speakers, filter, tag, speakerId, granted]);
