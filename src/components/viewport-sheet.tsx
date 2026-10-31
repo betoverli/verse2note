@@ -120,6 +120,7 @@ export function ActionSheet({
   useEffect(() => {
     if (mode === "web") return;
     let alive = true;
+    let handedToNative = false;
     void (async () => {
       const ok = await canUseNativeMenus();
       if (!alive) return;
@@ -127,7 +128,6 @@ export function ActionSheet({
         setMode("web");
         return;
       }
-      setMode("native");
       // Snapshot handlers at present time so a later parent render cannot
       // replace onSelect with a stale closure (e.g. dropSpeaker cleared).
       const presented = actionsRef.current.map((action, index) => ({
@@ -137,6 +137,7 @@ export function ActionSheet({
         symbol: action.destructive ? "trash" : undefined,
         onSelect: action.onSelect,
       }));
+      // Stay in "pending" (no web flash) until native confirms or fails fast.
       const result = await presentNativeMenu({
         style: variant === "alert" ? "alert" : "sheet",
         title,
@@ -158,6 +159,7 @@ export function ActionSheet({
         setMode("web");
         return;
       }
+      handedToNative = true;
       if (settledRef.current) return;
       settledRef.current = true;
       if (!result.cancelled && result.id) {
@@ -173,9 +175,9 @@ export function ActionSheet({
     })();
     return () => {
       alive = false;
-      // Dismiss is deferred + token-checked in Swift so a remount cannot
-      // cancel the sheet the user is about to tap.
-      void dismissNativeMenu();
+      // Only dismiss a sheet we actually handed to native. Dismissing during
+      // the pending probe was cancelling a just-presented alert (blank UI).
+      if (handedToNative) void dismissNativeMenu();
     };
     // Mount once per sheet open; callers remount when ask* flags flip.
     // eslint-disable-next-line react-hooks/exhaustive-deps

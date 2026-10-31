@@ -4,8 +4,9 @@ export const SWIPE_SLOP = 10;
 /**
  * Horizontal movement must exceed vertical by this factor.
  * A diagonal drag stays a scroll so the list does not stick mid-flick.
+ * Kept modest so a clear sideways flick still claims the row on iOS.
  */
-export const SWIPE_HORIZONTAL_BIAS = 1.75;
+export const SWIPE_HORIZONTAL_BIAS = 1.35;
 
 export type SwipeLock = "h" | "v";
 
