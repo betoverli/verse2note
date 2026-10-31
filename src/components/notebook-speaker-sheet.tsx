@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ActionSheet, SheetGrabber, ViewportSheet, formSheetClass } from "@/components/viewport-sheet";
 import {
   canUseNativeMenus,
+  FORCE_WEB_FALLBACK_MS,
   presentNativeMenu,
   presentNativePrompt,
   rectFromElement,
@@ -79,8 +80,16 @@ export function NotebookSpeakerSheet({
     if (!isNativeApp() || started.current) return;
     started.current = true;
     let alive = true;
+    let handedToNative = false;
+    const forceWeb = window.setTimeout(() => {
+      if (!alive || handedToNative) return;
+      console.warn("[NotebookSpeakerSheet] force web fallback after", FORCE_WEB_FALLBACK_MS, "ms");
+      setWeb(true);
+    }, FORCE_WEB_FALLBACK_MS);
+    const clearForceWeb = () => window.clearTimeout(forceWeb);
     void (async () => {
       if (!(await canUseNativeMenus())) {
+        clearForceWeb();
         if (alive) setWeb(true);
         return;
       }
@@ -96,18 +105,23 @@ export function NotebookSpeakerSheet({
           symbol: "plus",
         },
       ];
-      const result = await presentNativeMenu({
-        style: "sheet",
-        title: onPick ? t(locale, "notebookAddSpeaker") : t(locale, "notebookSpeakers"),
-        cancelLabel: t(locale, "linkCancel"),
-        anchor: rectFromElement(null),
-        items,
-      });
+      const result = await presentNativeMenu(
+        {
+          style: "sheet",
+          title: onPick ? t(locale, "notebookAddSpeaker") : t(locale, "notebookSpeakers"),
+          cancelLabel: t(locale, "linkCancel"),
+          anchor: rectFromElement(null),
+          items,
+        },
+        { onPresented: clearForceWeb },
+      );
+      clearForceWeb();
       if (!alive) return;
       if (result.failed) {
         setWeb(true);
         return;
       }
+      handedToNative = true;
       if (result.cancelled || !result.id) {
         onClose();
         return;
@@ -185,6 +199,7 @@ export function NotebookSpeakerSheet({
     })();
     return () => {
       alive = false;
+      clearForceWeb();
     };
     // Speakers snapshot at open is intentional — remount when `open` flips.
     // eslint-disable-next-line react-hooks/exhaustive-deps

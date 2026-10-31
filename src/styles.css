@@ -821,7 +821,15 @@ html.native-ios main.note-screen > .screen-body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+  /* pan-x + pan-y: a lone pan-y ancestor intersects child pan-x to "none"
+     and WKWebView steals every sideways flick for vertical scroll. */
+  touch-action: pan-x pan-y;
   background: var(--color-bg);
+}
+
+/* Note-row swipe hosts: allow horizontal claim; JS preventDefault once locked. */
+html.native-ios .clip-box {
+  touch-action: pan-x pan-y;
 }
 
 html.native-ios .screen-pad-4 {

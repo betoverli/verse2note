@@ -90,7 +90,14 @@ const AVAILABLE_TIMEOUT_MS = 800;
  * to the web sheet. Long enough for a real UIAlertController to appear; short
  * enough that a silent failure never leaves a blank screen.
  */
-const PRESENTATION_CONFIRM_MS = 600;
+export const PRESENTATION_CONFIRM_MS = 500;
+/**
+ * ActionSheet / speaker hard fallback if `presentNativeMenu` never returns
+ * and never fires `onPresented`. Slightly above PRESENTATION_CONFIRM_MS.
+ * Cleared as soon as native confirms presentation so a visible sheet waiting
+ * on the user is never covered by a premature web sheet.
+ */
+export const FORCE_WEB_FALLBACK_MS = PRESENTATION_CONFIRM_MS + 250;
 /**
  * Safety net if native `present` never settles after it was shown.
  */
@@ -120,6 +127,36 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
 function isUnimplemented(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error ?? "");
   return /UNIMPLEMENTED|not implemented|is not implemented|plugin.*not.*found/i.test(message);
+}
+
+/**
+ * Classify a settled native present() result.
+ * Pure — unit-tested. A cancel without a confirmed presentation is a failure
+ * (phantom cancel / silent drop), not a user dismiss — callers must open web UI.
+ */
+export function classifyPresentOutcome(input: {
+  presented: boolean;
+  result?: NativeMenuResult & { replaced?: boolean };
+  error?: unknown;
+}): NativeMenuResult {
+  if (input.error != null) {
+    return { id: null, cancelled: true, failed: true };
+  }
+  const result = input.result;
+  if (!result) {
+    return { id: null, cancelled: true, failed: true };
+  }
+  if (result.replaced) {
+    return { id: null, cancelled: true, failed: true };
+  }
+  if (result.cancelled || !result.id) {
+    // UI never appeared → not a real user cancel.
+    if (!input.presented) {
+      return { id: null, cancelled: true, failed: true, value: result.value };
+    }
+    return { id: null, cancelled: true, value: result.value };
+  }
+  return { id: result.id, cancelled: false, value: result.value };
 }
 
 /** CSS viewport rect → plugin anchor (1:1 with the WKWebView when scale is 1). */
@@ -182,12 +219,28 @@ export async function canUseNativeMenus(): Promise<boolean> {
   return (await nativeMenusInfo()) != null;
 }
 
+async function removeListener(handle: PluginListenerHandle | null | undefined) {
+  try {
+    await handle?.remove();
+  } catch {
+    /* ignore */
+  }
+}
+
+export type PresentNativeMenuOptions = {
+  /** Fires when native confirms the sheet is on screen (cancel hard web timers). */
+  onPresented?: () => void;
+};
+
 /**
  * Present a native menu. On plugin errors / hang / no presentation within
- * ~600ms, returns `{ failed: true }` so callers can open the web UI instead
+ * ~500ms, returns `{ failed: true }` so callers can open the web UI instead
  * of swallowing the tap.
  */
-export async function presentNativeMenu(request: NativeMenuRequest): Promise<NativeMenuResult> {
+export async function presentNativeMenu(
+  request: NativeMenuRequest,
+  options?: PresentNativeMenuOptions,
+): Promise<NativeMenuResult> {
   const plugin = await connect();
   if (!plugin) {
     console.warn("[NativeMenus] present skipped — plugin missing");
@@ -201,16 +254,33 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
   });
 
   let presented = false;
-  let listener: PluginListenerHandle | null = null;
-  try {
-    if (typeof plugin.addListener === "function") {
-      listener = await plugin.addListener("presented", () => {
-        presented = true;
-      });
+  const markPresented = () => {
+    if (presented) return;
+    presented = true;
+    console.log("[NativeMenus] presented event");
+    try {
+      options?.onPresented?.();
+    } catch (error) {
+      console.warn("[NativeMenus] onPresented callback failed", error);
     }
-  } catch {
-    listener = null;
-  }
+  };
+
+  // NEVER await addListener before present — that hang left TF85 blank.
+  let listener: PluginListenerHandle | null = null;
+  const listenerReady =
+    typeof plugin.addListener === "function"
+      ? plugin
+          .addListener("presented", markPresented)
+          .then((handle) => {
+            listener = handle;
+          })
+          .catch((error) => {
+            console.warn("[NativeMenus] addListener(presented) failed", error);
+          })
+      : Promise.resolve();
+
+  // Race: give the listener a brief head start, but never block present on it.
+  await Promise.race([listenerReady, new Promise<void>((r) => setTimeout(r, 50))]);
 
   const presentPromise = plugin.present({
     style: request.style ?? "menu",
@@ -226,7 +296,6 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
   });
 
   // Watchdog: if nothing confirms presentation quickly, abort for web fallback.
-  // A real sheet fires `presented` (or settles) well under this budget.
   const confirmed = await new Promise<"presented" | "settled" | "timeout">((resolve) => {
     let done = false;
     const finish = (value: "presented" | "settled" | "timeout") => {
@@ -253,32 +322,22 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
     } catch {
       /* already gone */
     }
-    try {
-      await listener?.remove();
-    } catch {
-      /* ignore */
-    }
-    // Best-effort: let the hanging present settle without blocking UI.
+    await removeListener(listener);
     void presentPromise.catch(() => {});
     return { id: null, cancelled: true, failed: true };
   }
 
+  if (presented) markPresented();
+
   try {
     const result = await withTimeout(presentPromise, PRESENT_HANG_TIMEOUT_MS, "native-menu-present-timeout");
-    console.log("[NativeMenus] present resolved", result);
-    try {
-      await listener?.remove();
-    } catch {
-      /* ignore */
+    console.log("[NativeMenus] present resolved", { result, presented });
+    await removeListener(listener);
+    const outcome = classifyPresentOutcome({ presented, result });
+    if (outcome.failed) {
+      console.warn("[NativeMenus] present settled without UI — web should fall back", result);
     }
-    // Replaced by a newer present — treat as failure so the caller can retry/web.
-    if ((result as { replaced?: boolean })?.replaced) {
-      return { id: null, cancelled: true, failed: true };
-    }
-    if (result?.cancelled || !result?.id) {
-      return { id: null, cancelled: true, value: result?.value };
-    }
-    return { id: result.id, cancelled: false, value: result.value };
+    return outcome;
   } catch (error) {
     console.warn("[NativeMenus] present failed — web should fall back", error);
     try {
@@ -286,16 +345,11 @@ export async function presentNativeMenu(request: NativeMenuRequest): Promise<Nat
     } catch {
       /* already gone */
     }
-    try {
-      await listener?.remove();
-    } catch {
-      /* ignore */
-    }
+    await removeListener(listener);
     if (isUnimplemented(error)) {
-      // Older binary without the method — never cache a false "available".
       infoPromise = null;
     }
-    return { id: null, cancelled: true, failed: true };
+    return classifyPresentOutcome({ presented, error });
   }
 }
 

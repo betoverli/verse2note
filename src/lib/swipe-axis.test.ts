@@ -11,9 +11,9 @@ describe("lockSwipe", () => {
 
   it("lets a vertical or diagonal drag scroll the list", () => {
     assert.equal(lockSwipe(6, 20), "v");
-    assert.equal(lockSwipe(12, 10), "v");
     assert.equal(lockSwipe(8, -30), "v");
-    assert.equal(lockSwipe(14, 12), "v");
+    // Near-diagonal with more vertical still scrolls.
+    assert.equal(lockSwipe(10, 12), "v");
   });
 
   it("claims a clearly horizontal swipe for the row actions", () => {
@@ -21,5 +21,7 @@ describe("lockSwipe", () => {
     assert.equal(lockSwipe(20, 10), "h");
     assert.equal(lockSwipe(18, 10), "h");
     assert.equal(lockSwipe(-30, 8), "h");
+    // Slight vertical jitter on a sideways flick still claims delete/share.
+    assert.equal(lockSwipe(14, 12), "h");
   });
 });

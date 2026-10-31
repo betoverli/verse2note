@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { readFileSync } from "node:fs";
-import { rectFromElement, rectFromPoint } from "./menus.ts";
+import {
+  classifyPresentOutcome,
+  FORCE_WEB_FALLBACK_MS,
+  PRESENTATION_CONFIRM_MS,
+  rectFromElement,
+  rectFromPoint,
+} from "./menus.ts";
 
 describe("rectFromElement", () => {
   it("falls back to a centered 44pt target without an element", () => {
@@ -23,6 +29,54 @@ describe("rectFromElement", () => {
 describe("rectFromPoint", () => {
   it("centers a hit target on the point", () => {
     assert.deepEqual(rectFromPoint(100, 200, 40), { x: 80, y: 180, width: 40, height: 40 });
+  });
+});
+
+describe("classifyPresentOutcome (web fallback logic)", () => {
+  it("marks plugin errors as failed so callers open the web sheet", () => {
+    assert.deepEqual(classifyPresentOutcome({ presented: false, error: new Error("hang") }), {
+      id: null,
+      cancelled: true,
+      failed: true,
+    });
+  });
+
+  it("marks replaced / missing results as failed", () => {
+    assert.equal(classifyPresentOutcome({ presented: true, result: { id: null, cancelled: true, replaced: true } }).failed, true);
+    assert.equal(classifyPresentOutcome({ presented: false }).failed, true);
+  });
+
+  it("treats cancel without a confirmed presentation as failed (phantom cancel)", () => {
+    const outcome = classifyPresentOutcome({
+      presented: false,
+      result: { id: null, cancelled: true },
+    });
+    assert.equal(outcome.failed, true);
+    assert.equal(outcome.cancelled, true);
+  });
+
+  it("keeps a real user cancel after presentation (no failed → no web flash)", () => {
+    const outcome = classifyPresentOutcome({
+      presented: true,
+      result: { id: null, cancelled: true },
+    });
+    assert.equal(outcome.failed, undefined);
+    assert.equal(outcome.cancelled, true);
+  });
+
+  it("returns the selected id when presentation succeeded", () => {
+    assert.deepEqual(
+      classifyPresentOutcome({
+        presented: true,
+        result: { id: "action-0", cancelled: false },
+      }),
+      { id: "action-0", cancelled: false, value: undefined },
+    );
+  });
+
+  it("keeps the force-web budget just above the presentation confirm budget", () => {
+    assert.ok(FORCE_WEB_FALLBACK_MS > PRESENTATION_CONFIRM_MS);
+    assert.ok(FORCE_WEB_FALLBACK_MS <= PRESENTATION_CONFIRM_MS + 500);
   });
 });
 
@@ -67,11 +121,31 @@ describe("native menus wiring", () => {
     assert.match(wrapper, /failed\?:\s*boolean/);
     assert.match(wrapper, /PRESENT_HANG_TIMEOUT_MS/);
     assert.match(wrapper, /PRESENTATION_CONFIRM_MS/);
+    assert.match(wrapper, /FORCE_WEB_FALLBACK_MS/);
+    assert.match(wrapper, /classifyPresentOutcome/);
     assert.match(wrapper, /failed:\s*true/);
     assert.match(wrapper, /\[NativeMenus\] present failed/);
     assert.match(wrapper, /presentation not confirmed in time/);
     assert.match(sheet, /result\.failed/);
     assert.match(sheet, /setMode\("web"\)/);
+    assert.match(sheet, /FORCE_WEB_FALLBACK_MS/);
+    assert.match(sheet, /force web fallback/);
+  });
+
+  it("does not await addListener before present (TF85 blank pending hang)", () => {
+    // The old bug: `listener = await plugin.addListener(...)` before
+    // `plugin.present(...)` — if addListener never settled, present never ran
+    // and ActionSheet stayed on mode=pending (null render) forever.
+    assert.doesNotMatch(wrapper, /listener\s*=\s*await\s+plugin\.addListener/);
+    assert.match(wrapper, /NEVER await addListener before present/);
+    assert.match(wrapper, /Promise\.race\(\[listenerReady/);
+  });
+
+  it("coerces top-level items like nested children (typed getArray is unsafe)", () => {
+    assert.match(plugin, /itemObjects/);
+    assert.match(plugin, /getArray\("items"\) \?\? \[\]/);
+    assert.doesNotMatch(plugin, /getArray\("items",\s*JSObject\.self\)/);
+    assert.match(plugin, /notifyListeners\("presented"/);
   });
 
   it("exposes alert and prompt (UIAlertController + text field) for native dialogs", () => {
@@ -132,6 +206,9 @@ describe("native FAB compose menu", () => {
     const share = readFileSync(new URL("../share-note.ts", import.meta.url), "utf8");
     assert.match(share, /@capacitor\/share/);
     assert.match(share, /Share\.share/);
+    const css = readFileSync(new URL("../../styles.css", import.meta.url), "utf8");
+    assert.match(css, /html\.native-ios main\.screen > \.screen-body[\s\S]*?touch-action:\s*pan-x pan-y/);
+    assert.match(css, /html\.native-ios \.clip-box[\s\S]*?touch-action:\s*pan-x pan-y/);
   });
 });
 

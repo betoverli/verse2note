@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   canUseNativeMenus,
   dismissNativeMenu,
+  FORCE_WEB_FALLBACK_MS,
   presentNativeMenu,
   rectFromElement,
 } from "@/lib/native/menus";
@@ -121,10 +122,21 @@ export function ActionSheet({
     if (mode === "web") return;
     let alive = true;
     let handedToNative = false;
+    // Hard wall-clock: never leave the sheet on "pending" (blank) if native
+    // hangs before presentNativeMenu's own watchdog can return failed.
+    // Cleared on native `presented` so a visible alert waiting on the user
+    // is never covered by a premature web sheet.
+    const forceWeb = window.setTimeout(() => {
+      if (!alive || settledRef.current || handedToNative) return;
+      console.warn("[ActionSheet] force web fallback after", FORCE_WEB_FALLBACK_MS, "ms");
+      setMode("web");
+    }, FORCE_WEB_FALLBACK_MS);
+    const clearForceWeb = () => window.clearTimeout(forceWeb);
     void (async () => {
       const ok = await canUseNativeMenus();
       if (!alive) return;
       if (!ok) {
+        clearForceWeb();
         setMode("web");
         return;
       }
@@ -138,19 +150,23 @@ export function ActionSheet({
         onSelect: action.onSelect,
       }));
       // Stay in "pending" (no web flash) until native confirms or fails fast.
-      const result = await presentNativeMenu({
-        style: variant === "alert" ? "alert" : "sheet",
-        title,
-        message,
-        cancelLabel,
-        anchor: rectFromElement(anchor ?? null),
-        items: presented.map(({ id, title: itemTitle, destructive, symbol }) => ({
-          id,
-          title: itemTitle,
-          destructive,
-          symbol,
-        })),
-      });
+      const result = await presentNativeMenu(
+        {
+          style: variant === "alert" ? "alert" : "sheet",
+          title,
+          message,
+          cancelLabel,
+          anchor: rectFromElement(anchor ?? null),
+          items: presented.map(({ id, title: itemTitle, destructive, symbol }) => ({
+            id,
+            title: itemTitle,
+            destructive,
+            symbol,
+          })),
+        },
+        { onPresented: clearForceWeb },
+      );
+      clearForceWeb();
       // A remount may have set alive=false, but if the user already picked an
       // item on this presentation we must still apply it — that was the
       // first-speaker / remove-× bug on iOS.
@@ -171,13 +187,18 @@ export function ActionSheet({
           console.warn("[ActionSheet] onSelect failed", error);
         }
       }
+      // Real user cancel / pick — only close while this mount is still alive.
+      // A stale remount calling onClose was wiping the parent before web painted.
+      if (!alive) return;
       onCloseRef.current();
     })();
     return () => {
       alive = false;
+      window.clearTimeout(forceWeb);
       // Only dismiss a sheet we actually handed to native. Dismissing during
       // the pending probe was cancelling a just-presented alert (blank UI).
       if (handedToNative) void dismissNativeMenu();
+      clearForceWeb();
     };
     // Mount once per sheet open; callers remount when ask* flags flip.
     // eslint-disable-next-line react-hooks/exhaustive-deps

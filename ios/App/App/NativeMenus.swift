@@ -69,7 +69,11 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         let message = call.getString("message")
         let cancelLabel = call.getString("cancelLabel") ?? "Cancel"
         let appearanceRaw = call.getString("appearance") ?? ""
-        let items = Self.parseItems(call.getArray("items", JSObject.self) ?? [])
+        // Prefer untyped getArray + coerce: Capacitor's typed JSObject array
+        // cast (`as? [JSObject]`) silently yields nil when elements arrive as
+        // NSDictionary, so the sheet would open with Cancel only. Coerce each
+        // element the same way nested `children` already do.
+        let items = Self.parseItems(Self.itemObjects(call.getArray("items") ?? []))
         let anchor = Self.parseAnchor(call.getObject("anchor"))
         let placeholder = call.getString("placeholder") ?? ""
         let defaultValue = call.getString("defaultValue") ?? ""
@@ -147,12 +151,29 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     /// Topmost VC that can present — never present on a mid-dismiss controller.
+    /// Prefer the key window's root when the bridge VC is unavailable or
+    /// mid-transition (remote-URL WKWebView can leave bridge.viewController
+    /// briefly without a window).
     private func topPresenter() -> UIViewController? {
-        guard var vc = bridge?.viewController else { return nil }
+        let seed =
+            bridge?.viewController
+            ?? bridge?.webView?.window?.rootViewController
+            ?? keyWindowRoot()
+        guard var vc = seed else { return nil }
         while let next = vc.presentedViewController, !next.isBeingDismissed {
             vc = next
         }
         return vc
+    }
+
+    private func keyWindowRoot() -> UIViewController? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        let scene = scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+        let window =
+            scene?.windows.first(where: { $0.isKeyWindow })
+            ?? scene?.keyWindow
+            ?? scene?.windows.first
+        return window?.rootViewController
     }
 
     /// Cancel the previous plugin call and strip any alert without animation.
@@ -213,9 +234,14 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             failPresent("Já há um modal nativo.")
             return
         }
+        // Notify ASAP (before animation completes) so the JS watchdog does not
+        // dismiss a sheet that is already animating in.
+        print("[NativeMenus] presenting style=\(alert.preferredStyle == .alert ? "alert" : "sheet") items=\(alert.actions.count)")
+        notifyListeners("presented", data: [:])
         controller.present(alert, animated: true) { [weak self] in
             guard let self, !self.resolved else { return }
             print("[NativeMenus] presented style=\(alert.preferredStyle == .alert ? "alert" : "sheet")")
+            // Second notify is cheap; covers listeners attached mid-animation.
             self.notifyListeners("presented", data: [:])
         }
     }
@@ -616,19 +642,30 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
         raw.compactMap { parseItem($0) }
     }
 
+    /// Top-level `items` array — same coercion as nested children.
+    private static func itemObjects(_ value: JSArray) -> [JSObject] {
+        value.compactMap { jsObject(from: $0) }
+    }
+
     private static func parseItem(_ raw: JSObject) -> NativeMenuItem? {
-        let id = raw["id"] as? String ?? ""
-        let title = raw["title"] as? String ?? ""
+        let id = stringValue(raw["id"])
+        let title = stringValue(raw["title"])
         if id.isEmpty || title.isEmpty { return nil }
         return NativeMenuItem(
             id: id,
             title: title,
-            symbol: raw["symbol"] as? String ?? "",
+            symbol: stringValue(raw["symbol"]),
             destructive: bool(raw["destructive"]),
             checked: bool(raw["checked"]),
             disabled: bool(raw["disabled"]),
             children: childObjects(raw["children"]).compactMap { parseItem($0) }
         )
+    }
+
+    private static func stringValue(_ value: JSValue?) -> String {
+        if let value = value as? String { return value }
+        if let number = value as? NSNumber { return number.stringValue }
+        return ""
     }
 
     private static func bool(_ value: JSValue?) -> Bool {

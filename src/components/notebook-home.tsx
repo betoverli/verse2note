@@ -188,8 +188,9 @@ function NoteCard({ note, groups }: { note: Note; groups: { id: string; name: st
         ref={layer}
         role="link"
         className="relative bg-surface active:bg-fill"
-        // pan-x pan-y lets the row claim a sideways flick; non-passive
-        // touchmove + preventDefault still stops the list once locked.
+        // pan-x pan-y: ancestor .screen-body must also allow pan-x (styles.css)
+        // or the intersection collapses to pan-y and WKWebView steals the flick.
+        // Non-passive touchmove + preventDefault still stops the list once locked.
         style={{ touchAction: "pan-x pan-y" }}
         onClick={() => {
           if (dragged.current || Math.abs(x.current) > 12) return;
