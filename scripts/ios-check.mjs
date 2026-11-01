@@ -141,8 +141,13 @@ if (!selector.includes("export function chooseXcode") || !selector.includes("sdk
   errors.push("O selector de Xcode tem de exigir o SDK do iOS 26 com runtime de simulador instalado.");
 }
 const scene = read("ios/App/App/SceneDelegate.swift");
-if (!scene.includes("rootViewController = Verse2NoteBridgeViewController()")) {
-  errors.push("O SceneDelegate tem de mostrar o controlador que registra o login.");
+// Phase 1: root is AppRoot (hybrid native Caderno by default). Capacitor bridge
+// remains for login modal + classic fallback, not as the cold-start root.
+if (!scene.includes("AppRoot.makeRootViewController") && !scene.includes("Verse2NoteBridgeViewController()")) {
+  errors.push("O SceneDelegate tem de montar a root via AppRoot (ou Cap bridge).");
+}
+if (!read("ios/App/App/AppRoot.swift").includes("Verse2NoteBridgeViewController")) {
+  errors.push("AppRoot tem de conseguir montar o Cap bridge (fallback capacitorSite).");
 }
 const mainStoryboard = read("ios/App/App/Base.lproj/Main.storyboard");
 if (!mainStoryboard.includes('customClass="Verse2NoteBridgeViewController"')) {
@@ -320,8 +325,39 @@ if (!project.includes("KeychainStore.swift in Sources") || !project.includes("Na
   errors.push("KeychainStore / NativePhase0 têm de estar no target Xcode.");
 }
 const shellMode = read("ios/App/App/NativeShellMode.swift");
-if (!shellMode.includes("capacitorSite") || !shellMode.includes('return .capacitorSite')) {
-  errors.push("NativeShellMode tem de defaultar para capacitorSite (UI atual).");
+if (!shellMode.includes("capacitorSite") || !shellMode.includes("hybrid")) {
+  errors.push("NativeShellMode tem de expor capacitorSite (fallback) e hybrid.");
+}
+if (!shellMode.includes("return .hybrid")) {
+  errors.push("Phase 1: NativeShellMode tem de defaultar para hybrid (caderno nativo).");
+}
+if (!scene.includes("AppRoot.makeRootViewController")) {
+  errors.push("SceneDelegate tem de montar a root via AppRoot (Phase 1).");
+}
+for (const file of [
+  "ios/App/App/NotebookListViewController.swift",
+  "ios/App/App/NoteDetailViewController.swift",
+  "ios/App/App/NoteSettingsViewController.swift",
+  "ios/App/App/NativeRootTabBarController.swift",
+  "ios/App/App/LocalNoteCache.swift",
+  "ios/App/App/AppRoot.swift",
+]) {
+  try {
+    const body = read(file);
+    if (body.length < 80) errors.push(`${file} parece vazio.`);
+  } catch {
+    errors.push(`Ficheiro Phase 1 em falta: ${file}`);
+  }
+}
+if (!project.includes("NotebookListViewController.swift in Sources")) {
+  errors.push("NotebookListViewController tem de estar no target Xcode.");
+}
+const notebookList = read("ios/App/App/NotebookListViewController.swift");
+if (!notebookList.includes("Site clássico") || !notebookList.includes("capacitorSite")) {
+  errors.push("Tem de haver um fallback oculto para o UI Capacitor clássico.");
+}
+if (!notebookList.includes("UIActivityViewController") || !notebookList.includes("trailingSwipeActions")) {
+  errors.push("A lista nativa tem de ter swipe e partilha nativa.");
 }
 
 for (const path of [
@@ -333,6 +369,9 @@ for (const path of [
   "docs/ios-native-migration.md",
   "src/routes/native-editor.tsx",
   "src/routes/native-phase0.tsx",
+  "ios/App/App/NotebookListViewController.swift",
+  "ios/App/App/NoteDetailViewController.swift",
+  "ios/App/App/AppRoot.swift",
 ]) {
   try {
     read(path);

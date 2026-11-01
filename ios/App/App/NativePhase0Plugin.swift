@@ -21,9 +21,12 @@ public class NativePhase0Plugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func setShellMode(_ call: CAPPluginCall) {
-        let raw = call.getString("mode") ?? NativeShellMode.capacitorSite.rawValue
-        let mode = NativeShellMode(rawValue: raw) ?? .capacitorSite
+        let raw = call.getString("mode") ?? NativeShellMode.hybrid.rawValue
+        let mode = NativeShellMode(rawValue: raw) ?? .hybrid
         NativeShellMode.setCurrent(mode)
+        DispatchQueue.main.async {
+            AppRoot.applyToKeyWindow()
+        }
         call.resolve(["mode": mode.rawValue])
     }
 

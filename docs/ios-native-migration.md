@@ -386,13 +386,16 @@ Principles: **small**, **user-visible or foundational**, **reversible feature fl
 
 ---
 
-### Phase 1 — Native notebook list + open note (hybrid)
+### Phase 1 — Native notebook list + open note (hybrid) — **default app experience**
 
-- Native `UITabBar` / notebook list (local DB seeded from API).
-- Swipe actions, compose, delete confirms (UIKit).
-- Tapping a row pushes native note chrome + **miolo WKWebView**.
-- Other tabs can still briefly host WKWebView of the site **or** show “coming soon” — prefer keeping Capacitor only for non-notebook tabs behind the same shell to limit scope.
-- Offline: read/edit local notes; outbox flush.
+**Goal:** Caderno is native by default (`NativeShellMode.hybrid`). Capacitor full-site remains a **hidden fallback** (⋯ → “Site clássico”, or other tabs’ “Usar app clássico”).
+
+- Native `UITabBar` / notebook list (file cache seeded from `/api/native/v1`).
+- Swipe share / delete + confirm (`UIAlertController`), compose, native search.
+- Tapping a row pushes native note chrome (nav, `…`, settings, speakers, share, delete) + **miolo WKWebView** on `/native-editor` speaking `NoteDocumentV1`.
+- Other tabs: “Em breve” placeholders with optional Cap modal / classic fallback.
+- Offline: read/edit from `LocalNoteCache`; save retries when online.
+- **Exit criteria:** Cold start opens native Caderno; list loads via Bearer; open/edit/delete/share work; classic Cap still reachable without being default.
 
 ### Phase 2 — Native groups
 
@@ -492,3 +495,4 @@ Principles: **small**, **user-visible or foundational**, **reversible feature fl
 | 2026-11-01 | Native shell first; miolo may stay WebView mid-migration; website compatibility not required; plan-first PR. |
 | 2026-11-01 | Phase 0 = API + Keychain + editor spike + flag default Capacitor UI. |
 | 2026-11-01 | **Final Phase 7:** note editor fully native (no WebView). Content = versioned platform-neutral JSON from Phase 0 (`NoteDocumentV1`), not HTML. |
+| 2026-11-01 | Phase 0 merged (TF 95). **Phase 1:** native Caderno default (`hybrid`); Cap site hidden fallback. |

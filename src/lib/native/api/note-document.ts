@@ -431,3 +431,34 @@ export function emptyDocument(partial?: Partial<NoteDocumentV1>): NoteDocumentV1
     },
   };
 }
+
+/** Plain-text preview for native list rows (no HTML). */
+export function documentPreview(doc: NoteDocumentV1, maxLen = 160): string {
+  const parts: string[] = [];
+  for (const block of doc.body.blocks) {
+    if (block.type === "speakerSection") {
+      for (const child of block.blocks) {
+        parts.push(spansToPlain(child.spans));
+      }
+    } else {
+      parts.push(spansToPlain(block.spans));
+    }
+    if (parts.join(" ").length >= maxLen) break;
+  }
+  const text = parts.join(" ").replace(/\s+/g, " ").trim();
+  if (!text) return "";
+  return text.length > maxLen ? `${text.slice(0, maxLen - 1)}…` : text;
+}
+
+function spansToPlain(spans: NoteDocSpan[]): string {
+  return spans
+    .map((span) => {
+      if (span.type === "bibleRef") {
+        const verse = span.verseStart != null ? `:${span.verseStart}` : "";
+        return `${span.bookId} ${span.chapter}${verse}`;
+      }
+      if (span.type === "link") return span.text || span.href;
+      return span.text;
+    })
+    .join("");
+}
