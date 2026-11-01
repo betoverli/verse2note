@@ -25,6 +25,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             })
         }
 
+        // Existing Cap users: copy web session cookie into Keychain before notes load.
+        Task { @MainActor in
+            let migrated = await NativeSessionBootstrap.migrateCookieToKeychainIfNeeded()
+            if migrated {
+                NotificationCenter.default.post(name: .nativeSessionDidChange, object: nil)
+            }
+        }
+
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }
 
@@ -43,6 +51,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func sceneDidEnterBackground(_ scene: UIScene) {
         flushWebViewCookies()
     }
+}
+
+extension Notification.Name {
+    static let nativeSessionDidChange = Notification.Name("verse2note.nativeSessionDidChange")
 }
 
 /// WKWebView writes cookies asynchronously. Reading the store is what pushes

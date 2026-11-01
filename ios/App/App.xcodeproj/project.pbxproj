@@ -33,6 +33,9 @@
 		E4F1A01A2FED796500168550 /* NoteDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A01B2FED796500168550 /* NoteDetailViewController.swift */; };
 		E4F1A01C2FED796500168550 /* NoteSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A01D2FED796500168550 /* NoteSettingsViewController.swift */; };
 		E4F1A01E2FED796500168550 /* SpeakerPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A01F2FED796500168550 /* SpeakerPickerViewController.swift */; };
+		E4F1B0102FED796500168560 /* NativeSessionBootstrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1B0112FED796500168560 /* NativeSessionBootstrap.swift */; };
+		E4F1B0122FED796500168560 /* NativeLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1B0132FED796500168560 /* NativeLoginService.swift */; };
+		E4F1B0142FED796500168560 /* NativeSignInViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1B0152FED796500168560 /* NativeSignInViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +69,9 @@
 		E4F1A01B2FED796500168550 /* NoteDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailViewController.swift; sourceTree = "<group>"; };
 		E4F1A01D2FED796500168550 /* NoteSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSettingsViewController.swift; sourceTree = "<group>"; };
 		E4F1A01F2FED796500168550 /* SpeakerPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerPickerViewController.swift; sourceTree = "<group>"; };
+		E4F1B0112FED796500168560 /* NativeSessionBootstrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSessionBootstrap.swift; sourceTree = "<group>"; };
+		E4F1B0132FED796500168560 /* NativeLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeLoginService.swift; sourceTree = "<group>"; };
+		E4F1B0152FED796500168560 /* NativeSignInViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSignInViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -117,6 +123,9 @@
 				E4F1A01B2FED796500168550 /* NoteDetailViewController.swift */,
 				E4F1A01D2FED796500168550 /* NoteSettingsViewController.swift */,
 				E4F1A01F2FED796500168550 /* SpeakerPickerViewController.swift */,
+				E4F1B0112FED796500168560 /* NativeSessionBootstrap.swift */,
+				E4F1B0132FED796500168560 /* NativeLoginService.swift */,
+				E4F1B0152FED796500168560 /* NativeSignInViewController.swift */,
 				A1C0DE032FED796500168520 /* LiquidGlassMaterial.m */,
 				A1C0DE052FED796500168520 /* LiquidGlassMaterial.h */,
 				A1C0DE062FED796500168520 /* App-Bridging-Header.h */,
@@ -232,6 +241,9 @@
 				E4F1A01A2FED796500168550 /* NoteDetailViewController.swift in Sources */,
 				E4F1A01C2FED796500168550 /* NoteSettingsViewController.swift in Sources */,
 				E4F1A01E2FED796500168550 /* SpeakerPickerViewController.swift in Sources */,
+				E4F1B0102FED796500168560 /* NativeSessionBootstrap.swift in Sources */,
+				E4F1B0122FED796500168560 /* NativeLoginService.swift in Sources */,
+				E4F1B0142FED796500168560 /* NativeSignInViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

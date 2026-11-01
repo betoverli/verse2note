@@ -496,3 +496,4 @@ Principles: **small**, **user-visible or foundational**, **reversible feature fl
 | 2026-11-01 | Phase 0 = API + Keychain + editor spike + flag default Capacitor UI. |
 | 2026-11-01 | **Final Phase 7:** note editor fully native (no WebView). Content = versioned platform-neutral JSON from Phase 0 (`NoteDocumentV1`), not HTML. |
 | 2026-11-01 | Phase 0 merged (TF 95). **Phase 1:** native Caderno default (`hybrid`); Cap site hidden fallback. |
+| 2026-11-01 | Phase 1 TF 98: add **native login** (Google ASWebAuth, Apple ASAuthorization, email) + cookie→Keychain migration + sign-out. |

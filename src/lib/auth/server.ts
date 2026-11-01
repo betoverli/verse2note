@@ -40,6 +40,7 @@ import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordEnabled } from "./email-password";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
+import { APPLE_PROVIDER_ID, appleOAuthFromEnv } from "./apple";
 import { GOOGLE_PROVIDER_ID, googleOAuthFromEnv } from "./google";
 import { GROK_PROVIDERS } from "./providers";
 import { pgliteDialect } from "./pglite-dialect";
@@ -94,6 +95,7 @@ export const authConfigured =
  * auth is disabled. Partial config does not register a broken provider.
  */
 const googleOAuth = authDisabled ? { configured: false as const } : googleOAuthFromEnv(process.env);
+const appleOAuth = authDisabled ? { configured: false as const } : appleOAuthFromEnv(process.env);
 
 // This app's own Better Auth origin. When deployed the deployer injects the
 // public URL. In the sandbox live preview there's no fixed URL (each preview gets
@@ -287,6 +289,7 @@ export const auth = betterAuth({
       trustedProviders: [
         ...GROK_PROVIDERS.map((p) => p.providerId),
         ...(googleOAuth.configured ? [GOOGLE_PROVIDER_ID] : []),
+        ...(appleOAuth.configured ? [APPLE_PROVIDER_ID] : []),
         GATE_PROVIDER_ID,
       ],
       // Password accounts are never email-verified (no mailer). Require the
@@ -314,15 +317,28 @@ export const auth = betterAuth({
   // Native Google Cloud OAuth. `select_account` lets the visitor pick an account
   // without `prompt=consent` / `prompt=login`, which made Google treat every
   // visit as a first-time consent. Callback: `/api/auth/callback/google`.
-  ...(googleOAuth.configured
+  // Apple is optional (APPLE_CLIENT_ID + APPLE_CLIENT_SECRET) for Sign in with Apple.
+  ...((googleOAuth.configured || appleOAuth.configured)
     ? {
         socialProviders: {
-          google: {
-            clientId: googleOAuth.clientId,
-            clientSecret: googleOAuth.clientSecret,
-            prompt: "select_account" as const,
-            overrideUserInfoOnSignIn: true,
-          },
+          ...(googleOAuth.configured
+            ? {
+                google: {
+                  clientId: googleOAuth.clientId,
+                  clientSecret: googleOAuth.clientSecret,
+                  prompt: "select_account" as const,
+                  overrideUserInfoOnSignIn: true,
+                },
+              }
+            : {}),
+          ...(appleOAuth.configured
+            ? {
+                apple: {
+                  clientId: appleOAuth.clientId,
+                  clientSecret: appleOAuth.clientSecret,
+                },
+              }
+            : {}),
         },
       }
     : {}),

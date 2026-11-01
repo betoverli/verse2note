@@ -84,11 +84,23 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
         notes = LocalNoteCache.loadNotes()
         speakers = LocalNoteCache.loadSpeakers()
         applyFilter()
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(reload),
+            name: .nativeSessionDidChange,
+            object: nil
+        )
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        reload()
+        Task { @MainActor in
+            if !NativeAPIClient.hasBearer {
+                _ = await NativeSessionBootstrap.migrateCookieToKeychainIfNeeded()
+            }
+            reload()
+        }
     }
 
     @objc private func reload() {
@@ -101,6 +113,10 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
                 signInButton.isHidden = false
                 emptyLabel.text = notes.isEmpty ? "Nenhuma nota ainda.\nEntra para ver o teu caderno." : nil
                 emptyLabel.isHidden = !notes.isEmpty
+                // Fresh install / no session: present native sign-in once.
+                if notes.isEmpty, presentedViewController == nil {
+                    presentSignIn(auto: true)
+                }
                 return
             }
             signInButton.isHidden = true
@@ -271,9 +287,20 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
             let nav = UINavigationController(rootViewController: picker)
             self?.present(nav, animated: true)
         })
-        sheet.addAction(UIAlertAction(title: "Entrar / sincronizar sessão", style: .default) { [weak self] _ in
-            self?.presentSignIn()
-        })
+        if NativeAPIClient.hasBearer {
+            sheet.addAction(UIAlertAction(title: "Terminar sessão", style: .destructive) { [weak self] _ in
+                Task { @MainActor in
+                    await NativeLoginService.shared.signOut()
+                    self?.notes = LocalNoteCache.loadNotes()
+                    self?.applyFilter()
+                    self?.presentSignIn(auto: false)
+                }
+            })
+        } else {
+            sheet.addAction(UIAlertAction(title: "Entrar", style: .default) { [weak self] _ in
+                self?.presentSignIn(auto: false)
+            })
+        }
         // Hidden fallback — not the primary path.
         sheet.addAction(UIAlertAction(title: "Site clássico (Capacitor)", style: .default) { _ in
             NativeShellMode.setCurrent(.capacitorSite)
@@ -287,25 +314,29 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
     }
 
     @objc private func presentSignIn() {
-        let bridge = Verse2NoteBridgeViewController()
-        bridge.modalPresentationStyle = .fullScreen
-        present(bridge, animated: true) {
-            let button = UIButton(type: .close)
-            button.translatesAutoresizingMaskIntoConstraints = false
-            button.accessibilityLabel = "Fechar e voltar ao caderno"
-            button.addTarget(self, action: #selector(self.dismissSignIn), for: .touchUpInside)
-            bridge.view.addSubview(button)
-            NSLayoutConstraint.activate([
-                button.topAnchor.constraint(equalTo: bridge.view.safeAreaLayoutGuide.topAnchor, constant: 8),
-                button.trailingAnchor.constraint(equalTo: bridge.view.safeAreaLayoutGuide.trailingAnchor, constant: -12),
-            ])
-        }
+        presentSignIn(auto: false)
     }
 
-    @objc private func dismissSignIn() {
-        dismiss(animated: true) { [weak self] in
+    private var didAutoPresentSignIn = false
+
+    private func presentSignIn(auto: Bool) {
+        if auto {
+            if didAutoPresentSignIn { return }
+            didAutoPresentSignIn = true
+        }
+        if presentedViewController is UINavigationController,
+           (presentedViewController as? UINavigationController)?.viewControllers.first is NativeSignInViewController
+        {
+            return
+        }
+        let signIn = NativeSignInViewController()
+        signIn.onSignedIn = { [weak self] in
+            NotificationCenter.default.post(name: .nativeSessionDidChange, object: nil)
             self?.reload()
         }
+        let nav = UINavigationController(rootViewController: signIn)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
     }
 }
 

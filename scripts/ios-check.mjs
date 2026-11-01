@@ -360,6 +360,37 @@ if (!notebookList.includes("UIActivityViewController") || !notebookList.includes
   errors.push("A lista nativa tem de ter swipe e partilha nativa.");
 }
 
+// Native login (Keychain bearer) — required after Phase 1 Caderno default.
+const loginService = read("ios/App/App/NativeLoginService.swift");
+const signInVc = read("ios/App/App/NativeSignInViewController.swift");
+const sessionBoot = read("ios/App/App/NativeSessionBootstrap.swift");
+if (!loginService.includes("ASWebAuthenticationSession") || !loginService.includes("auth/claim")) {
+  errors.push("NativeLoginService tem de fazer Google via ASWebAuthenticationSession + claim.");
+}
+if (!loginService.includes("signOut") || !loginService.includes("deleteBearerToken")) {
+  errors.push("Sign-out nativo tem de limpar o Keychain.");
+}
+if (!signInVc.includes("Continuar com Google") || !signInVc.includes("Entrar com email")) {
+  errors.push("Falta o ecrã nativo de login (Google + email).");
+}
+if (!sessionBoot.includes("__Host-grok-auth.session_token") || !sessionBoot.includes("migrateCookieToKeychainIfNeeded")) {
+  errors.push("Tem de migrar o cookie Cap → bearer no Keychain.");
+}
+if (!notebookList.includes("NativeSignInViewController") || !notebookList.includes("Terminar sessão")) {
+  errors.push("O Caderno tem de abrir o login nativo e permitir terminar sessão.");
+}
+const authRouter = read("src/lib/native/api/v1-router.ts");
+if (!authRouter.includes("auth-claim") || !authRouter.includes("auth-email") || !authRouter.includes("auth-apple")) {
+  errors.push("Faltam rotas /api/native/v1/auth/* (claim/email/apple).");
+}
+const ents = read("ios/App/App/AppRelease.entitlements");
+if (!ents.includes("com.apple.developer.applesignin")) {
+  errors.push("AppRelease.entitlements tem de incluir Sign in with Apple.");
+}
+if (!project.includes("NativeSignInViewController.swift in Sources") || !project.includes("NativeLoginService.swift in Sources")) {
+  errors.push("Login nativo tem de estar no target Xcode.");
+}
+
 for (const path of [
   "ios/App/App/NativeShell.swift",
   "ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme",
@@ -372,6 +403,9 @@ for (const path of [
   "ios/App/App/NotebookListViewController.swift",
   "ios/App/App/NoteDetailViewController.swift",
   "ios/App/App/AppRoot.swift",
+  "ios/App/App/NativeSignInViewController.swift",
+  "ios/App/App/NativeLoginService.swift",
+  "ios/App/App/NativeSessionBootstrap.swift",
 ]) {
   try {
     read(path);

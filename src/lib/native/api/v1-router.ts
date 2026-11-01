@@ -8,6 +8,12 @@ export type NativeV1Route =
   | { kind: "notes"; noteId?: string }
   | { kind: "speakers"; speakerId?: string }
   | { kind: "devices-apns" }
+  | { kind: "auth-providers" }
+  | { kind: "auth-claim" }
+  | { kind: "auth-email" }
+  | { kind: "auth-apple" }
+  | { kind: "auth-from-cookie" }
+  | { kind: "auth-sign-out" }
   | { kind: "not-found"; path: string };
 
 /**
@@ -26,8 +32,26 @@ export function matchNativeV1Route(splat: string): NativeV1Route {
   if (a === "speakers" && parts.length === 1) return { kind: "speakers" };
   if (a === "speakers" && parts.length === 2 && b) return { kind: "speakers", speakerId: b };
   if (a === "devices" && b === "apns" && parts.length === 2) return { kind: "devices-apns" };
+  if (a === "auth" && b === "providers" && parts.length === 2) return { kind: "auth-providers" };
+  if (a === "auth" && b === "claim" && parts.length === 2) return { kind: "auth-claim" };
+  if (a === "auth" && b === "email" && parts.length === 2) return { kind: "auth-email" };
+  if (a === "auth" && b === "apple" && parts.length === 2) return { kind: "auth-apple" };
+  if (a === "auth" && b === "from-cookie" && parts.length === 2) return { kind: "auth-from-cookie" };
+  if (a === "auth" && b === "sign-out" && parts.length === 2) return { kind: "auth-sign-out" };
 
   return { kind: "not-found", path: raw };
+}
+
+/** Auth routes that do not require a prior bearer (sign-in + provider catalog). */
+export function isPublicNativeAuthRoute(route: NativeV1Route): boolean {
+  return (
+    route.kind === "auth-providers" ||
+    route.kind === "auth-claim" ||
+    route.kind === "auth-email" ||
+    route.kind === "auth-apple" ||
+    route.kind === "auth-from-cookie" ||
+    route.kind === "catalog"
+  );
 }
 
 export function methodAllowed(route: NativeV1Route, method: string): boolean {
@@ -46,6 +70,14 @@ export function methodAllowed(route: NativeV1Route, method: string): boolean {
       return m === "DELETE";
     case "devices-apns":
       return m === "POST" || m === "DELETE";
+    case "auth-providers":
+      return m === "GET";
+    case "auth-claim":
+    case "auth-email":
+    case "auth-apple":
+    case "auth-from-cookie":
+    case "auth-sign-out":
+      return m === "POST";
     case "not-found":
       return false;
   }
