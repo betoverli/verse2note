@@ -51,7 +51,7 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
         signInButton.translatesAutoresizingMaskIntoConstraints = false
         signInButton.setTitle("Entrar", for: .normal)
         signInButton.titleLabel?.font = .preferredFont(forTextStyle: .headline)
-        signInButton.addTarget(self, action: #selector(presentSignIn), for: .touchUpInside)
+        signInButton.addTarget(self, action: #selector(presentSignInTapped), for: .touchUpInside)
         signInButton.isHidden = true
         view.addSubview(signInButton)
 
@@ -115,7 +115,7 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
                 emptyLabel.isHidden = !notes.isEmpty
                 // Fresh install / no session: present native sign-in once.
                 if notes.isEmpty, presentedViewController == nil {
-                    presentSignIn(auto: true)
+                    showSignIn(auto: true)
                 }
                 return
             }
@@ -260,7 +260,7 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
     @objc private func composeNote() {
         Task { @MainActor in
             guard NativeAPIClient.hasBearer else {
-                presentSignIn()
+                showSignIn(auto: false)
                 return
             }
             do {
@@ -293,12 +293,12 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
                     await NativeLoginService.shared.signOut()
                     self?.notes = LocalNoteCache.loadNotes()
                     self?.applyFilter()
-                    self?.presentSignIn(auto: false)
+                    self?.showSignIn(auto: false)
                 }
             })
         } else {
             sheet.addAction(UIAlertAction(title: "Entrar", style: .default) { [weak self] _ in
-                self?.presentSignIn(auto: false)
+                self?.showSignIn(auto: false)
             })
         }
         // Hidden fallback — not the primary path.
@@ -313,13 +313,14 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
         present(sheet, animated: true)
     }
 
-    @objc private func presentSignIn() {
-        presentSignIn(auto: false)
+    /// Button / selector entry — must not overload `showSignIn(auto:)` (Swift `#selector` ambiguity).
+    @objc private func presentSignInTapped() {
+        showSignIn(auto: false)
     }
 
     private var didAutoPresentSignIn = false
 
-    private func presentSignIn(auto: Bool) {
+    private func showSignIn(auto: Bool) {
         if auto {
             if didAutoPresentSignIn { return }
             didAutoPresentSignIn = true

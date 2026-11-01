@@ -379,6 +379,13 @@ if (!sessionBoot.includes("__Host-grok-auth.session_token") || !sessionBoot.incl
 if (!notebookList.includes("NativeSignInViewController") || !notebookList.includes("Terminar sessão")) {
   errors.push("O Caderno tem de abrir o login nativo e permitir terminar sessão.");
 }
+// Overloading presentSignIn() + presentSignIn(auto:) makes #selector(presentSignIn) ambiguous (Xcode).
+if (/#selector\s*\(\s*presentSignIn\s*\)/.test(notebookList) || /func presentSignIn\s*\(\s*\)/.test(notebookList)) {
+  errors.push("NotebookList: use presentSignInTapped + showSignIn(auto:) — não sobrecarregar presentSignIn (erro Swift).");
+}
+if (!notebookList.includes("presentSignInTapped") || !notebookList.includes("showSignIn(auto")) {
+  errors.push("NotebookList tem de expor presentSignInTapped e showSignIn(auto:).");
+}
 const authRouter = read("src/lib/native/api/v1-router.ts");
 if (!authRouter.includes("auth-claim") || !authRouter.includes("auth-email") || !authRouter.includes("auth-apple")) {
   errors.push("Faltam rotas /api/native/v1/auth/* (claim/email/apple).");
