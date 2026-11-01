@@ -25,6 +25,14 @@
 		D3E0F0052FED796500168540 /* NativeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0042FED796500168540 /* NativeAPIClient.swift */; };
 		D3E0F0072FED796500168540 /* NoteEditorSpikeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0062FED796500168540 /* NoteEditorSpikeViewController.swift */; };
 		D3E0F0092FED796500168540 /* NativePhase0Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0082FED796500168540 /* NativePhase0Plugin.swift */; };
+		E4F1A0102FED796500168550 /* AppRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A0112FED796500168550 /* AppRoot.swift */; };
+		E4F1A0122FED796500168550 /* LocalNoteCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A0132FED796500168550 /* LocalNoteCache.swift */; };
+		E4F1A0142FED796500168550 /* NativeRootTabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A0152FED796500168550 /* NativeRootTabBarController.swift */; };
+		E4F1A0162FED796500168550 /* ComingSoonTabViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A0172FED796500168550 /* ComingSoonTabViewController.swift */; };
+		E4F1A0182FED796500168550 /* NotebookListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A0192FED796500168550 /* NotebookListViewController.swift */; };
+		E4F1A01A2FED796500168550 /* NoteDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A01B2FED796500168550 /* NoteDetailViewController.swift */; };
+		E4F1A01C2FED796500168550 /* NoteSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A01D2FED796500168550 /* NoteSettingsViewController.swift */; };
+		E4F1A01E2FED796500168550 /* SpeakerPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F1A01F2FED796500168550 /* SpeakerPickerViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +58,14 @@
 		A1C0DE052FED796500168520 /* LiquidGlassMaterial.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LiquidGlassMaterial.h; sourceTree = "<group>"; };
 		A1C0DE062FED796500168520 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
+		E4F1A0112FED796500168550 /* AppRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoot.swift; sourceTree = "<group>"; };
+		E4F1A0132FED796500168550 /* LocalNoteCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalNoteCache.swift; sourceTree = "<group>"; };
+		E4F1A0152FED796500168550 /* NativeRootTabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeRootTabBarController.swift; sourceTree = "<group>"; };
+		E4F1A0172FED796500168550 /* ComingSoonTabViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComingSoonTabViewController.swift; sourceTree = "<group>"; };
+		E4F1A0192FED796500168550 /* NotebookListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotebookListViewController.swift; sourceTree = "<group>"; };
+		E4F1A01B2FED796500168550 /* NoteDetailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteDetailViewController.swift; sourceTree = "<group>"; };
+		E4F1A01D2FED796500168550 /* NoteSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteSettingsViewController.swift; sourceTree = "<group>"; };
+		E4F1A01F2FED796500168550 /* SpeakerPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeakerPickerViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +109,14 @@
 				D3E0F0042FED796500168540 /* NativeAPIClient.swift */,
 				D3E0F0062FED796500168540 /* NoteEditorSpikeViewController.swift */,
 				D3E0F0082FED796500168540 /* NativePhase0Plugin.swift */,
+				E4F1A0112FED796500168550 /* AppRoot.swift */,
+				E4F1A0132FED796500168550 /* LocalNoteCache.swift */,
+				E4F1A0152FED796500168550 /* NativeRootTabBarController.swift */,
+				E4F1A0172FED796500168550 /* ComingSoonTabViewController.swift */,
+				E4F1A0192FED796500168550 /* NotebookListViewController.swift */,
+				E4F1A01B2FED796500168550 /* NoteDetailViewController.swift */,
+				E4F1A01D2FED796500168550 /* NoteSettingsViewController.swift */,
+				E4F1A01F2FED796500168550 /* SpeakerPickerViewController.swift */,
 				A1C0DE032FED796500168520 /* LiquidGlassMaterial.m */,
 				A1C0DE052FED796500168520 /* LiquidGlassMaterial.h */,
 				A1C0DE062FED796500168520 /* App-Bridging-Header.h */,
@@ -200,6 +224,14 @@
 				D3E0F0052FED796500168540 /* NativeAPIClient.swift in Sources */,
 				D3E0F0072FED796500168540 /* NoteEditorSpikeViewController.swift in Sources */,
 				D3E0F0092FED796500168540 /* NativePhase0Plugin.swift in Sources */,
+				E4F1A0102FED796500168550 /* AppRoot.swift in Sources */,
+				E4F1A0122FED796500168550 /* LocalNoteCache.swift in Sources */,
+				E4F1A0142FED796500168550 /* NativeRootTabBarController.swift in Sources */,
+				E4F1A0162FED796500168550 /* ComingSoonTabViewController.swift in Sources */,
+				E4F1A0182FED796500168550 /* NotebookListViewController.swift in Sources */,
+				E4F1A01A2FED796500168550 /* NoteDetailViewController.swift in Sources */,
+				E4F1A01C2FED796500168550 /* NoteSettingsViewController.swift in Sources */,
+				E4F1A01E2FED796500168550 /* SpeakerPickerViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

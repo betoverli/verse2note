@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   NOTE_DOCUMENT_SCHEMA_VERSION,
   coerceIncomingNote,
+  documentPreview,
   documentToNote,
   noteToDocument,
   type LegacyNote,
@@ -72,6 +73,15 @@ describe("noteToDocument / documentToNote", () => {
     const last = first.inlines.at(-1);
     assert.ok(last && last.type === "text");
     assert.equal(last.text, "site");
+  });
+});
+
+describe("documentPreview", () => {
+  it("flattens text and bible refs for list rows", () => {
+    const doc = noteToDocument(sampleLegacy);
+    const preview = documentPreview(doc);
+    assert.match(preview, /Hello/);
+    assert.match(preview, /JHN 3:16/);
   });
 });
 

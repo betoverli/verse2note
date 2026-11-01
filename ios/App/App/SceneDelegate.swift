@@ -4,13 +4,26 @@ import WebKit
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
+    private var modeObserver: NSObjectProtocol?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = Verse2NoteBridgeViewController()
+        window?.rootViewController = AppRoot.makeRootViewController()
         window?.makeKeyAndVisible()
+
+        modeObserver = NotificationCenter.default.addObserver(
+            forName: NativeShellMode.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let window = self?.window else { return }
+            let next = AppRoot.makeRootViewController()
+            UIView.transition(with: window, duration: 0.28, options: .transitionCrossDissolve, animations: {
+                window.rootViewController = next
+            })
+        }
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }

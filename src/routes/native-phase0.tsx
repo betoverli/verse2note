@@ -5,9 +5,9 @@ import { getBearerToken } from "@/lib/auth/client";
 
 export const Route = createFileRoute("/native-phase0")({
   head: () => ({
-    meta: [{ title: "Native Phase 0" }],
+    meta: [{ title: "Native shell debug" }],
   }),
-  component: NativePhase0Debug,
+  component: NativeShellDebug,
 });
 
 type ShellMode = "capacitorSite" | "hybrid" | "editorSpike";
@@ -27,11 +27,12 @@ async function plugin(): Promise<Phase0Plugin | null> {
 }
 
 /**
- * TestFlight debug page for Phase 0 (does not change the default shell).
- * Open `/native-phase0` inside the iOS app after signing in.
+ * TestFlight debug page for shell mode.
+ * Phase 1 default is **hybrid** (native Caderno). Use this page (from classic Cap)
+ * to fall back or return to hybrid after testing.
  */
-function NativePhase0Debug() {
-  const [mode, setMode] = useState<ShellMode>("capacitorSite");
+function NativeShellDebug() {
+  const [mode, setMode] = useState<ShellMode>("hybrid");
   const [log, setLog] = useState<string[]>([]);
   const native = isNativeApp();
 
@@ -66,7 +67,7 @@ function NativePhase0Debug() {
     }
     const info = await p.setShellMode({ mode: next });
     setMode(info.mode);
-    push(`set mode=${info.mode}`);
+    push(`set mode=${info.mode} (root rebuild)`);
   }
 
   async function sync() {
@@ -80,7 +81,6 @@ function NativePhase0Debug() {
   async function fetchNotes() {
     const p = await plugin();
     if (!p) {
-      // Browser fallback against same-origin API
       const headers: HeadersInit = {};
       const token = getBearerToken();
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -109,20 +109,20 @@ function NativePhase0Debug() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-4 px-4 py-8 text-fg">
-      <h1 className="text-xl font-semibold">Native Phase 0</h1>
+      <h1 className="text-xl font-semibold">Native shell debug</h1>
       <p className="text-sm text-muted">
-        Default shell stays <code>capacitorSite</code> (current UI). Use these controls only to verify the
-        API, Keychain bearer, and editor spike on TestFlight.
+        Phase 1 default is <code>hybrid</code> (native Caderno). <code>capacitorSite</code> is the classic
+        fallback if something breaks — also available from Caderno ⋯ → Site clássico.
       </p>
       <p className="text-sm">
         Runtime: {native ? "Capacitor iOS" : "browser"} · mode: <strong>{mode}</strong>
       </p>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="rounded-md bg-fill px-3 py-2 text-sm" onClick={() => void setShell("capacitorSite")}>
-          mode: capacitorSite
+        <button type="button" className="rounded-md bg-accent px-3 py-2 text-sm text-accent-fg" onClick={() => void setShell("hybrid")}>
+          mode: hybrid (default)
         </button>
-        <button type="button" className="rounded-md bg-fill px-3 py-2 text-sm" onClick={() => void setShell("hybrid")}>
-          mode: hybrid
+        <button type="button" className="rounded-md bg-fill px-3 py-2 text-sm" onClick={() => void setShell("capacitorSite")}>
+          mode: capacitorSite (fallback)
         </button>
         <button type="button" className="rounded-md bg-fill px-3 py-2 text-sm" onClick={() => void setShell("editorSpike")}>
           mode: editorSpike
