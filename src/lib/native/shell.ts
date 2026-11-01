@@ -74,6 +74,8 @@ export function installNativeShell() {
   started = true;
   installLinkCapture();
   void bootChrome();
+  // Phase 0: mirror bearer into Keychain for /api/native/v1 (shell mode stays capacitorSite).
+  void import("@/lib/native/phase0").then((mod) => mod.syncBearerToKeychain());
 }
 
 export async function resumeNativePushIfNeeded() {

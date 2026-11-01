@@ -13,6 +13,8 @@ class Verse2NoteBridgeViewController: CAPBridgeViewController {
         bridge?.registerPluginInstance(NativeAuthPlugin())
         bridge?.registerPluginInstance(LiquidChromePlugin())
         bridge?.registerPluginInstance(NativeMenusPlugin())
+        bridge?.registerPluginInstance(NativePhase0Plugin())
+        print("[NativeShell] mode=\(NativeShellMode.current.rawValue) (default capacitorSite = current UI)")
         tuneDocumentScroll()
         // Allow the site's service worker so notebook / app-shell routes stay
         // available after the first online open. Auth still uses the hosted

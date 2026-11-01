@@ -279,6 +279,12 @@ export async function adoptNativeSession(token: string, callbackURL: string): Pr
   } catch {
     /* session store recovers on the next read */
   }
+  try {
+    const { syncBearerToKeychain } = await import("@/lib/native/phase0");
+    await syncBearerToKeychain();
+  } catch {
+    /* Keychain sync is best-effort on older binaries */
+  }
   window.location.assign(callbackURL);
 }
 

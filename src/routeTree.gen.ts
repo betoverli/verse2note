@@ -18,6 +18,8 @@ import { Route as ForAiRouteImport } from './routes/for-ai'
 import { Route as GroupsRouteImport } from './routes/groups'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as NativeEditorRouteImport } from './routes/native-editor'
+import { Route as NativePhase0RouteImport } from './routes/native-phase0'
 import { Route as NotebookRouteImport } from './routes/notebook'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -60,6 +62,8 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as CollectionsCategoryCategoryIdRouteImport } from './routes/collections.category.$categoryId'
 import { Route as NotebookGIdRouteImport } from './routes/notebook.g.$id'
 import { Route as ReadingCategoryCategoryIdRouteImport } from './routes/reading.category.$categoryId'
+import { Route as ApiNativeV1IndexRouteImport } from './routes/api/native/v1.index'
+import { Route as ApiNativeV1SplatRouteImport } from './routes/api/native/v1/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -104,6 +108,16 @@ const InboxRoute = InboxRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NativeEditorRoute = NativeEditorRouteImport.update({
+  id: '/native-editor',
+  path: '/native-editor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NativePhase0Route = NativePhase0RouteImport.update({
+  id: '/native-phase0',
+  path: '/native-phase0',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotebookRoute = NotebookRouteImport.update({
@@ -319,6 +333,16 @@ const ReadingCategoryCategoryIdRoute =
     path: '/category/$categoryId',
     getParentRoute: () => ReadingRoute,
   } as any)
+const ApiNativeV1IndexRoute = ApiNativeV1IndexRouteImport.update({
+  id: '/api/native/v1/',
+  path: '/api/native/v1/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiNativeV1SplatRoute = ApiNativeV1SplatRouteImport.update({
+  id: '/api/native/v1/$',
+  path: '/api/native/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -330,6 +354,8 @@ export interface FileRoutesByFullPath {
   '/groups': typeof GroupsRouteWithChildren
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
+  '/native-editor': typeof NativeEditorRoute
+  '/native-phase0': typeof NativePhase0Route
   '/notebook': typeof NotebookRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
@@ -372,6 +398,8 @@ export interface FileRoutesByFullPath {
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
   '/notebook/g/$id': typeof NotebookGIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
+  '/api/native/v1/$': typeof ApiNativeV1SplatRoute
+  '/api/native/v1/': typeof ApiNativeV1IndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -381,6 +409,8 @@ export interface FileRoutesByTo {
   '/for-ai': typeof ForAiRoute
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
+  '/native-editor': typeof NativeEditorRoute
+  '/native-phase0': typeof NativePhase0Route
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
   '/.well-known/apple-app-site-association': typeof DotwellKnownAppleAppSiteAssociationRoute
@@ -420,6 +450,8 @@ export interface FileRoutesByTo {
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
   '/notebook/g/$id': typeof NotebookGIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
+  '/api/native/v1/$': typeof ApiNativeV1SplatRoute
+  '/api/native/v1': typeof ApiNativeV1IndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -432,6 +464,8 @@ export interface FileRoutesById {
   '/groups': typeof GroupsRouteWithChildren
   '/inbox': typeof InboxRoute
   '/login': typeof LoginRoute
+  '/native-editor': typeof NativeEditorRoute
+  '/native-phase0': typeof NativePhase0Route
   '/notebook': typeof NotebookRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRouteWithChildren
@@ -474,6 +508,8 @@ export interface FileRoutesById {
   '/collections/category/$categoryId': typeof CollectionsCategoryCategoryIdRoute
   '/notebook/g/$id': typeof NotebookGIdRoute
   '/reading/category/$categoryId': typeof ReadingCategoryCategoryIdRoute
+  '/api/native/v1/$': typeof ApiNativeV1SplatRoute
+  '/api/native/v1/': typeof ApiNativeV1IndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -487,6 +523,8 @@ export interface FileRouteTypes {
     | '/groups'
     | '/inbox'
     | '/login'
+    | '/native-editor'
+    | '/native-phase0'
     | '/notebook'
     | '/privacy'
     | '/profile'
@@ -529,6 +567,8 @@ export interface FileRouteTypes {
     | '/collections/category/$categoryId'
     | '/notebook/g/$id'
     | '/reading/category/$categoryId'
+    | '/api/native/v1/$'
+    | '/api/native/v1/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -538,6 +578,8 @@ export interface FileRouteTypes {
     | '/for-ai'
     | '/inbox'
     | '/login'
+    | '/native-editor'
+    | '/native-phase0'
     | '/privacy'
     | '/settings'
     | '/.well-known/apple-app-site-association'
@@ -577,6 +619,8 @@ export interface FileRouteTypes {
     | '/collections/category/$categoryId'
     | '/notebook/g/$id'
     | '/reading/category/$categoryId'
+    | '/api/native/v1/$'
+    | '/api/native/v1'
   id:
     | '__root__'
     | '/'
@@ -588,6 +632,8 @@ export interface FileRouteTypes {
     | '/groups'
     | '/inbox'
     | '/login'
+    | '/native-editor'
+    | '/native-phase0'
     | '/notebook'
     | '/privacy'
     | '/profile'
@@ -630,6 +676,8 @@ export interface FileRouteTypes {
     | '/collections/category/$categoryId'
     | '/notebook/g/$id'
     | '/reading/category/$categoryId'
+    | '/api/native/v1/$'
+    | '/api/native/v1/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -642,6 +690,8 @@ export interface RootRouteChildren {
   GroupsRoute: typeof GroupsRouteWithChildren
   InboxRoute: typeof InboxRoute
   LoginRoute: typeof LoginRoute
+  NativeEditorRoute: typeof NativeEditorRoute
+  NativePhase0Route: typeof NativePhase0Route
   NotebookRoute: typeof NotebookRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRouteWithChildren
@@ -661,6 +711,8 @@ export interface RootRouteChildren {
   NIdRoute: typeof NIdRoute
   UHandleRoute: typeof UHandleRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiNativeV1SplatRoute: typeof ApiNativeV1SplatRoute
+  ApiNativeV1IndexRoute: typeof ApiNativeV1IndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -726,6 +778,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/native-editor': {
+      id: '/native-editor'
+      path: '/native-editor'
+      fullPath: '/native-editor'
+      preLoaderRoute: typeof NativeEditorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/native-phase0': {
+      id: '/native-phase0'
+      path: '/native-phase0'
+      fullPath: '/native-phase0'
+      preLoaderRoute: typeof NativePhase0RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notebook': {
@@ -1022,6 +1088,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ReadingCategoryCategoryIdRouteImport
       parentRoute: typeof ReadingRoute
     }
+    '/api/native/v1/': {
+      id: '/api/native/v1/'
+      path: '/api/native/v1'
+      fullPath: '/api/native/v1/'
+      preLoaderRoute: typeof ApiNativeV1IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/native/v1/$': {
+      id: '/api/native/v1/$'
+      path: '/api/native/v1/$'
+      fullPath: '/api/native/v1/$'
+      preLoaderRoute: typeof ApiNativeV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1128,6 +1208,8 @@ const rootRouteChildren: RootRouteChildren = {
   GroupsRoute: GroupsRouteWithChildren,
   InboxRoute: InboxRoute,
   LoginRoute: LoginRoute,
+  NativeEditorRoute: NativeEditorRoute,
+  NativePhase0Route: NativePhase0Route,
   NotebookRoute: NotebookRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRouteWithChildren,
@@ -1148,6 +1230,8 @@ const rootRouteChildren: RootRouteChildren = {
   NIdRoute: NIdRoute,
   UHandleRoute: UHandleRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiNativeV1SplatRoute: ApiNativeV1SplatRoute,
+  ApiNativeV1IndexRoute: ApiNativeV1IndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

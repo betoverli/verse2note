@@ -1,0 +1,148 @@
+import { UnauthorizedError } from "@/lib/auth/verify.server";
+import { matchNativeV1Route, methodAllowed } from "./v1-router";
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+};
+
+export function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      ...CORS,
+    },
+  });
+}
+
+export function preflight(): Response {
+  return new Response(null, { status: 204, headers: CORS });
+}
+
+async function readBody(request: Request): Promise<unknown> {
+  const text = await request.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return Symbol.for("invalid-json");
+  }
+}
+
+/**
+ * Dispatch a native v1 request. Dynamic-imports the server module so tests can
+ * exercise the router without loading Postgres.
+ */
+export async function handleNativeV1Request(request: Request, splat: string): Promise<Response> {
+  if (request.method.toUpperCase() === "OPTIONS") return preflight();
+
+  const route = matchNativeV1Route(splat);
+  if (route.kind === "not-found") {
+    return json({ ok: false, error: "not_found", path: route.path }, 404);
+  }
+  if (!methodAllowed(route, request.method)) {
+    return json({ ok: false, error: "method_not_allowed" }, 405);
+  }
+
+  if (route.kind === "catalog") {
+    const { nativeV1Catalog } = await import("./v1.server");
+    return json(nativeV1Catalog());
+  }
+
+  try {
+    const {
+      resolveNativeUser,
+      getNativeSession,
+      listNotesForUser,
+      getNoteForUser,
+      getNoteWithSpeakersForUser,
+      upsertNoteForUser,
+      deleteNoteForUser,
+      listSpeakersForUser,
+      upsertSpeakerForUser,
+      deleteSpeakerForUser,
+      saveApnsDevice,
+      dropApnsDevice,
+    } = await import("./v1.server");
+
+    const user = await resolveNativeUser(request);
+    const method = request.method.toUpperCase();
+
+    if (route.kind === "session") {
+      return json(await getNativeSession(user.id, user.email));
+    }
+
+    if (route.kind === "notes") {
+      if (!route.noteId) {
+        if (method === "GET") return json({ ok: true, notes: await listNotesForUser(user.id) });
+        const body = await readBody(request);
+        if (body === Symbol.for("invalid-json")) return json({ ok: false, error: "invalid_json" }, 400);
+        const result = await upsertNoteForUser(user.id, body);
+        if (!result.ok) return json(result, result.error === "limit" ? 409 : 400);
+        return json(result, 201);
+      }
+      if (method === "GET") {
+        const packed = await getNoteWithSpeakersForUser(user.id, route.noteId);
+        if (!packed) return json({ ok: false, error: "missing" }, 404);
+        return json({ ok: true, ...packed });
+      }
+      if (method === "DELETE") {
+        const result = await deleteNoteForUser(user.id, route.noteId);
+        return json(result, result.ok ? 200 : 404);
+      }
+      // PATCH / PUT — merge onto existing NoteDocumentV1
+      const body = await readBody(request);
+      if (body === Symbol.for("invalid-json")) return json({ ok: false, error: "invalid_json" }, 400);
+      const existing = await getNoteForUser(user.id, route.noteId);
+      if (!existing) return json({ ok: false, error: "missing" }, 404);
+      const patch = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+      const merged = {
+        ...existing,
+        ...patch,
+        id: route.noteId,
+        schemaVersion: existing.schemaVersion,
+        body: (patch.body as typeof existing.body | undefined) ?? existing.body,
+      };
+      const result = await upsertNoteForUser(user.id, merged);
+      if (!result.ok) return json(result, 400);
+      return json(result);
+    }
+
+    if (route.kind === "speakers") {
+      if (!route.speakerId) {
+        if (method === "GET") return json({ ok: true, speakers: await listSpeakersForUser(user.id) });
+        const body = await readBody(request);
+        if (body === Symbol.for("invalid-json")) return json({ ok: false, error: "invalid_json" }, 400);
+        const result = await upsertSpeakerForUser(user.id, body);
+        if (!result.ok) return json(result, 400);
+        return json(result, 201);
+      }
+      if (method === "DELETE") {
+        const result = await deleteSpeakerForUser(user.id, route.speakerId);
+        return json(result);
+      }
+    }
+
+    if (route.kind === "devices-apns") {
+      const body = (await readBody(request)) as { token?: string; sandbox?: boolean } | null;
+      if (body === Symbol.for("invalid-json")) return json({ ok: false, error: "invalid_json" }, 400);
+      if (method === "POST") {
+        const result = await saveApnsDevice(user.id, String(body?.token ?? ""), body?.sandbox === true);
+        return json(result, result.ok ? 200 : 400);
+      }
+      const result = await dropApnsDevice(user.id, String(body?.token ?? ""));
+      return json(result);
+    }
+
+    return json({ ok: false, error: "not_found" }, 404);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return json({ ok: false, error: "unauthorized" }, 401);
+    }
+    console.error("[native/v1]", error);
+    return json({ ok: false, error: "server_error" }, 500);
+  }
+}
