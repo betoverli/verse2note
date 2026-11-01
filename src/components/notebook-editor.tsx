@@ -3,7 +3,6 @@ import { Bold, BookOpen, Ellipsis, Italic, List, ListOrdered, Plus, Type, UserRo
 import { t } from "@/lib/i18n";
 import { detectTrailingRef, emptyLine, newNoteId, noteIsBare, noteNeedsSpeakerAsk, passageToRef, replaceTrailingWithRef, type LineBlock, type Note, type NoteBlock, type Speaker, type SpeakerBlock } from "@/lib/notebook";
 import { runNativeNoteSettings } from "@/lib/native/note-settings";
-import { isNativeApp } from "@/lib/native/runtime";
 import { upsertLocalNote, upsertLocalSpeaker } from "@/lib/notebook-local";
 import { useAppStore } from "@/lib/store";
 import { formatSelection } from "@/components/notebook-line";
@@ -336,28 +335,41 @@ export function NotebookEditor({
     insertSpeakerSection(speaker);
   }
 
-  async function openNativeNoteSettings() {
-    const action = await runNativeNoteSettings({ locale, note: latest() });
-    if (action.type === "web-fallback") {
+  /**
+   * Note settings: always the web ViewportSheet on iOS.
+   * Chaining NativeMenus.present after the Liquid Glass … UIMenu was swallowing
+   * taps (TF88) — cancelled/failed native present never opened metaSheet.
+   */
+  async function openNoteSettings() {
+    try {
+      const action = await runNativeNoteSettings({ locale, note: latest() });
+      // web-fallback is the expected path; any other result still must not
+      // leave the tap dead — open the sheet unless we applied a native action.
+      if (action.type === "web-fallback" || action.type === "cancelled") {
+        setMetaSheet(true);
+        return;
+      }
+      if (action.type === "set-date") {
+        patch((row) => ({ ...row, happenedAt: action.value }));
+        return;
+      }
+      if (action.type === "add-tag") {
+        patch((row) => (row.tags.includes(action.value) ? row : { ...row, tags: [...row.tags, action.value] }));
+        return;
+      }
+      if (action.type === "clear-speaker") {
+        patch((row) => ({ ...row, speakerId: null }));
+        return;
+      }
+      if (action.type === "pick-speaker") {
+        setPickNoteSpeaker(true);
+        setPeople(true);
+        return;
+      }
       setMetaSheet(true);
-      return;
-    }
-    if (action.type === "cancelled") return;
-    if (action.type === "set-date") {
-      patch((row) => ({ ...row, happenedAt: action.value }));
-      return;
-    }
-    if (action.type === "add-tag") {
-      patch((row) => (row.tags.includes(action.value) ? row : { ...row, tags: [...row.tags, action.value] }));
-      return;
-    }
-    if (action.type === "clear-speaker") {
-      patch((row) => ({ ...row, speakerId: null }));
-      return;
-    }
-    if (action.type === "pick-speaker") {
-      setPickNoteSpeaker(true);
-      setPeople(true);
+    } catch (error) {
+      console.warn("[notebook-editor] openNoteSettings failed — web sheet", error);
+      setMetaSheet(true);
     }
   }
 
@@ -555,8 +567,9 @@ export function NotebookEditor({
           onTrailingMenuSelect={(id) => {
             console.log("[notebook-editor] trailingMenuSelect", id);
             if (id === NOTE_MORE_SETTINGS) {
-              if (isNativeApp()) void openNativeNoteSettings();
-              else setMetaSheet(true);
+              // Always open the web settings sheet — never NativeMenus.present
+              // after this UIMenu (silent no-op on TF85/TF88).
+              void openNoteSettings();
             } else if (id === NOTE_MORE_SPEAKERS) setPeople(true);
           }}
           trailing={
@@ -846,8 +859,7 @@ export function NotebookEditor({
             {
               label: t(locale, "settings"),
               onSelect: () => {
-                if (isNativeApp()) void openNativeNoteSettings();
-                else setMetaSheet(true);
+                void openNoteSettings();
               },
             },
             {

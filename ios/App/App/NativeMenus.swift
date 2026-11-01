@@ -234,14 +234,19 @@ public class NativeMenusPlugin: CAPPlugin, CAPBridgedPlugin {
             failPresent("Já há um modal nativo.")
             return
         }
-        // Notify ASAP (before animation completes) so the JS watchdog does not
-        // dismiss a sheet that is already animating in.
+        // Only notify AFTER UIKit accepts the presentation. Firing `presented`
+        // before `present` (TF85/TF88) made JS treat a dropped sheet as a real
+        // user cancel — call sites then swallowed the tap with no web fallback.
         print("[NativeMenus] presenting style=\(alert.preferredStyle == .alert ? "alert" : "sheet") items=\(alert.actions.count)")
-        notifyListeners("presented", data: [:])
         controller.present(alert, animated: true) { [weak self] in
             guard let self, !self.resolved else { return }
+            // If UIKit silently refused, the alert is not in the hierarchy.
+            guard alert.presentingViewController != nil || self.topPresenter()?.presentedViewController === alert else {
+                print("[NativeMenus] present completion without visible alert — failing")
+                self.failPresent("Apresentação nativa recusada.")
+                return
+            }
             print("[NativeMenus] presented style=\(alert.preferredStyle == .alert ? "alert" : "sheet")")
-            // Second notify is cheap; covers listeners attached mid-animation.
             self.notifyListeners("presented", data: [:])
         }
     }

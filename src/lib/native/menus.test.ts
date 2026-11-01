@@ -233,14 +233,26 @@ describe("native note … trailing UIMenu", () => {
     assert.match(header, /onTrailingMenuSelect/);
   });
 
-  it("note editor supplies … items via chrome and keeps a web ActionSheet fallback", () => {
+  it("note editor supplies … items via chrome and opens web settings (not NativeMenus)", () => {
     assert.match(note, /nativeSymbol=\{readOnly \? undefined : "ellipsis"\}/);
     assert.match(note, /trailingMenu=/);
     assert.match(note, /NOTE_MORE_SETTINGS/);
     assert.match(note, /NOTE_MORE_SPEAKERS/);
     assert.match(note, /setMoreSheet\(true\)/);
+    assert.match(note, /openNoteSettings/);
+    assert.match(note, /setMetaSheet\(true\)/);
     assert.doesNotMatch(note, /presentNativeMenu/);
     assert.doesNotMatch(note, /nativeBar=\{false\}/);
+    assert.doesNotMatch(note, /openNativeNoteSettings/);
+  });
+
+  it("does not fire presented before UIKit accepts the alert (TF88 false cancel)", () => {
+    assert.match(menusSwift, /presentingViewController/);
+    assert.doesNotMatch(menusSwift, /Notify ASAP/);
+    // presented notify must live inside the present completion, not before.
+    const idxPresent = menusSwift.indexOf("controller.present(alert");
+    const idxNotify = menusSwift.indexOf('notifyListeners("presented"');
+    assert.ok(idxPresent >= 0 && idxNotify > idxPresent);
   });
 
   it("note editor keeps the title only in the body, not the native/web top bar", () => {

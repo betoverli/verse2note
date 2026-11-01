@@ -140,18 +140,31 @@ export function NotebookGroupsHome({ query }: { query: string }) {
     }
   }
 
+  /**
+   * Novo grupo: always the web ViewportSheet on iOS.
+   * Native prompt/sheet after the FAB tap was a silent no-op (TF88) when
+   * present failed or was classified as cancel without opening web UI.
+   */
   async function openCreate() {
-    if (!isNativeApp()) {
+    try {
+      if (!isNativeApp()) {
+        setCreate(true);
+        return;
+      }
+      const result = await runNativeNewGroup(locale);
+      if (result.type === "web-fallback" || result.type === "cancelled") {
+        setCreate(true);
+        return;
+      }
+      if (result.type === "create") {
+        await makeWith(result.name, result.listed);
+        return;
+      }
       setCreate(true);
-      return;
-    }
-    const result = await runNativeNewGroup(locale);
-    if (result.type === "web-fallback") {
+    } catch (error) {
+      console.warn("[notebook-groups] openCreate failed — web sheet", error);
       setCreate(true);
-      return;
     }
-    if (result.type === "cancelled") return;
-    await makeWith(result.name, result.listed);
   }
 
   useNativeFab(t(locale, "notebookGroupNew"), () => void openCreate(), Boolean(user));
