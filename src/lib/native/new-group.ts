@@ -1,46 +1,29 @@
 /**
- * Native "new group" flow: UIAlertController prompt for the name, then an
- * action sheet for private vs listed. Web callers fall back to ViewportSheet.
+ * "New group" entry for the Capacitor iOS shell.
+ *
+ * History: TF82–TF88 used a native text prompt then a visibility action sheet.
+ * On device that prompt often never appeared (or was classified as a user
+ * cancel after a false `presented` event), and `openCreate` did
+ * `if (cancelled) return` — so the Novo grupo FAB / button did nothing.
+ *
+ * The web ViewportSheet (name + private/listed) always works in the WKWebView.
  */
 import type { Locale } from "@/lib/bible/books";
-import { t } from "@/lib/i18n";
-import {
-  canUseNativeMenus,
-  presentNativeMenu,
-  presentNativePrompt,
-  rectFromElement,
-} from "@/lib/native/menus";
 
 export type NativeNewGroupResult =
   | { type: "web-fallback" }
   | { type: "cancelled" }
   | { type: "create"; name: string; listed: boolean };
 
-export async function runNativeNewGroup(locale: Locale): Promise<NativeNewGroupResult> {
-  if (!(await canUseNativeMenus())) return { type: "web-fallback" };
+/**
+ * Always prefer the web create-group sheet.
+ * Callers MUST open the ViewportSheet on `web-fallback` — never ignore the tap.
+ */
+export async function runNativeNewGroup(_locale: Locale): Promise<NativeNewGroupResult> {
+  return { type: "web-fallback" };
+}
 
-  const prompted = await presentNativePrompt({
-    title: t(locale, "notebookGroupNew"),
-    cancelLabel: t(locale, "linkCancel"),
-    okLabel: t(locale, "notebookGroupCreate"),
-    placeholder: t(locale, "notebookGroupName"),
-  });
-  if (prompted.failed) return { type: "web-fallback" };
-  const name = (prompted.value ?? "").trim();
-  if (name.length < 2) return { type: "cancelled" };
-
-  const visibility = await presentNativeMenu({
-    style: "sheet",
-    title: t(locale, "notebookGroupNew"),
-    message: name,
-    cancelLabel: t(locale, "linkCancel"),
-    anchor: rectFromElement(null),
-    items: [
-      { id: "private", title: t(locale, "notebookGroupPrivate"), symbol: "lock.fill" },
-      { id: "listed", title: t(locale, "notebookGroupListed"), symbol: "globe" },
-    ],
-  });
-  if (visibility.failed) return { type: "web-fallback" };
-  if (visibility.cancelled || !visibility.id) return { type: "cancelled" };
-  return { type: "create", name, listed: visibility.id === "listed" };
+/** Pure helper for tests / call sites: a tap must open web UI on this result. */
+export function newGroupShouldOpenWeb(result: NativeNewGroupResult): boolean {
+  return result.type === "web-fallback";
 }

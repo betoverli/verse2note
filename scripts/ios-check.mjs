@@ -213,6 +213,27 @@ if (!viewportSheet.includes("settledRef") || !viewportSheet.includes("presented.
 if (!viewportSheet.includes("result.failed") || !viewportSheet.includes('setMode("web")')) {
   errors.push("ActionSheet tem de cair no sheet web quando o native falha.");
 }
+const noteSettings = read("src/lib/native/note-settings.ts");
+if (!noteSettings.includes('type: "web-fallback"') || noteSettings.includes("presentNativeMenu")) {
+  errors.push("note-settings tem de abrir o sheet web (sem NativeMenus.present após o …).");
+}
+if (!noteEditor.includes("openNoteSettings") || !noteEditor.includes("setMetaSheet(true)")) {
+  errors.push("O editor tem de abrir metaSheet no tap de Settings (nunca ignorar o tap).");
+}
+if (/if \(action\.type === "cancelled"\) return/.test(noteEditor)) {
+  errors.push("Settings não pode engolir cancelled sem abrir o sheet web.");
+}
+const newGroup = read("src/lib/native/new-group.ts");
+const groupsHome = read("src/components/notebook-groups-home.tsx");
+if (!newGroup.includes('type: "web-fallback"') || newGroup.includes("presentNativePrompt")) {
+  errors.push("new-group tem de abrir o sheet web (sem presentNativePrompt silencioso).");
+}
+if (!groupsHome.includes("setCreate(true)") || /if \(result\.type === "cancelled"\) return/.test(groupsHome)) {
+  errors.push("Novo grupo tem de abrir o ViewportSheet; cancelled não pode ser no-op.");
+}
+if (!nativeMenus.includes("presentingViewController") || nativeMenus.includes("Notify ASAP")) {
+  errors.push("NativeMenus só pode emitir presented depois do present completar com sucesso.");
+}
 if (!viewportSheet.includes("FORCE_WEB_FALLBACK_MS") || !viewportSheet.includes("force web fallback")) {
   errors.push("ActionSheet tem de forçar o sheet web se o native ficar em pending.");
 }
