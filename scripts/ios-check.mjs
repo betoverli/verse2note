@@ -300,12 +300,39 @@ if (!done.includes("nativeDoneLocation") || !done.includes("status: 302")) {
   errors.push("O regresso /auth/native-done tem de redirecionar para o código de uso único.");
 }
 
+// Phase 0 — native JSON API + Keychain + flag (default Capacitor UI).
+const nativeV1Router = read("src/lib/native/api/v1-router.ts");
+const noteDocument = read("src/lib/native/api/note-document.ts");
+const migrationPlan = read("docs/ios-native-migration.md");
+if (!nativeV1Router.includes("devices-apns") || !read("src/routes/api/native/v1/$.ts").includes("handleNativeV1Request")) {
+  errors.push("Falta o router /api/native/v1 (Phase 0).");
+}
+if (!noteDocument.includes("NOTE_DOCUMENT_SCHEMA_VERSION") || !noteDocument.includes("noteToDocument")) {
+  errors.push("NoteDocumentV1 (schemaVersion + conversão legacy) é obrigatório no Phase 0.");
+}
+if (!migrationPlan.includes("Phase 7") || !migrationPlan.includes("NoteDocumentV1")) {
+  errors.push("O plano tem de documentar Phase 7 (editor nativo final) e NoteDocumentV1.");
+}
+if (!shell.includes("registerPluginInstance(NativePhase0Plugin())")) {
+  errors.push("NativePhase0Plugin tem de ser registrado no bridge.");
+}
+if (!project.includes("KeychainStore.swift in Sources") || !project.includes("NativePhase0Plugin.swift in Sources")) {
+  errors.push("KeychainStore / NativePhase0 têm de estar no target Xcode.");
+}
+const shellMode = read("ios/App/App/NativeShellMode.swift");
+if (!shellMode.includes("capacitorSite") || !shellMode.includes('return .capacitorSite')) {
+  errors.push("NativeShellMode tem de defaultar para capacitorSite (UI atual).");
+}
+
 for (const path of [
   "ios/App/App/NativeShell.swift",
   "ios/App/App.xcodeproj/xcshareddata/xcschemes/App.xcscheme",
   "ios/App/CapApp-SPM/Package.swift",
   "native/www/offline.html",
   ".github/workflows/ios.yml",
+  "docs/ios-native-migration.md",
+  "src/routes/native-editor.tsx",
+  "src/routes/native-phase0.tsx",
 ]) {
   try {
     read(path);

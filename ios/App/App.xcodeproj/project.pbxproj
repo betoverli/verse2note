@@ -20,6 +20,11 @@
 		A1C0DE022FED796500168520 /* LiquidChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE012FED796500168520 /* LiquidChrome.swift */; };
 		C2B1F0122FED796500168530 /* NativeMenus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B1F0112FED796500168530 /* NativeMenus.swift */; };
 		A1C0DE042FED796500168520 /* LiquidGlassMaterial.m in Sources */ = {isa = PBXBuildFile; fileRef = A1C0DE032FED796500168520 /* LiquidGlassMaterial.m */; };
+		D3E0F0012FED796500168540 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0002FED796500168540 /* KeychainStore.swift */; };
+		D3E0F0032FED796500168540 /* NativeShellMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0022FED796500168540 /* NativeShellMode.swift */; };
+		D3E0F0052FED796500168540 /* NativeAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0042FED796500168540 /* NativeAPIClient.swift */; };
+		D3E0F0072FED796500168540 /* NoteEditorSpikeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0062FED796500168540 /* NoteEditorSpikeViewController.swift */; };
+		D3E0F0092FED796500168540 /* NativePhase0Plugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E0F0082FED796500168540 /* NativePhase0Plugin.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +41,11 @@
 		B1A7E0012FED79650016851F /* NativeShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeShell.swift; sourceTree = "<group>"; };
 		A1C0DE012FED796500168520 /* LiquidChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidChrome.swift; sourceTree = "<group>"; };
 		C2B1F0112FED796500168530 /* NativeMenus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeMenus.swift; sourceTree = "<group>"; };
+		D3E0F0002FED796500168540 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		D3E0F0022FED796500168540 /* NativeShellMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeShellMode.swift; sourceTree = "<group>"; };
+		D3E0F0042FED796500168540 /* NativeAPIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAPIClient.swift; sourceTree = "<group>"; };
+		D3E0F0062FED796500168540 /* NoteEditorSpikeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorSpikeViewController.swift; sourceTree = "<group>"; };
+		D3E0F0082FED796500168540 /* NativePhase0Plugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativePhase0Plugin.swift; sourceTree = "<group>"; };
 		A1C0DE032FED796500168520 /* LiquidGlassMaterial.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LiquidGlassMaterial.m; sourceTree = "<group>"; };
 		A1C0DE052FED796500168520 /* LiquidGlassMaterial.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LiquidGlassMaterial.h; sourceTree = "<group>"; };
 		A1C0DE062FED796500168520 /* App-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "App-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -78,6 +88,11 @@
 				B1A7E0012FED79650016851F /* NativeShell.swift */,
 				A1C0DE012FED796500168520 /* LiquidChrome.swift */,
 				C2B1F0112FED796500168530 /* NativeMenus.swift */,
+				D3E0F0002FED796500168540 /* KeychainStore.swift */,
+				D3E0F0022FED796500168540 /* NativeShellMode.swift */,
+				D3E0F0042FED796500168540 /* NativeAPIClient.swift */,
+				D3E0F0062FED796500168540 /* NoteEditorSpikeViewController.swift */,
+				D3E0F0082FED796500168540 /* NativePhase0Plugin.swift */,
 				A1C0DE032FED796500168520 /* LiquidGlassMaterial.m */,
 				A1C0DE052FED796500168520 /* LiquidGlassMaterial.h */,
 				A1C0DE062FED796500168520 /* App-Bridging-Header.h */,
@@ -180,6 +195,11 @@
 				A1C0DE022FED796500168520 /* LiquidChrome.swift in Sources */,
 				C2B1F0122FED796500168530 /* NativeMenus.swift in Sources */,
 				A1C0DE042FED796500168520 /* LiquidGlassMaterial.m in Sources */,
+				D3E0F0012FED796500168540 /* KeychainStore.swift in Sources */,
+				D3E0F0032FED796500168540 /* NativeShellMode.swift in Sources */,
+				D3E0F0052FED796500168540 /* NativeAPIClient.swift in Sources */,
+				D3E0F0072FED796500168540 /* NoteEditorSpikeViewController.swift in Sources */,
+				D3E0F0092FED796500168540 /* NativePhase0Plugin.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
