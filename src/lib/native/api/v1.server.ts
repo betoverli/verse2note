@@ -230,6 +230,12 @@ export function nativeV1Catalog() {
     noteDocument:
       "Notes use NoteDocumentV1 (schemaVersion + body.blocks). Not HTML. See docs/ios-native-migration.md § Document model.",
     endpoints: [
+      { method: "GET", path: "/auth/providers", auth: false },
+      { method: "POST", path: "/auth/claim", auth: false, body: "{ code, verifier }" },
+      { method: "POST", path: "/auth/email", auth: false, body: "{ email, password }" },
+      { method: "POST", path: "/auth/apple", auth: false, body: "{ identityToken, nonce? }" },
+      { method: "POST", path: "/auth/from-cookie", auth: false, note: "Cookie session → bearer" },
+      { method: "POST", path: "/auth/sign-out", auth: true },
       { method: "GET", path: "/session", auth: true },
       { method: "GET", path: "/notes", auth: true, returns: "NoteDocumentV1[]" },
       { method: "POST", path: "/notes", auth: true, body: "NoteDocumentV1" },

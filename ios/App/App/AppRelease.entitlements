@@ -9,5 +9,9 @@
 		<string>applinks:verse2note.com</string>
 		<string>webcredentials:verse2note.com</string>
 	</array>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
 </dict>
 </plist>

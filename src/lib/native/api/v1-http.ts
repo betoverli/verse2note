@@ -4,7 +4,7 @@ import { matchNativeV1Route, methodAllowed } from "./v1-router";
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, Cookie",
 };
 
 export function json(data: unknown, status = 200): Response {
@@ -53,6 +53,44 @@ export async function handleNativeV1Request(request: Request, splat: string): Pr
   }
 
   try {
+    // Public auth endpoints (no bearer yet). Catalog already returned above.
+    if (
+      route.kind === "auth-providers" ||
+      route.kind === "auth-claim" ||
+      route.kind === "auth-email" ||
+      route.kind === "auth-apple" ||
+      route.kind === "auth-from-cookie"
+    ) {
+      const authApi = await import("./v1-auth.server");
+      if (route.kind === "auth-providers") {
+        return json(authApi.listNativeAuthProviders());
+      }
+      const body = await readBody(request);
+      if (body === Symbol.for("invalid-json")) return json({ ok: false, error: "invalid_json" }, 400);
+      const payload = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+
+      if (route.kind === "auth-claim") {
+        const result = await authApi.claimNativeBearer(request, payload);
+        return json(result, result.ok ? 200 : result.status);
+      }
+      if (route.kind === "auth-email") {
+        const result = await authApi.signInEmailNative(request, payload);
+        return json(result, result.ok ? 200 : result.status);
+      }
+      if (route.kind === "auth-apple") {
+        const result = await authApi.signInAppleNative(request, payload);
+        return json(result, result.ok ? 200 : result.status);
+      }
+      const result = await authApi.bearerFromCookie(request);
+      return json(result, result.ok ? 200 : result.status);
+    }
+
+    if (route.kind === "auth-sign-out") {
+      const authApi = await import("./v1-auth.server");
+      const result = await authApi.signOutNative(request);
+      return json(result, result.ok ? 200 : result.status);
+    }
+
     const {
       resolveNativeUser,
       getNativeSession,
@@ -93,7 +131,6 @@ export async function handleNativeV1Request(request: Request, splat: string): Pr
         const result = await deleteNoteForUser(user.id, route.noteId);
         return json(result, result.ok ? 200 : 404);
       }
-      // PATCH / PUT — merge onto existing NoteDocumentV1
       const body = await readBody(request);
       if (body === Symbol.for("invalid-json")) return json({ ok: false, error: "invalid_json" }, 400);
       const existing = await getNoteForUser(user.id, route.noteId);
