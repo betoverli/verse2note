@@ -37,6 +37,10 @@ describe("Phase 1 native login", () => {
     const list = read("ios/App/App/NotebookListViewController.swift");
     assert.match(list, /NativeSignInViewController/);
     assert.match(list, /Terminar sessão/);
+    // Avoid #selector(presentSignIn) ambiguity with presentSignIn(auto:) overloads.
+    assert.match(list, /presentSignInTapped/);
+    assert.match(list, /showSignIn\(auto/);
+    assert.doesNotMatch(list, /#selector\s*\(\s*presentSignIn\s*\)/);
   });
 
   it("registers Sign in with Apple entitlement", () => {
