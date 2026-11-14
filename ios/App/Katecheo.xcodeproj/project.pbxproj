@@ -89,6 +89,8 @@
 		TBONB22FED7965001685TB /* OnboardingFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TBONB21FED7965001685TB /* OnboardingFlowTests.swift */; };
 		TBSET12FED7965001685TB /* SettingsGuideTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TBSET11FED7965001685TB /* SettingsGuideTests.swift */; };
 		TBNOTE12FED7965001685TB /* NoteRowPreviewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TBNOTE11FED7965001685TB /* NoteRowPreviewTests.swift */; };
+		TBREL12FED7965001685TB /* AppLocaleRelativeDayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TBREL11FED7965001685TB /* AppLocaleRelativeDayTests.swift */; };
+		TBTENT12FED7965001685TB /* NativeNoteEditorTitleEnterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TBTENT11FED7965001685TB /* NativeNoteEditorTitleEnterTests.swift */; };
 		KCONB12FED7965001685V2 /* OnboardingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = KCONB11FED7965001685V2 /* OnboardingStore.swift */; };
 		KCONB22FED7965001685V2 /* OnboardingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = KCONB21FED7965001685V2 /* OnboardingViewController.swift */; };
 		KCSET12FED7965001685V2 /* SettingsGuideViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = KCSET11FED7965001685V2 /* SettingsGuideViewController.swift */; };
@@ -189,6 +191,8 @@
 		KCSET11FED7965001685V2 /* SettingsGuideViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsGuideViewController.swift; sourceTree = "<group>"; };
 		TBSET11FED7965001685TB /* SettingsGuideTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsGuideTests.swift; sourceTree = "<group>"; };
 		TBNOTE11FED7965001685TB /* NoteRowPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteRowPreviewTests.swift; sourceTree = "<group>"; };
+		TBREL11FED7965001685TB /* AppLocaleRelativeDayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocaleRelativeDayTests.swift; sourceTree = "<group>"; };
+		TBTENT11FED7965001685TB /* NativeNoteEditorTitleEnterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeNoteEditorTitleEnterTests.swift; sourceTree = "<group>"; };
 		F5A2C0112FED796500168570 /* GroupsListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupsListViewController.swift; sourceTree = "<group>"; };
 		F5A3D0112FED796500168580 /* ProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		F5A3D0132FED796500168580 /* ProfileSettingsScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSettingsScreens.swift; sourceTree = "<group>"; };
@@ -387,6 +391,8 @@
 				TBONB21FED7965001685TB /* OnboardingFlowTests.swift */,
 				TBSET11FED7965001685TB /* SettingsGuideTests.swift */,
 				TBNOTE11FED7965001685TB /* NoteRowPreviewTests.swift */,
+				TBREL11FED7965001685TB /* AppLocaleRelativeDayTests.swift */,
+				TBTENT11FED7965001685TB /* NativeNoteEditorTitleEnterTests.swift */,
 				KCSWR21FED7965001685V2 /* NativeSWRCacheTests.swift */,
 				GNCACHE21FED7965001685GN /* GroupNotesCacheTests.swift */,
 				TBNTC11FED7965001685TB /* NotificationsCenterTests.swift */,
@@ -677,6 +683,8 @@
 				TBONB22FED7965001685TB /* OnboardingFlowTests.swift in Sources */,
 				TBSET12FED7965001685TB /* SettingsGuideTests.swift in Sources */,
 				TBNOTE12FED7965001685TB /* NoteRowPreviewTests.swift in Sources */,
+				TBREL12FED7965001685TB /* AppLocaleRelativeDayTests.swift in Sources */,
+				TBTENT12FED7965001685TB /* NativeNoteEditorTitleEnterTests.swift in Sources */,
 				KCSWR22FED7965001685V2 /* NativeSWRCacheTests.swift in Sources */,
 				GNCACHE22FED7965001685GN /* GroupNotesCacheTests.swift in Sources */,
 				TBNTC12FED7965001685TB /* NotificationsCenterTests.swift in Sources */,

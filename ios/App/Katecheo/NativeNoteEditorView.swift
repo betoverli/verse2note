@@ -31,7 +31,6 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
     private let titlePlaceholderLabel = UILabel()
     private let bodyPlaceholderLabel = UILabel()
     private let tagsStrip = NoteEditorTagsStrip()
-    private var bodyPlaceholderTopConstraint: NSLayoutConstraint?
 
     override init(frame: CGRect) {
         let storage = NSTextStorage()
@@ -84,22 +83,24 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
         }
         addSubview(textView)
 
-        titlePlaceholderLabel.translatesAutoresizingMaskIntoConstraints = false
+        // Placeholders live inside the text view so they share the same content-offset
+        // space as the caret (and match TextKit insets / lineFragmentPadding).
+        titlePlaceholderLabel.translatesAutoresizingMaskIntoConstraints = true
         titlePlaceholderLabel.text = String(localized: "Título")
         titlePlaceholderLabel.font = UIFont.preferredFont(forTextStyle: .title1)
         titlePlaceholderLabel.textColor = .tertiaryLabel
         titlePlaceholderLabel.isUserInteractionEnabled = false
         titlePlaceholderLabel.adjustsFontForContentSizeCategory = true
-        addSubview(titlePlaceholderLabel)
+        textView.addSubview(titlePlaceholderLabel)
 
-        bodyPlaceholderLabel.translatesAutoresizingMaskIntoConstraints = false
+        bodyPlaceholderLabel.translatesAutoresizingMaskIntoConstraints = true
         bodyPlaceholderLabel.text = String(localized: "Comece a escrever…")
         bodyPlaceholderLabel.font = UIFont.preferredFont(forTextStyle: .body)
         bodyPlaceholderLabel.textColor = .tertiaryLabel
         bodyPlaceholderLabel.isUserInteractionEnabled = false
         bodyPlaceholderLabel.adjustsFontForContentSizeCategory = true
         bodyPlaceholderLabel.numberOfLines = 1
-        addSubview(bodyPlaceholderLabel)
+        textView.addSubview(bodyPlaceholderLabel)
 
         tagsStrip.translatesAutoresizingMaskIntoConstraints = true
         tagsStrip.onTagsChange = { [weak self] tags in
@@ -117,26 +118,15 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
         // Formatting toolbar appears only after the user taps into the body (edit mode).
         textView.inputAccessoryView = nil
 
-        let inset = textView.textContainerInset
-        let bodyTop = bodyPlaceholderLabel.topAnchor.constraint(
-            equalTo: titlePlaceholderLabel.bottomAnchor,
-            constant: 12 + NoteEditorTagsStrip.preferredHeight + 8
-        )
-        bodyPlaceholderTopConstraint = bodyTop
         NSLayoutConstraint.activate([
             textView.topAnchor.constraint(equalTo: topAnchor),
             textView.leadingAnchor.constraint(equalTo: leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: trailingAnchor),
             textView.bottomAnchor.constraint(equalTo: bottomAnchor),
-
-            titlePlaceholderLabel.topAnchor.constraint(equalTo: textView.topAnchor, constant: inset.top),
-            titlePlaceholderLabel.leadingAnchor.constraint(equalTo: textView.leadingAnchor, constant: inset.left + 5),
-            titlePlaceholderLabel.trailingAnchor.constraint(lessThanOrEqualTo: textView.trailingAnchor, constant: -(inset.right)),
-
-            bodyTop,
-            bodyPlaceholderLabel.leadingAnchor.constraint(equalTo: titlePlaceholderLabel.leadingAnchor),
-            bodyPlaceholderLabel.trailingAnchor.constraint(lessThanOrEqualTo: textView.trailingAnchor, constant: -(inset.right)),
         ])
+        // Keep placeholders under the tags strip visually (z-order).
+        textView.sendSubviewToBack(titlePlaceholderLabel)
+        textView.sendSubviewToBack(bodyPlaceholderLabel)
 
         let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         tap.delegate = self
@@ -194,6 +184,7 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
     override func layoutSubviews() {
         super.layoutSubviews()
         repositionTagsStrip()
+        repositionPlaceholders()
     }
 
     override func didMoveToWindow() {
@@ -455,12 +446,29 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
         emitChange()
     }
 
+    private func textContentLeading() -> CGFloat {
+        textView.textContainerInset.left + textView.textContainer.lineFragmentPadding
+    }
+
+    private func textContentWidth() -> CGFloat {
+        let inset = textView.textContainerInset
+        return max(
+            0,
+            textView.bounds.width
+                - inset.left
+                - inset.right
+                - textView.textContainer.lineFragmentPadding * 2
+        )
+    }
+
     private func repositionTagsStrip() {
         let inset = textView.textContainerInset
-        let width = max(0, textView.bounds.width - inset.left - inset.right - 5)
+        let leading = textContentLeading()
+        let width = textContentWidth()
         let height = NoteEditorTagsStrip.preferredHeight
         var y = inset.top + 28
         if textView.textStorage.length > 0 {
+            textView.layoutManager.ensureLayout(for: textView.textContainer)
             let titlePara = (textView.textStorage.string as NSString).paragraphRange(
                 for: NSRange(location: 0, length: 0)
             )
@@ -472,9 +480,68 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
                 forGlyphRange: glyphRange,
                 in: textView.textContainer
             )
+            // Sit in the title's reserved paragraphSpacing band (tags under the title).
             y = inset.top + rect.maxY + 4
         }
-        tagsStrip.frame = CGRect(x: inset.left + 5, y: y, width: width, height: height)
+        tagsStrip.frame = CGRect(x: leading, y: y, width: width, height: height)
+    }
+
+    /// Pin title/body placeholders to the same origin as the caret (insets, padding, font).
+    private func repositionPlaceholders() {
+        textView.layoutManager.ensureLayout(for: textView.textContainer)
+        let inset = textView.textContainerInset
+        let leading = textContentLeading()
+        let width = textContentWidth()
+
+        titlePlaceholderLabel.font = UIFont.preferredFont(forTextStyle: .title1)
+        bodyPlaceholderLabel.font = UIFont.preferredFont(forTextStyle: .body)
+
+        let titleFont = titlePlaceholderLabel.font ?? UIFont.preferredFont(forTextStyle: .title1)
+        let bodyFont = bodyPlaceholderLabel.font ?? UIFont.preferredFont(forTextStyle: .body)
+
+        let titleOrigin = caretAlignedOrigin(atCharacter: 0, font: titleFont, fallbackY: inset.top)
+        titlePlaceholderLabel.frame = CGRect(
+            x: leading,
+            y: titleOrigin.y,
+            width: width,
+            height: ceil(titleFont.lineHeight)
+        )
+
+        let bodyChar: Int = {
+            guard textView.textStorage.length > 0 else { return 0 }
+            let titlePara = (textView.textStorage.string as NSString).paragraphRange(
+                for: NSRange(location: 0, length: 0)
+            )
+            return min(NSMaxRange(titlePara), max(0, textView.textStorage.length - 1))
+        }()
+        let bodyFallbackY = tagsStrip.frame.maxY + 8
+        let bodyOrigin = caretAlignedOrigin(atCharacter: bodyChar, font: bodyFont, fallbackY: bodyFallbackY)
+        bodyPlaceholderLabel.frame = CGRect(
+            x: leading,
+            y: bodyOrigin.y,
+            width: width,
+            height: ceil(bodyFont.lineHeight)
+        )
+    }
+
+    /// Match UILabel origin to the TextKit caret / line-fragment top for `font`.
+    private func caretAlignedOrigin(atCharacter location: Int, font: UIFont, fallbackY: CGFloat) -> CGPoint {
+        let leading = textContentLeading()
+        guard textView.textStorage.length > 0, location >= 0, location < textView.textStorage.length else {
+            return CGPoint(x: leading, y: fallbackY)
+        }
+        let layout = textView.layoutManager
+        let container = textView.textContainer
+        let glyphIndex = layout.glyphIndexForCharacter(at: location)
+        var lineRange = NSRange(location: 0, length: 0)
+        let used = layout.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: &lineRange)
+        if used.isNull || used.isEmpty {
+            return CGPoint(x: leading, y: fallbackY)
+        }
+        // lineFragment rect is in text-container coords; add the text container inset.
+        let y = textView.textContainerInset.top + used.minY
+            + (used.height - font.lineHeight) * 0.5
+        return CGPoint(x: leading, y: y)
     }
 
     /// Keep the caret on-screen with the smallest possible contentOffset change.
@@ -782,6 +849,11 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
         }
 
         if Self.isNewlineReplacement(text) {
+            // Title is a fixed first paragraph — Enter never splits / demotes it into body text.
+            if isCaretInTitle() {
+                moveCaretFromTitleToBodyStart()
+                return false
+            }
             let type = paragraphBlockType()
             // Caret on header attachment: jump into first body (or exit if collapsed-only).
             if type == "speakerSection" {
@@ -1141,6 +1213,60 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
         textView.typingAttributes = result.typingAttributes
         emitChange()
         refreshSpeakerRails()
+        scrollCaretVisible(animated: true)
+    }
+
+    /// Enter in the title: leave title text untouched and place the caret at the body start.
+    private func moveCaretFromTitleToBodyStart() {
+        captureScrollAnchor()
+        ensureTitleParagraphChrome()
+        let storage = textView.textStorage
+        let ns = storage.string as NSString
+        var titlePara = ns.paragraphRange(for: NSRange(location: 0, length: 0))
+        // Guarantee a trailing newline so the title stays its own paragraph.
+        let titleEndsWithNewline: Bool = {
+            guard titlePara.length > 0 else { return false }
+            let last = ns.substring(with: NSRange(location: NSMaxRange(titlePara) - 1, length: 1))
+            return last == "\n" || last == "\r"
+        }()
+        if !titleEndsWithNewline {
+            let insertAt = NSMaxRange(titlePara)
+            storage.replaceCharacters(
+                in: NSRange(location: insertAt, length: 0),
+                with: NSAttributedString(string: "\n", attributes: titleTypingAttributes())
+            )
+            titlePara = (storage.string as NSString).paragraphRange(for: NSRange(location: 0, length: 0))
+        }
+
+        // Re-apply title styling across the whole title paragraph content (never demote).
+        let titleAttrs = titleTypingAttributes()
+        let terminatorLen: Int = {
+            guard titlePara.length > 0 else { return 0 }
+            let last = (storage.string as NSString).substring(
+                with: NSRange(location: NSMaxRange(titlePara) - 1, length: 1)
+            )
+            return (last == "\n" || last == "\r") ? 1 : 0
+        }()
+        let titleContent = NSRange(location: titlePara.location, length: max(0, titlePara.length - terminatorLen))
+        if titleContent.length > 0 {
+            storage.addAttributes(titleAttrs, range: titleContent)
+        }
+
+        let bodyAttrs = SpeakerSectionEditing.outsideTypingAttributes()
+        var bodyStart = NSMaxRange(titlePara)
+        if bodyStart >= storage.length {
+            let seed = NSAttributedString(string: "\u{200B}", attributes: bodyAttrs)
+            storage.replaceCharacters(in: NSRange(location: bodyStart, length: 0), with: seed)
+        } else {
+            let bodyPara = (storage.string as NSString).paragraphRange(for: NSRange(location: bodyStart, length: 0))
+            bodyStart = bodyPara.location
+        }
+
+        textView.selectedRange = NSRange(location: min(bodyStart, storage.length), length: 0)
+        textView.typingAttributes = bodyAttrs
+        emitChange()
+        refreshPlaceholders()
+        refreshEditingChrome()
         scrollCaretVisible(animated: true)
     }
 
@@ -2074,6 +2200,7 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
         // bibleRef pills, speaker headers, or any other attachment (TF210).
         bodyPlaceholderLabel.isHidden = bodyHasVisibleContent()
         repositionTagsStrip()
+        repositionPlaceholders()
     }
 
     /// True when the body region of `textStorage` is non-empty (attachments count).
@@ -2243,6 +2370,25 @@ final class NativeNoteEditorView: UIView, UITextViewDelegate {
 
     func testing_bodyPlaceholderText() -> String? {
         bodyPlaceholderLabel.text
+    }
+
+    func testing_titlePlaceholderFrame() -> CGRect {
+        repositionPlaceholders()
+        return titlePlaceholderLabel.frame
+    }
+
+    func testing_bodyPlaceholderFrame() -> CGRect {
+        repositionPlaceholders()
+        return bodyPlaceholderLabel.frame
+    }
+
+    func testing_textContentLeading() -> CGFloat {
+        textContentLeading()
+    }
+
+    func testing_tagsStripFrame() -> CGRect {
+        repositionTagsStrip()
+        return tagsStrip.frame
     }
 
     func testing_setTags(_ tags: [String]) {
