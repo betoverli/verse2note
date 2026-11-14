@@ -232,6 +232,8 @@ final class KCNoteRowCell: UITableViewCell {
 
     private let spine = UIView()
     private let titleLabel = UILabel()
+    private let dateLabel = UILabel()
+    private let titleRow = UIStackView()
     private let speakerPill = UILabel()
     private let subtitleLabel = UILabel()
     private let tagsLabel = UILabel()
@@ -253,7 +255,23 @@ final class KCNoteRowCell: UITableViewCell {
         titleLabel.font = KCDesign.rowTitle()
         titleLabel.textColor = .label
         titleLabel.numberOfLines = 1
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         titleLabel.adjustsFontForContentSizeCategory = true
+
+        dateLabel.font = KCDesign.caption()
+        dateLabel.textColor = .secondaryLabel
+        dateLabel.numberOfLines = 1
+        dateLabel.textAlignment = .right
+        dateLabel.setContentHuggingPriority(.required, for: .horizontal)
+        dateLabel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        dateLabel.adjustsFontForContentSizeCategory = true
+
+        titleRow.axis = .horizontal
+        titleRow.alignment = .firstBaseline
+        titleRow.spacing = 8
+        titleRow.addArrangedSubview(titleLabel)
+        titleRow.addArrangedSubview(dateLabel)
 
         speakerPill.font = KCDesign.preferred(.caption2, weight: .semibold)
         speakerPill.textColor = KCDesign.accent
@@ -286,7 +304,7 @@ final class KCNoteRowCell: UITableViewCell {
         stack.axis = .vertical
         stack.spacing = 3
         stack.translatesAutoresizingMaskIntoConstraints = false
-        stack.addArrangedSubview(titleLabel)
+        stack.addArrangedSubview(titleRow)
         stack.addArrangedSubview(metaRow)
         stack.addArrangedSubview(tagsLabel)
         contentView.addSubview(stack)
@@ -307,8 +325,11 @@ final class KCNoteRowCell: UITableViewCell {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    func configure(title: String, subtitle: String, tags: [String], speakerName: String? = nil) {
+    func configure(title: String, subtitle: String, tags: [String], speakerName: String? = nil, date: String? = nil) {
         titleLabel.text = title
+        let dateText = date?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        dateLabel.text = dateText.isEmpty ? nil : dateText
+        dateLabel.isHidden = dateText.isEmpty
         subtitleLabel.text = subtitle
         subtitleLabel.isHidden = subtitle.isEmpty
         // UIStackView often keeps reserved width when only toggling `isHidden` on an
@@ -336,12 +357,17 @@ final class KCNoteRowCell: UITableViewCell {
             tagsLabel.isHidden = false
             tagsLabel.text = tags.map { "#\($0)" }.joined(separator: "  ")
         }
-        accessibilityLabel = [title, speakerName, subtitle, tagsLabel.text].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ". ")
+        accessibilityLabel = [title, dateText.isEmpty ? nil : dateText, speakerName, subtitle, tagsLabel.text]
+            .compactMap { $0 }
+            .filter { !$0.isEmpty }
+            .joined(separator: ". ")
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
         titleLabel.text = nil
+        dateLabel.text = nil
+        dateLabel.isHidden = true
         subtitleLabel.text = nil
         subtitleLabel.isHidden = false
         speakerPill.text = nil
@@ -358,6 +384,7 @@ final class KCNoteRowCell: UITableViewCell {
     // MARK: - Testing hooks
 
     var testing_titleLabel: UILabel { titleLabel }
+    var testing_dateLabel: UILabel { dateLabel }
     var testing_subtitleLabel: UILabel { subtitleLabel }
     var testing_speakerPill: UILabel { speakerPill }
     var testing_speakerPillInMetaRow: Bool { speakerPill.superview === metaRow }

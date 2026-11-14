@@ -103,6 +103,29 @@ enum NativeAPIClient {
             return text.isEmpty ? String(localized: "Sem texto") : text
         }
 
+        /// Notebook list second line: plain body text only (no bible refs, no speaker headers).
+        var listBodyPreview: String {
+            var parts: [String] = []
+            for block in body.blocks {
+                if block.type == "speakerSection" {
+                    // Skip the section header itself; only walk child body lines.
+                    for child in block.blocks ?? [] {
+                        let plain = plainSpanText(child.spans)
+                        if !plain.isEmpty { parts.append(plain) }
+                    }
+                } else {
+                    let plain = plainSpanText(block.spans)
+                    if !plain.isEmpty { parts.append(plain) }
+                }
+                if parts.joined(separator: " ").count > 200 { break }
+            }
+            let collapsed = parts
+                .joined(separator: " ")
+                .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return collapsed
+        }
+
         private func spanText(_ spans: [TextSpan]?) -> String {
             // Caderno preview: keep readable bible labels (e.g. "João 15:1–8"), not raw pills.
             (spans ?? []).compactMap { span in
@@ -112,6 +135,17 @@ enum NativeAPIClient {
                 let text = span.text ?? ""
                 return text.isEmpty ? nil : text
             }.joined()
+        }
+
+        /// Plain text spans only — bibleRef attachments and empty runs are omitted.
+        private func plainSpanText(_ spans: [TextSpan]?) -> String {
+            (spans ?? []).compactMap { span -> String? in
+                if span.type == "bibleRef" { return nil }
+                let text = (span.text ?? "")
+                    .replacingOccurrences(of: "\u{200B}", with: "")
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                return text.isEmpty ? nil : text
+            }.joined(separator: " ")
         }
 
         /// Prefer stored display text; otherwise format from bookId / chapter / verses.

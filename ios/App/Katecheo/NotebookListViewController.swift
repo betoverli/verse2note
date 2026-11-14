@@ -494,19 +494,30 @@ final class NotebookListViewController: UIViewController, UITableViewDelegate, U
         if isGroupMode {
             let card = filteredCards[indexPath.row]
             let title = card.note.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Reunião") : card.note.title
-            let preview = card.document?.preview ?? card.author.displayName
-            let day = AppLocale.displayDay(card.note.happenedAt)
+            let preview = card.document?.listBodyPreview ?? ""
+            let subtitle = preview.isEmpty ? (card.author.displayName) : preview
+            let day = AppLocale.relativeNoteDay(card.note.happenedAt)
             let speakerName = mainSpeakerName(for: card.document)
-            let subtitle = [day, preview].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-            cell.configure(title: title, subtitle: subtitle, tags: card.document?.tags ?? [], speakerName: speakerName)
+            cell.configure(
+                title: title,
+                subtitle: subtitle,
+                tags: card.document?.tags ?? [],
+                speakerName: speakerName,
+                date: day
+            )
             return cell
         }
         let note = filtered[indexPath.row]
         let title = note.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Reunião") : note.title
-        let day = AppLocale.displayDay(note.happenedAt)
+        let day = AppLocale.relativeNoteDay(note.happenedAt)
         let speakerName = mainSpeakerName(for: note)
-        let subtitle = [day, note.preview].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-        cell.configure(title: title, subtitle: subtitle, tags: note.tags, speakerName: speakerName)
+        cell.configure(
+            title: title,
+            subtitle: note.listBodyPreview,
+            tags: note.tags,
+            speakerName: speakerName,
+            date: day
+        )
         return cell
     }
 
